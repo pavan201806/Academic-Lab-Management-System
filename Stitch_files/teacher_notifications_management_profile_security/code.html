@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Apex STEM Labs - Notifications &amp; Faculty Security Suite</title>
+<!-- Google Fonts: Manrope & Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Container Queries & Forms -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim as defined in prompt -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#93000a",
+            "tertiary-fixed-dim": "#93ccff",
+            "primary-fixed-dim": "#b2c5ff",
+            "surface": "#faf8ff",
+            "secondary-fixed": "#89f5e7",
+            "primary-fixed": "#dae2ff",
+            "inverse-surface": "#283044",
+            "surface-container": "#eaedff",
+            "surface-container-high": "#e2e7ff",
+            "tertiary": "#001e32",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#005049",
+            "tertiary-container": "#003452",
+            "secondary-container": "#86f2e4",
+            "surface-tint": "#445c9c",
+            "surface-container-highest": "#dae2fd",
+            "secondary": "#006a61",
+            "on-error": "#ffffff",
+            "surface-container-low": "#f2f3ff",
+            "surface-dim": "#d2d9f4",
+            "on-secondary": "#ffffff",
+            "surface-bright": "#faf8ff",
+            "on-secondary-container": "#006f66",
+            "on-primary": "#ffffff",
+            "on-primary-fixed-variant": "#2a4482",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001848",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "inverse-primary": "#b2c5ff",
+            "primary": "#001849",
+            "on-tertiary-fixed": "#001d31",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#004b73",
+            "inverse-on-surface": "#eef0ff",
+            "on-secondary-fixed": "#00201d",
+            "primary-container": "#0f2d6b",
+            "on-surface-variant": "#444650",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "outline": "#757781",
+            "outline-variant": "#c5c6d2",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-tertiary-container": "#3da0e5",
+            "error-container": "#ffdad6",
+            "on-primary-container": "#7f97db",
+            "on-surface": "#131b2e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "2rem",
+            "margin": "1.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "1rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Manrope"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-sm": ["Hanken Grotesk"],
+            "display-lg": ["Manrope"],
+            "headline-lg-mobile": ["Manrope"],
+            "label-md": ["Hanken Grotesk"],
+            "headline-md": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "body-md": ["Hanken Grotesk"],
+            "title-md": ["Manrope"],
+            "body-sm": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Subtle custom scrollbar for lab table & drawer */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #faf8ff;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c5c6d2;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #757781;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen antialiased flex flex-col font-body-md selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- ========================================================================= -->
+<!-- 1. APPLICATION SHELL: SIDEBAR & TOP BAR                                   -->
+<!-- ========================================================================= -->
+<!-- SideNavBar: Fixed standard left navigation rail mapped exactly from JSON -->
+<aside class="fixed top-0 left-0 h-screen w-64 z-40 border-r border-outline-variant/30 dark:border-outline-variant/10 bg-surface-container-lowest dark:bg-inverse-surface shadow-[1px_0_2px_0_rgba(15,23,42,0.04)] hidden md:block">
+<div class="flex flex-col justify-between h-full p-4">
+<!-- Top Brand Section -->
+<div class="flex flex-col gap-6">
+<!-- University Brand Logo & Identity -->
+<div class="flex items-center gap-3 px-2 pt-1">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-headline-sm text-title-md font-bold shadow-sm">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">biotech</span>
+</div>
+<div class="flex flex-col">
+<span class="text-title-md font-title-md font-bold text-primary dark:text-inverse-primary tracking-tight">Apex STEM Labs</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Collegiate Research Portal</span>
+</div>
+</div>
+<!-- Institutional CTA Button -->
+<button class="w-full flex items-center justify-center gap-2 py-2 px-3 bg-primary-container text-white rounded-lg font-title-md text-body-md font-semibold hover:bg-primary transition-colors shadow-sm active:scale-[0.99] duration-150">
+<span class="material-symbols-outlined text-body-md">add_circle</span>
+<span>New Protocol</span>
+</button>
+<!-- Main Navigation Links (Strict Mapping to JSON tab_labels) -->
+<nav class="flex flex-col gap-1">
+<!-- 1. Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- 2. Labs -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">biotech</span>
+<span>Labs</span>
+</a>
+<!-- 3. Experiments -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">science</span>
+<span>Experiments</span>
+</a>
+<!-- 4. Submissions -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">assignment_turned_in</span>
+<span>Submissions</span>
+</a>
+<!-- 5. Notifications (ACTIVE STATE - Destination Match) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-high dark:bg-primary-container text-primary dark:text-on-primary-fixed font-title-md font-semibold shadow-sm" href="#notifications-ledger">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span class="flex-1">Notifications</span>
+<span class="px-1.5 py-0.5 text-label-sm font-label-sm rounded-full bg-primary-container text-white">3</span>
+</a>
+<!-- 6. Profile -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#faculty-profile">
+<span class="material-symbols-outlined text-outline">person</span>
+<span>Profile</span>
+</a>
+<!-- 7. Settings -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+</div>
+<!-- Footer Action Links (Safety Docs, Support) -->
+<div class="border-t border-outline-variant/30 pt-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-sm hover:bg-surface-container-low transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-outline">verified_user</span>
+<span>Safety Docs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-sm hover:bg-surface-container-low transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-outline">help</span>
+<span>Support</span>
+</a>
+<!-- Logged in identity compact card -->
+<div class="mt-2 p-2 rounded-lg bg-surface-container-low border border-outline-variant/20 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-label-md">
+            JV
+          </div>
+<div class="overflow-hidden">
+<p class="text-body-sm font-semibold truncate text-on-surface">Dr. Julian Vance</p>
+<p class="text-label-sm text-on-surface-variant truncate">Teacher / Principal Inv.</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Fixed Header for Web & Mobile) -->
+<header class="sticky top-0 right-0 w-full z-30 border-b border-outline-variant/30 dark:border-outline-variant/10 bg-surface-container-lowest dark:bg-inverse-surface shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] md:pl-64">
+<div class="flex items-center justify-between h-14 px-6 w-full">
+<!-- Left side: Breadcrumb Trail -->
+<div class="flex items-center gap-2 text-body-sm">
+<span class="text-on-surface-variant">Portal</span>
+<span class="material-symbols-outlined text-outline text-label-sm">chevron_right</span>
+<span class="text-on-surface-variant font-medium">Teacher Console</span>
+<span class="material-symbols-outlined text-outline text-label-sm">chevron_right</span>
+<span class="text-primary font-semibold font-title-md">Announcements &amp; Faculty Profile</span>
+</div>
+<!-- Right side: Navigation actions, Quick Actions & User Pill -->
+<div class="flex items-center gap-4">
+<!-- Search bar inline -->
+<div class="relative hidden lg:block w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-body-md">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-body-sm rounded-lg border border-outline-variant/50 focus:border-primary-container focus:ring-1 focus:ring-primary-container bg-surface/50 placeholder:text-on-surface-variant/70" placeholder="Search notices, labs, logs..." type="text"/>
+</div>
+<!-- Trailing action icons -->
+<button class="relative p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" title="Notifications">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-error"></span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" title="Safety Assistance">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-6 w-[1px] bg-outline-variant/30"></div>
+<!-- Teacher Status Pill -->
+<div class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-surface-container-low border border-outline-variant/30">
+<div class="w-7 h-7 rounded-full bg-primary-container text-white flex items-center justify-center font-label-md font-bold">
+            JV
+          </div>
+<div class="flex flex-col text-left">
+<span class="text-label-md font-semibold text-primary leading-tight">Dr. Julian Vance</span>
+<span class="text-[10px] text-secondary font-bold uppercase tracking-wider">Teacher</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-emerald-500 ml-1" title="Teacher Session Active"></span>
+</div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN CONTENT CANVAS                                                       -->
+<!-- ========================================================================= -->
+<main class="flex-1 md:pl-64 p-6 lg:p-8 space-y-8 max-w-[1600px] w-full mx-auto">
+<!-- 5. SYSTEM FEEDBACK TOAST (Active Alert Banner) -->
+<div class="flex items-center justify-between px-4 py-3 bg-[#e6f4ea] border border-[#34a853]/30 rounded-lg shadow-sm" id="toast-banner">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#137333]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<p class="text-body-md font-medium text-[#137333]">
+          Notification published successfully to <strong class="font-bold">64 enrolled students</strong> in Data Structures Lab (CS-201P).
+        </p>
+</div>
+<button class="text-[#137333] hover:text-[#0b4e22] p-1 rounded transition-colors" onclick="document.getElementById('toast-banner').remove()">
+<span class="material-symbols-outlined text-body-md">close</span>
+</button>
+</div>
+<!-- Section 1 & Section 2 Split: Notification Broadcaster + Create Drawer -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+<!-- ===================================================================== -->
+<!-- SECTION 1: NOTIFICATIONS MANAGEMENT & BROADCASTER (8 Cols on XL)      -->
+<!-- ===================================================================== -->
+<section class="xl:col-span-7 flex flex-col gap-6" id="notifications-ledger">
+<!-- Header row -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<h1 class="text-headline-sm font-headline-sm text-primary tracking-tight">Notifications Management &amp; Broadcaster</h1>
+</div>
+<p class="text-body-sm text-on-surface-variant mt-0.5">Create, broadcast, and audit collegiate laboratory alerts for student cohorts.</p>
+</div>
+<!-- Primary CTA Button -->
+<button class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-container hover:bg-primary text-white font-title-md text-body-md rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined text-body-md">add</span>
+<span>+ Create Notification</span>
+</button>
+</div>
+<!-- Filter Bar & Summary Statistics Strip -->
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-3 flex items-center justify-between shadow-sm">
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Active Notices</p>
+<p class="text-headline-sm font-headline-sm text-primary font-bold">14</p>
+</div>
+<div class="w-9 h-9 rounded-full bg-[#ccfbf1] text-[#0d9488] flex items-center justify-center">
+<span class="material-symbols-outlined text-body-lg">notifications_active</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-3 flex items-center justify-between shadow-sm">
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Scheduled</p>
+<p class="text-headline-sm font-headline-sm text-primary font-bold">3</p>
+</div>
+<div class="w-9 h-9 rounded-full bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center">
+<span class="material-symbols-outlined text-body-lg">schedule</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-3 flex items-center justify-between shadow-sm">
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Total Reach</p>
+<p class="text-headline-sm font-headline-sm text-primary font-bold">482</p>
+</div>
+<div class="w-9 h-9 rounded-full bg-surface-container text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-body-lg">groups</span>
+</div>
+</div>
+</div>
+<!-- Notification Ledger Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<div class="px-5 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface/30">
+<h2 class="text-title-md font-title-md text-primary font-semibold">Active Announcements Ledger</h2>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Showing 3 of 17 records</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-outline-variant/30 text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+<th class="py-2.5 px-4 font-semibold">Notification Title</th>
+<th class="py-2.5 px-3 font-semibold">Target Audience</th>
+<th class="py-2.5 px-3 font-semibold">Related Lab</th>
+<th class="py-2.5 px-3 font-semibold">Created Date</th>
+<th class="py-2.5 px-3 font-semibold">Status</th>
+<th class="py-2.5 px-4 text-right font-semibold">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/15 text-body-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-4">
+<div class="font-semibold text-primary font-title-md text-body-md">Midterm Practical Exam Timetable &amp; Bench Allocations</div>
+<div class="text-on-surface-variant text-body-sm text-xs truncate max-w-xs">Room allocations for B-201 and B-204 safety stations. Bring lab coat.</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-[#e0f2fe] text-[#0284c7]">
+                      All Students
+                    </span>
+</td>
+<td class="py-3 px-3 font-medium text-on-surface">General STEM Core</td>
+<td class="py-3 px-3 text-on-surface-variant">Today, 08:30 AM</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-sm font-medium bg-[#ccfbf1] text-[#0d9488]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0d9488]"></span>
+                      Published
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="View Detail">
+<span class="material-symbols-outlined text-body-md">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Edit Notification">
+<span class="material-symbols-outlined text-body-md">edit</span>
+</button>
+<button class="p-1 rounded text-error hover:bg-error-container hover:text-on-error-container transition-colors" title="Delete Notification (Teacher Only)">
+<span class="material-symbols-outlined text-body-md">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-4">
+<div class="font-semibold text-primary font-title-md text-body-md">Red-Black Tree Valgrind Test Suite Uploaded</div>
+<div class="text-on-surface-variant text-body-sm text-xs truncate max-w-xs">Memory leak validator suite available via portal repository terminal.</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-surface-container text-primary font-medium">
+                      Data Structures Sec A
+                    </span>
+</td>
+<td class="py-3 px-3 font-medium text-on-surface">CS-201P Advanced Algo</td>
+<td class="py-3 px-3 text-on-surface-variant">2 days ago</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-sm font-medium bg-[#ccfbf1] text-[#0d9488]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0d9488]"></span>
+                      Published
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="View Detail">
+<span class="material-symbols-outlined text-body-md">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Edit Notification">
+<span class="material-symbols-outlined text-body-md">edit</span>
+</button>
+<button class="p-1 rounded text-error hover:bg-error-container hover:text-on-error-container transition-colors" title="Delete Notification (Teacher Only)">
+<span class="material-symbols-outlined text-body-md">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 (Trigger for Modal Demonstration) -->
+<tr class="bg-surface-container-low/20 hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-4">
+<div class="font-semibold text-primary font-title-md text-body-md">Rescheduled Lab Session for Clean Room B-204</div>
+<div class="text-on-surface-variant text-body-sm text-xs truncate max-w-xs">HVAC maintenance shifted session to Friday 14:00. Mandatory safety checklist.</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-surface-container text-primary font-medium">
+                      AI Lab Sec A
+                    </span>
+</td>
+<td class="py-3 px-3 font-medium text-on-surface">Neural Systems B-204</td>
+<td class="py-3 px-3 text-on-surface-variant">Oct 20, 2024</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-label-sm font-medium bg-[#ccfbf1] text-[#0d9488]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0d9488]"></span>
+                      Published
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="View Detail">
+<span class="material-symbols-outlined text-body-md">visibility</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Edit Notification">
+<span class="material-symbols-outlined text-body-md">edit</span>
+</button>
+<button class="p-1 rounded bg-error-container text-error hover:bg-error hover:text-white transition-colors" title="Delete Notification (Teacher Only)">
+<span class="material-symbols-outlined text-body-md">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer Pagination -->
+<div class="px-5 py-3 border-t border-outline-variant/20 flex items-center justify-between text-body-sm text-on-surface-variant bg-surface/20">
+<span>Showing page 1 of 6</span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50 text-label-md" disabled="">Previous</button>
+<button class="px-2.5 py-1 rounded bg-primary-container text-white text-label-md">1</button>
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 hover:bg-surface-container-low text-label-md">2</button>
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 hover:bg-surface-container-low text-label-md">3</button>
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 text-on-surface hover:bg-surface-container-low text-label-md">Next</button>
+</div>
+</div>
+</div>
+<!-- =================================================================== -->
+<!-- DELETE CONFIRMATION MODAL (ACTIVE DEMONSTRATION OVERLAY)             -->
+<!-- =================================================================== -->
+<div class="relative bg-surface-container-lowest border-2 border-error/30 rounded-xl p-5 shadow-[0_10px_25px_-5px_rgba(186,26,26,0.12)]">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-error-container text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-headline-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex items-center justify-between">
+<h3 class="text-title-md font-title-md font-bold text-error">Delete Notification?</h3>
+<span class="px-2 py-0.5 rounded text-label-sm font-bold bg-error-container text-on-error-container tracking-wider uppercase">
+                  Teacher Privilege Only
+                </span>
+</div>
+<p class="text-body-md text-on-surface">
+                Are you sure you want to delete this notification? This action cannot be undone and will immediately remove the notice from all student dashboards.
+              </p>
+<div class="p-3 bg-surface rounded-lg border border-outline-variant/30 text-body-sm font-mono text-on-surface-variant">
+                Target: <span class="font-semibold text-primary">"Rescheduled Lab Session for Clean Room B-204"</span> (AI Lab Sec A)
+              </div>
+<!-- Modal Buttons -->
+<div class="flex items-center justify-end gap-3 pt-2">
+<button class="px-4 py-2 border border-outline-variant text-on-surface hover:bg-surface-container-low font-title-md text-body-md rounded-lg transition-colors" type="button">
+                  Cancel
+                </button>
+<button class="px-4 py-2 bg-error hover:bg-[#a01313] text-white font-title-md text-body-md rounded-lg shadow-sm transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-body-md">delete_forever</span>
+<span>Delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION 2: CREATE NOTIFICATION FORM DRAWER (5 Cols on XL)             -->
+<!-- ===================================================================== -->
+<section class="xl:col-span-5 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-5">
+<!-- Drawer Header -->
+<div class="border-b border-outline-variant/20 pb-4 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined">edit_note</span>
+</div>
+<div>
+<h2 class="text-title-md font-title-md text-primary font-bold">Create Notification</h2>
+<p class="text-body-sm text-on-surface-variant">Author and broadcast lab bulletins</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-label-sm font-medium bg-surface-container text-primary">Faculty Mode</span>
+</div>
+<form class="space-y-4">
+<!-- Notification Title Field -->
+<div class="space-y-1.5">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+              Notification Title <span class="text-error">*</span>
+</label>
+<input class="w-full h-9 px-3 text-body-md rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-medium" placeholder="e.g. Midterm Lab Schedule..." type="text" value="Laboratory Safety Protocol Update &amp; Goggle Check"/>
+</div>
+<!-- Target Audience Radio Chips -->
+<div class="space-y-2">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+              Target Audience Selector <span class="text-error">*</span>
+</label>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+<label class="flex items-center justify-center p-2 rounded-lg border border-outline-variant/40 bg-surface cursor-pointer hover:bg-surface-container-low transition-colors text-label-md font-medium text-on-surface-variant">
+<input class="sr-only" name="audience" type="radio"/>
+<span>All Students</span>
+</label>
+<label class="flex items-center justify-center p-2 rounded-lg border-2 border-primary-container bg-primary-container text-white cursor-pointer transition-colors text-label-md font-semibold shadow-sm">
+<input checked="" class="sr-only" name="audience" type="radio"/>
+<span>Laboratory</span>
+</label>
+<label class="flex items-center justify-center p-2 rounded-lg border border-outline-variant/40 bg-surface cursor-pointer hover:bg-surface-container-low transition-colors text-label-md font-medium text-on-surface-variant">
+<input class="sr-only" name="audience" type="radio"/>
+<span>Section</span>
+</label>
+<label class="flex items-center justify-center p-2 rounded-lg border border-outline-variant/40 bg-surface cursor-pointer hover:bg-surface-container-low transition-colors text-label-md font-medium text-on-surface-variant">
+<input class="sr-only" name="audience" type="radio"/>
+<span>Individual</span>
+</label>
+</div>
+</div>
+<!-- Contextual Dropdowns (Lab & Section) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+<div class="space-y-1.5">
+<label class="block text-label-sm font-label-sm font-semibold text-on-surface">
+                Target Laboratory
+              </label>
+<select class="w-full h-9 px-3 text-body-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-medium">
+<option selected="">Data Structures Lab (CS-201P)</option>
+<option>Database Management Lab (CS-302P)</option>
+<option>Microbiology &amp; Tissue Culture (BIO-104)</option>
+<option>Organic Chemistry Synthesis (CHEM-402)</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="block text-label-sm font-label-sm font-semibold text-on-surface">
+                Section Selector
+              </label>
+<select class="w-full h-9 px-3 text-body-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-medium">
+<option selected="">Section A &amp; B</option>
+<option>Section A Only</option>
+<option>Section B Only</option>
+<option>Section C (Honors)</option>
+</select>
+</div>
+</div>
+<!-- Expiry Date -->
+<div class="space-y-1.5">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+              Notice Expiry Date
+            </label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-body-md">calendar_today</span>
+<input class="w-full h-9 pl-9 pr-3 text-body-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary" type="text" value="Nov 15, 2024"/>
+</div>
+</div>
+<!-- Rich Textarea Field & Formatting Bar -->
+<div class="space-y-1.5">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+              Message Body <span class="text-error">*</span>
+</label>
+<div class="border border-outline-variant rounded-lg overflow-hidden focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container">
+<!-- Formatting toolbar -->
+<div class="flex items-center gap-1 p-1.5 bg-surface border-b border-outline-variant/30 text-on-surface-variant text-body-sm">
+<button class="p-1 hover:bg-surface-container-high rounded text-on-surface font-bold" title="Bold" type="button">B</button>
+<button class="p-1 hover:bg-surface-container-high rounded text-on-surface italic" title="Italic" type="button">I</button>
+<button class="p-1 hover:bg-surface-container-high rounded text-on-surface underline" title="Underline" type="button">U</button>
+<div class="h-4 w-[1px] bg-outline-variant/40 mx-1"></div>
+<button class="p-1 hover:bg-surface-container-high rounded" title="Bullet List" type="button">
+<span class="material-symbols-outlined text-body-md">format_list_bulleted</span>
+</button>
+<button class="p-1 hover:bg-surface-container-high rounded" title="Add Link" type="button">
+<span class="material-symbols-outlined text-body-md">link</span>
+</button>
+<button class="p-1 hover:bg-surface-container-high rounded" title="Hazard Warning Tag" type="button">
+<span class="material-symbols-outlined text-body-md text-error">warning</span>
+</button>
+</div>
+<textarea class="w-full p-3 text-body-sm border-0 focus:ring-0 text-on-surface placeholder:text-on-surface-variant/60" placeholder="Write full announcement details..." rows="4">All students attending the Tuesday &amp; Wednesday practical slots in Data Structures Lab must bring their ANSI Z87.1 certified splash goggles and verified student card. Failure to adhere will void benchmark access for Lab Assignment 4.</textarea>
+</div>
+</div>
+<!-- Live Preview Card -->
+<div class="space-y-1.5 pt-1">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Live Student Feed Preview</span>
+<span class="text-label-sm text-secondary font-medium">As shown to enrolled cohort</span>
+</div>
+<div class="p-3.5 bg-surface border border-outline-variant/40 rounded-lg space-y-2">
+<div class="flex items-center justify-between text-xs">
+<span class="px-2 py-0.5 rounded text-label-sm font-semibold bg-[#ccfbf1] text-[#0d9488]">
+                  Data Structures Lab (CS-201P) • Sec A &amp; B
+                </span>
+<span class="text-on-surface-variant">Expires: Nov 15, 2024</span>
+</div>
+<h4 class="font-title-md font-bold text-primary text-body-md">Laboratory Safety Protocol Update &amp; Goggle Check</h4>
+<p class="text-body-sm text-on-surface-variant line-clamp-2">
+                All students attending the Tuesday &amp; Wednesday practical slots in Data Structures Lab must bring their ANSI Z87.1 certified splash goggles and verified student card...
+              </p>
+<div class="flex items-center gap-2 pt-1 border-t border-outline-variant/20 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-sm text-primary">person</span>
+<span>Posted by Dr. Julian Vance (Teacher)</span>
+</div>
+</div>
+</div>
+<!-- Drawer Action Buttons -->
+<div class="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant/20">
+<button class="px-3 py-2 border border-outline-variant text-on-surface hover:bg-surface-container-low font-title-md text-body-sm rounded-lg transition-colors" type="button">
+              Cancel
+            </button>
+<button class="px-3.5 py-2 border border-outline-variant text-primary hover:bg-surface-container-low font-title-md text-body-sm rounded-lg transition-colors" type="button">
+              Save Draft
+            </button>
+<button class="px-4 py-2 bg-primary-container hover:bg-primary text-white font-title-md text-body-sm rounded-lg shadow-sm transition-all duration-150 flex items-center gap-1.5 active:scale-[0.98]" type="submit">
+<span class="material-symbols-outlined text-body-md">send</span>
+<span>Publish Notification</span>
+</button>
+</div>
+</form>
+</section>
+</div>
+<!-- ========================================================================= -->
+<!-- SECTION 3: TEACHER PROFILE & SECURITY CENTER                              -->
+<!-- ========================================================================= -->
+<section class="space-y-6 pt-4 border-t border-outline-variant/30" id="faculty-profile">
+<!-- Section Title & Credentials Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">manage_accounts</span>
+<h2 class="text-headline-sm font-headline-sm text-primary tracking-tight">Faculty Profile &amp; Account Security</h2>
+</div>
+<p class="text-body-sm text-on-surface-variant">Manage institutional credentials, cryptographic permissions, and authenticated faculty access.</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-md font-medium bg-[#ccfbf1] text-[#0d9488] border border-[#0d9488]/20">
+<span class="w-2 h-2 rounded-full bg-[#0d9488]"></span>
+            Active Faculty Account
+          </span>
+<span class="text-label-sm text-on-surface-variant">Member since: Aug 14, 2021</span>
+</div>
+</div>
+<!-- Grid: Personal Information + Security & Password Rotation -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left: Personal Information & Lab Governance Card (7 Cols) -->
+<div class="lg:col-span-7 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-6">
+<div class="flex items-start justify-between pb-4 border-b border-outline-variant/20">
+<div class="flex items-center gap-4">
+<!-- Faculty Profile Photo / Avatar -->
+<div class="relative">
+<img class="w-20 h-20 rounded-xl object-cover border-2 border-primary-container/20 shadow-sm" data-alt="Close up photographic studio portrait of Dr. Julian Vance, an distinguished mid-40s male university professor and chemical informatics researcher wearing wire-rimmed glasses and a crisp navy academic blazer. He exhibits a calm, intellectual posture with soft lighting and a modern research laboratory blurred in the backdrop with soft blue tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwyYpXvZFGcjPNWq9pwqxjTV7hD5XncXvxnkC-W7PXX2858FmphbifZeGDT0jSGjsCOVTPcMHi16JjU_AJUuk6ue-Yypp_aGKc8mS8_n1vS0wsNBNR7bWTeawuvyibeoXcSk8nOyqlbP-X9jm9ISSagUFMzoYq5a35fRvpTLvfz1uHmctfq9QE0ZXkRN7k3iW3MUAwjJEcPnpY0Fma312Nriml-kKbjqdmLc0HJNrRtY3UNkWliOjQ"/>
+<span class="absolute -bottom-1 -right-1 p-1 bg-primary-container text-white rounded-full text-xs" title="Verified Collegiate Faculty">
+<span class="material-symbols-outlined text-sm">verified</span>
+</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-primary font-bold">Dr. Julian Vance</h3>
+<p class="text-body-md text-on-surface-variant font-medium">Principal Investigator &amp; Associate Professor</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 rounded text-label-sm font-semibold bg-surface-container text-primary">
+                    Teacher / Faculty Administrator
+                  </span>
+<span class="text-label-sm text-outline font-mono">FAC-8829-CHEM</span>
+</div>
+</div>
+</div>
+<button class="px-3 py-1.5 border border-outline-variant text-on-surface hover:bg-surface-container-low rounded-lg text-body-sm font-title-md font-medium transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-body-md">edit</span>
+<span>Edit Details</span>
+</button>
+</div>
+<!-- Academic Attributes Matrix -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="p-3.5 rounded-lg bg-surface border border-outline-variant/30">
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Institutional Email</p>
+<p class="text-body-md font-semibold text-primary font-mono mt-0.5">julian.vance@apex.edu</p>
+</div>
+<div class="p-3.5 rounded-lg bg-surface border border-outline-variant/30">
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Assigned Department</p>
+<p class="text-body-md font-semibold text-primary mt-0.5">Dept. of Computer Science &amp; Chemical Informatics</p>
+</div>
+<div class="p-3.5 rounded-lg bg-surface border border-outline-variant/30">
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Laboratory Bench Jurisdiction</p>
+<p class="text-body-md font-semibold text-primary mt-0.5">Clean Room B-204 &amp; CS-201P Suite</p>
+</div>
+<div class="p-3.5 rounded-lg bg-surface border border-outline-variant/30">
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Compliance Clearances</p>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded text-label-sm font-semibold bg-[#e0f2fe] text-[#0284c7]">OSHA STEM-3</span>
+<span class="px-2 py-0.5 rounded text-label-sm font-semibold bg-[#ccfbf1] text-[#0d9488]">BioSafety L2</span>
+</div>
+</div>
+</div>
+<!-- Supervisory Scope Strip -->
+<div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 space-y-2">
+<div class="flex items-center justify-between text-body-sm">
+<span class="font-semibold text-primary">Active Teaching Load (Fall Semester)</span>
+<span class="text-on-surface-variant">3 Courses • 142 Active Enrollees</span>
+</div>
+<div class="flex flex-wrap gap-2 pt-1">
+<span class="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-body-sm text-on-surface font-medium flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> CS-201P: Data Structures Practical
+              </span>
+<span class="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-body-sm text-on-surface font-medium flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> CS-302P: Database Management Lab
+              </span>
+<span class="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-body-sm text-on-surface font-medium flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> CHEM-402: High-Performance Catalysis
+              </span>
+</div>
+</div>
+</div>
+<!-- Right: Security & Password Rotation Center (5 Cols) -->
+<div class="lg:col-span-5 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-5">
+<div class="border-b border-outline-variant/20 pb-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">lock_reset</span>
+<h3 class="text-title-md font-title-md font-bold text-primary">Change Password</h3>
+</div>
+<span class="text-label-sm text-on-surface-variant">Policy: 90-day rotation</span>
+</div>
+<form class="space-y-4">
+<!-- Current Password -->
+<div class="space-y-1">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+                Current Password <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-9 px-3 pr-10 text-body-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-mono" type="password" value="ApexSecureFaculty#2023"/>
+<button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-body-md">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- New Password -->
+<div class="space-y-1">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+                New Password <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-9 px-3 pr-10 text-body-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-mono" type="password" value="N0t!fication#2024Lab"/>
+<button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-body-md">visibility</span>
+</button>
+</div>
+<!-- Password Entropy Meter -->
+<div class="pt-2 space-y-1.5">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant font-medium">Entropy Strength:</span>
+<span class="text-secondary font-bold">Strong (86/100)</span>
+</div>
+<!-- 4 segment bar -->
+<div class="grid grid-cols-4 gap-1.5 h-1.5">
+<div class="bg-secondary rounded-full"></div>
+<div class="bg-secondary rounded-full"></div>
+<div class="bg-secondary rounded-full"></div>
+<div class="bg-outline-variant/30 rounded-full"></div>
+</div>
+<p class="text-[11px] text-on-surface-variant">Must contain min 12 chars, 1 uppercase, 1 symbol &amp; 1 numeral.</p>
+</div>
+</div>
+<!-- Confirm New Password -->
+<div class="space-y-1">
+<label class="block text-label-md font-label-md font-semibold text-on-surface">
+                Confirm New Password <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-9 px-3 pr-10 text-body-sm rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-mono" type="password" value="N0t!fication#2024Lab"/>
+<button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-body-md">check</span>
+</button>
+</div>
+</div>
+<!-- Two-Factor Authentication Advisory -->
+<div class="p-3 bg-surface rounded-lg border border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary-container">phonelink_lock</span>
+<div>
+<p class="text-body-sm font-semibold text-primary">2-Factor Authentication (Duo Push)</p>
+<p class="text-label-sm text-on-surface-variant">Configured to +1 (555) •••• 910</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded text-label-sm font-bold bg-[#ccfbf1] text-[#0d9488]">ENABLED</span>
+</div>
+<!-- Submit CTA -->
+<div class="pt-2">
+<button class="w-full py-2 px-4 bg-primary-container hover:bg-primary text-white font-title-md text-body-md font-semibold rounded-lg shadow-sm transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-body-md">vpn_key</span>
+<span>Update Password</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+</section>
+</main>
+</body></html>

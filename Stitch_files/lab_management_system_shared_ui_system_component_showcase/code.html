@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Apex STEM Labs - Master Design System &amp; UI Showcase</title>
+<!-- Google Fonts: Manrope & Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim from Design System -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#d2d9f4",
+            "primary-fixed": "#dae2ff",
+            "outline": "#757781",
+            "error": "#ba1a1a",
+            "on-error-container": "#93000a",
+            "surface-variant": "#dae2fd",
+            "secondary": "#006a61",
+            "primary-container": "#0f2d6b",
+            "inverse-primary": "#b2c5ff",
+            "on-tertiary-fixed": "#001d31",
+            "on-primary-fixed": "#001848",
+            "primary": "#001849",
+            "on-tertiary-fixed-variant": "#004b73",
+            "surface-bright": "#faf8ff",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "surface-container-highest": "#dae2fd",
+            "on-tertiary": "#ffffff",
+            "surface": "#faf8ff",
+            "tertiary": "#001e32",
+            "secondary-fixed": "#89f5e7",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#eaedff",
+            "on-secondary-fixed-variant": "#005049",
+            "inverse-surface": "#283044",
+            "tertiary-fixed": "#cce5ff",
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#eef0ff",
+            "outline-variant": "#c5c6d2",
+            "background": "#faf8ff",
+            "on-surface-variant": "#444650",
+            "surface-container-low": "#f2f3ff",
+            "on-tertiary-container": "#3da0e5",
+            "on-background": "#131b2e",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#00201d",
+            "primary-fixed-dim": "#b2c5ff",
+            "on-secondary-container": "#006f66",
+            "tertiary-fixed-dim": "#93ccff",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-surface": "#131b2e",
+            "surface-container-high": "#e2e7ff",
+            "on-primary-fixed-variant": "#2a4482",
+            "on-primary-container": "#7f97db",
+            "tertiary-container": "#003452",
+            "secondary-container": "#86f2e4",
+            "surface-tint": "#445c9c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.5rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "gutter-sm": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-md": "1rem",
+            "gutter-lg": "2rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "title-md": ["Manrope"],
+            "headline-sm": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "headline-md": ["Manrope"],
+            "body-sm": ["Hanken Grotesk"],
+            "label-md": ["Hanken Grotesk"],
+            "body-md": ["Hanken Grotesk"],
+            "display-lg": ["Manrope"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-sm": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Manrope"]
+          },
+          "fontSize": {
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Ambient Scientific Grid Background */
+    .blueprint-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(197, 198, 210, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(197, 198, 210, 0.15) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen blueprint-grid">
+<!-- ========================================================================= -->
+<!-- 1. APPLICATION SHELL: LIVE FIXED SIDEBAR (Standard Shared Component) -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-64 z-40 bg-surface-container-lowest border-r border-outline-variant/30 shadow-[1px_0_2px_0_rgba(15,23,42,0.04)] flex flex-col justify-between p-4">
+<!-- Header / Brand -->
+<div>
+<div class="flex items-center gap-3 px-2 py-2 mb-6">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+</div>
+<div>
+<h1 class="font-title-md text-title-md font-bold text-primary tracking-tight">Apex STEM Labs</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Collegiate Research Portal</p>
+</div>
+</div>
+<!-- Action CTA -->
+<button class="w-full mb-6 flex items-center justify-center gap-2 px-3 py-2 bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary transition-colors duration-150 active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span>New Protocol</span>
+</button>
+<!-- Primary Navigation (Shared Components logic: 'Dashboard' is Active) -->
+<nav class="space-y-1">
+<!-- Dashboard (Active) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-high text-primary font-title-md font-semibold active:scale-[0.99] transition-transform duration-150" href="#section-dashboard">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md flex-1">Dashboard</span>
+</a>
+<!-- Labs -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 font-body-md" href="#section-labs">
+<span class="material-symbols-outlined" data-icon="biotech">biotech</span>
+<span class="font-label-md text-label-md flex-1">Labs</span>
+<span class="text-label-sm font-label-sm px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant">18</span>
+</a>
+<!-- Experiments -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 font-body-md" href="#section-experiments">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+<span class="font-label-md text-label-md flex-1">Experiments</span>
+</a>
+<!-- Submissions -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 font-body-md" href="#section-submissions">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-label-md text-label-md flex-1">Submissions</span>
+<span class="text-label-sm font-label-sm px-1.5 py-0.5 rounded-full bg-error-container text-on-error-container font-semibold">29</span>
+</a>
+<!-- Notifications -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 font-body-md" href="#section-notifications">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label-md text-label-md flex-1">Notifications</span>
+<span class="w-5 h-5 flex items-center justify-center text-label-sm font-label-sm rounded-full bg-primary text-on-primary">3</span>
+</a>
+<!-- Profile -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 font-body-md" href="#section-profile">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md flex-1">Profile</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 font-body-md" href="#section-settings">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md flex-1">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Footer Links & Live Status Indicator -->
+<div class="pt-4 border-t border-outline-variant/30 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm" href="#safety-docs">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span>Safety Docs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm" href="#support">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</a>
+<div class="mt-3 px-3 py-2 bg-surface-container-low rounded-lg flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Sensor Grid: Operational</span>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE & TOP NAV WRAPPER -->
+<!-- ========================================================================= -->
+<div class="ml-64 flex flex-col min-h-screen">
+<!-- ======================================================================= -->
+<!-- 2. STICKY TOP NAVIGATION BAR (Shared Component Execution) -->
+<!-- ======================================================================= -->
+<header class="sticky top-0 z-30 bg-surface-container-lowest border-b border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] h-14 px-6 flex items-center justify-between">
+<!-- Breadcrumbs & Quick Selector -->
+<div class="flex items-center gap-4">
+<nav class="flex items-center text-label-md font-label-md text-on-surface-variant space-x-1.5">
+<span class="hover:text-primary cursor-pointer">Academics</span>
+<span class="text-outline-variant">/</span>
+<span class="hover:text-primary cursor-pointer truncate max-w-[200px]">Dept. of Computer Science &amp; Physics</span>
+<span class="text-outline-variant">/</span>
+<span class="text-primary font-semibold">Labs</span>
+</nav>
+<!-- Quick Lab Selector Dropdown -->
+<div class="relative hidden lg:block">
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-low hover:bg-surface-container rounded-lg border border-outline-variant/40 text-on-surface font-label-sm text-label-sm cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="biotech">biotech</span>
+<span class="font-semibold">Lab B-204: Optics &amp; Laser</span>
+<span class="material-symbols-outlined text-outline" data-icon="arrow_drop_down">arrow_drop_down</span>
+</div>
+</div>
+</div>
+<!-- Center-Right Controls: Search + Actions + Dropdowns Preview -->
+<div class="flex items-center gap-3">
+<!-- Global Search Bar with '⌘K' -->
+<div class="relative w-64 md:w-80">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none" data-icon="search">search</span>
+<input class="w-full h-9 pl-9 pr-12 bg-surface-container-low hover:bg-surface-container rounded-lg border border-outline-variant/40 text-body-sm font-body-sm text-on-surface placeholder:text-outline-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="Search experiments, reagents, safety docs..." type="text"/>
+<kbd class="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-label-sm font-label-sm text-outline bg-surface-container-lowest border border-outline-variant/60 rounded">⌘K</kbd>
+</div>
+<!-- Trailing Top Nav Actions -->
+<button class="px-3 py-1.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors active:scale-[0.98] hidden sm:flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+<span>Create Booking</span>
+</button>
+<!-- Emergency Stop (Required Secondary Trailing Action) -->
+<button class="px-2.5 py-1.5 bg-error text-on-error rounded-lg font-label-sm text-label-sm hover:bg-on-error-container transition-colors active:scale-[0.98] flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="power_settings_new">power_settings_new</span>
+<span class="hidden sm:inline">Emergency Stop</span>
+</button>
+<div class="h-5 w-[1px] bg-outline-variant/40 mx-1"></div>
+<!-- Notification Bell with Active Pulse & OPEN PREVIEW DROPDOWN -->
+<div class="relative">
+<button class="relative p-2 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error ring-2 ring-surface-container-lowest animate-pulse"></span>
+</button>
+<!-- In-place Open Notification Popover Demonstration -->
+<div class="absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-[0_10px_15px_-3px_rgb(15_23_42_/_0.08)] z-50 overflow-hidden">
+<div class="p-3 bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
+<span class="font-title-md text-label-md text-on-surface font-semibold">Laboratory Alerts (3)</span>
+<button class="text-label-sm font-label-sm text-primary hover:underline">Mark as read</button>
+</div>
+<div class="divide-y divide-outline-variant/20 max-h-64 overflow-y-auto">
+<div class="p-3 hover:bg-surface-container-low cursor-pointer transition-colors flex gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5" data-icon="science">science</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">New experiment added</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Lab 4: Quantum Hall Effect protocol live.</p>
+<span class="text-label-sm font-label-sm text-outline">10m ago</span>
+</div>
+</div>
+<div class="p-3 hover:bg-surface-container-low cursor-pointer transition-colors flex gap-2.5">
+<span class="material-symbols-outlined text-error text-[20px] mt-0.5" data-icon="assignment_late">assignment_late</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Submission deadline updated</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Organic Chemistry II synthesis reports due Friday.</p>
+<span class="text-label-sm font-label-sm text-outline">1h ago</span>
+</div>
+</div>
+<div class="p-3 hover:bg-surface-container-low cursor-pointer transition-colors flex gap-2.5">
+<span class="material-symbols-outlined text-outline text-[20px] mt-0.5" data-icon="construction">construction</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Lab schedule announcement</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Lab B-204 maintenance scheduled for 18:00 UTC.</p>
+<span class="text-label-sm font-label-sm text-outline">3h ago</span>
+</div>
+</div>
+</div>
+<div class="p-2.5 bg-surface-container-lowest text-center border-t border-outline-variant/20">
+<a class="text-label-sm font-label-sm text-primary font-semibold hover:underline" href="#notifications">View all notifications</a>
+</div>
+</div>
+</div>
+<!-- User Profile Pill & Profile Dropdown Demonstration -->
+<div class="relative ml-2">
+<div class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 cursor-pointer transition-colors">
+<div class="w-7 h-7 rounded-full bg-primary-container text-inverse-primary flex items-center justify-center font-bold text-label-sm">
+              PK
+            </div>
+<div class="text-left hidden xl:block leading-none">
+<div class="font-label-md text-label-md font-semibold text-on-surface">Pavan Kumar</div>
+<div class="font-label-sm text-[10px] text-outline">ID: 202301001 · Student</div>
+</div>
+<span class="material-symbols-outlined text-outline" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+<!-- Active Profile Dropdown Menu Showcase -->
+<div class="absolute right-0 mt-2 w-52 bg-surface-container-lowest border border-outline-variant/40 rounded-xl shadow-[0_10px_15px_-3px_rgb(15_23_42_/_0.08)] py-1.5 z-50">
+<div class="px-3 py-2 border-b border-outline-variant/20">
+<p class="font-label-md text-label-md font-bold text-on-surface">Pavan Kumar</p>
+<p class="font-body-sm text-body-sm text-outline">Student Researcher</p>
+</div>
+<a class="flex items-center gap-2.5 px-3 py-2 text-label-md font-label-md text-on-surface hover:bg-surface-container-low transition-colors" href="#profile">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="person">person</span>
+<span>Profile</span>
+</a>
+<a class="flex items-center gap-2.5 px-3 py-2 text-label-md font-label-md text-on-surface hover:bg-surface-container-low transition-colors" href="#password">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="lock_reset">lock_reset</span>
+<span>Change Password</span>
+</a>
+<a class="flex items-center gap-2.5 px-3 py-2 text-label-md font-label-md text-on-surface hover:bg-surface-container-low transition-colors" href="#settings">
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="tune">tune</span>
+<span>Settings</span>
+</a>
+<div class="h-[1px] bg-outline-variant/30 my-1"></div>
+<a class="flex items-center gap-2.5 px-3 py-2 text-label-md font-label-md text-error hover:bg-error-container/30 transition-colors" href="#logout">
+<span class="material-symbols-outlined text-error text-[18px]" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</div>
+</div>
+</header>
+<!-- ======================================================================= -->
+<!-- MAIN CONTENT CANVAS -->
+<!-- ======================================================================= -->
+<main class="flex-1 p-6 lg:p-10 space-y-12 max-w-[1600px] w-full mx-auto">
+<!-- SYSTEM HERO & SPECIFICATION HEADER -->
+<section class="border-b border-outline-variant/40 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-secondary-fixed/50 border border-secondary/20 text-on-secondary-fixed mb-3">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="token">token</span>
+<span class="font-label-sm text-label-sm font-semibold tracking-wide uppercase">Core Architecture &amp; Living Styleguide</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-primary tracking-tight">Master UI Component Showcase</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-3xl">
+            A unified collegiate research design system engineered for STEM laboratory management, real-time chemical tracking, telemetry instrumentation, and asynchronous academic peer submissions.
+          </p>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-outline block">Design Spec</span>
+<span class="font-title-md text-label-md font-bold text-primary">v2.4.8 (Production Build)</span>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/50"></div>
+<button class="px-3.5 py-2 bg-surface-container-lowest border border-outline-variant/50 text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+<span>Export Tokens</span>
+</button>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SHELL COMPARISON: COLLAPSED SIDEBAR RAIL DEMONSTRATION -->
+<!-- ===================================================================== -->
+<section class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Interactive Shell Variants: Icon-Rail Mode</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">The responsive collapsed rail mode activated on tablet or compacted workspaces (with instant tooltips).</p>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded bg-surface-container text-on-surface-variant font-mono">w-16 compact</span>
+</div>
+<div class="p-6 bg-surface-container-low rounded-lg border border-outline-variant/30 flex items-center gap-6 overflow-x-auto">
+<!-- Rail Preview -->
+<div class="w-16 bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-2 py-4 flex flex-col items-center gap-4 shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="science">science</span>
+</div>
+<div class="w-8 h-[1px] bg-outline-variant/40"></div>
+<!-- Collapsed active item -->
+<div class="relative group">
+<button class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+</button>
+<div class="absolute left-14 top-1.5 px-2 py-1 bg-inverse-surface text-inverse-on-surface text-label-sm rounded shadow-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-30">
+                Dashboard
+              </div>
+</div>
+<!-- Collapsed items -->
+<div class="relative group">
+<button class="w-10 h-10 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="biotech">biotech</span>
+</button>
+<div class="absolute left-14 top-1.5 px-2 py-1 bg-inverse-surface text-inverse-on-surface text-label-sm rounded shadow-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-30">
+                Labs (18)
+              </div>
+</div>
+<div class="relative group">
+<button class="w-10 h-10 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="assignment_turned_in">assignment_turned_in</span>
+</button>
+<div class="absolute left-14 top-1.5 px-2 py-1 bg-inverse-surface text-inverse-on-surface text-label-sm rounded shadow-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-30">
+                Submissions (29 Pending)
+              </div>
+</div>
+<div class="relative group">
+<button class="w-10 h-10 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+</button>
+<div class="absolute left-14 top-1.5 px-2 py-1 bg-inverse-surface text-inverse-on-surface text-label-sm rounded shadow-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-30">
+                System Settings
+              </div>
+</div>
+</div>
+<div class="space-y-2 text-body-sm font-body-sm text-on-surface-variant max-w-lg">
+<p class="font-semibold text-on-surface">Architectural Guidance for Sidebar Transitions:</p>
+<ul class="list-disc pl-5 space-y-1">
+<li>Switches seamlessly between full 256px layout and 64px compacted rail at viewport widths below 1200px.</li>
+<li>Floating tooltip anchors render via high-contrast `#283044` pill surfaces with zero layout shift.</li>
+<li>Critical status badges condense to 4px colored alert dots positioned at top-right quadrants.</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION A: BUTTON SYSTEM & INTERACTIVE STATES -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-primary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION A: Button System &amp; Interactive States</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Hierarchical action components engineered for operational safety, hazardous task confirmations, and laboratory workflow controls.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Button Variants Card -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-4">
+<h3 class="font-title-md text-title-md text-on-surface font-bold">Button Hierarchy Types</h3>
+<div class="flex flex-wrap items-center gap-3">
+<!-- Primary Button -->
+<button class="px-4 py-2 bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary transition-colors shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-primary-container active:scale-[0.98]">
+                Create Lab
+              </button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm active:scale-[0.98]">
+                Save Experiment
+              </button>
+<!-- Secondary Button -->
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors active:scale-[0.98]">
+                Cancel
+              </button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors active:scale-[0.98]">
+                Export CSV
+              </button>
+<!-- Tertiary Button -->
+<button class="px-3 py-2 text-primary font-label-md text-label-md hover:bg-surface-container-low rounded-lg transition-colors">
+                View Details
+              </button>
+<button class="px-3 py-2 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low rounded-lg transition-colors">
+                Learn More
+              </button>
+<!-- Destructive Button -->
+<button class="px-4 py-2 bg-error text-on-error rounded-lg font-label-md text-label-md hover:bg-on-error-container transition-colors shadow-sm active:scale-[0.98]">
+                Delete Notification
+              </button>
+<button class="px-4 py-2 bg-error-container text-on-error-container border border-error/30 rounded-lg font-label-md text-label-md hover:bg-error hover:text-on-error transition-colors">
+                Revoke Access
+              </button>
+<!-- Success Button -->
+<button class="px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-on-secondary-container transition-colors shadow-sm active:scale-[0.98]">
+                Approve Submission
+              </button>
+</div>
+</div>
+<!-- Interactive States & Loading Spinners -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-4">
+<h3 class="font-title-md text-title-md text-on-surface font-bold">Standard Interactive States</h3>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+<!-- Default -->
+<div class="space-y-1 text-center">
+<span class="text-label-sm font-label-sm text-outline">Default</span>
+<button class="w-full py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md">Action</button>
+</div>
+<!-- Hover Preview -->
+<div class="space-y-1 text-center">
+<span class="text-label-sm font-label-sm text-outline">Hover State</span>
+<button class="w-full py-2 bg-primary-container text-on-primary rounded-lg font-label-md text-label-md shadow-md">Action</button>
+</div>
+<!-- Focus State with ring -->
+<div class="space-y-1 text-center">
+<span class="text-label-sm font-label-sm text-outline">Focus Ring</span>
+<button class="w-full py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md ring-2 ring-offset-2 ring-primary">Action</button>
+</div>
+<!-- Disabled -->
+<div class="space-y-1 text-center">
+<span class="text-label-sm font-label-sm text-outline">Disabled</span>
+<button class="w-full py-2 bg-outline-variant/40 text-on-surface-variant/40 rounded-lg font-label-md text-label-md cursor-not-allowed" disabled="">Disabled</button>
+</div>
+</div>
+<!-- Loading Spinner State -->
+<div class="pt-4 border-t border-outline-variant/20 flex items-center justify-between">
+<div>
+<span class="font-label-md text-label-md font-semibold text-on-surface block">Loading &amp; Processing State</span>
+<span class="font-body-sm text-body-sm text-outline">Embedded SVG spinner with button state lock</span>
+</div>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-2 cursor-wait opacity-90 shadow-inner">
+<svg class="animate-spin h-4 w-4 text-on-primary" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+<span>Synchronizing...</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Icon Buttons Strip -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<h3 class="font-title-md text-title-md text-on-surface font-bold mb-3">Micro Icon Button Systems</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Standardized 36px and 30px compact icon action components with high-contrast active feedback.</p>
+<div class="flex flex-wrap items-center gap-3">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant hover:text-primary transition-colors" title="Edit">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-error-container/30 text-error transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant transition-colors" title="More Actions">
+<span class="material-symbols-outlined text-[18px]" data-icon="more_vert">more_vert</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant hover:text-primary transition-colors" title="Download File">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant hover:text-primary transition-colors" title="Upload Document">
+<span class="material-symbols-outlined text-[18px]" data-icon="upload">upload</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Search">
+<span class="material-symbols-outlined text-[18px]" data-icon="search">search</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Filter Records">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant/40 hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Notifications">
+<span class="material-symbols-outlined text-[18px]" data-icon="notifications">notifications</span>
+</button>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION B: STATUS BADGE SYSTEM -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-secondary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION B: Status Badge System</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">The 11 official collegiate laboratory lifecycle statuses represented with distinct semantic visual cues.</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+<!-- 1. Active -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 01</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#CCFBF1] text-[#0D9488] border border-[#0D9488]/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0D9488]"></span>
+                Active
+              </span>
+</div>
+<!-- 2. Inactive -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 02</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-surface-container text-on-surface-variant border border-outline-variant/40 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                Inactive
+              </span>
+</div>
+<!-- 3. Pending -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 03</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#FEF3C7] text-[#D97706] border border-[#D97706]/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+                Pending
+              </span>
+</div>
+<!-- 4. Submitted -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 04</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#E0F2FE] text-[#0284C7] border border-[#0284C7]/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0284C7]"></span>
+                Submitted
+              </span>
+</div>
+<!-- 5. Reviewed -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 05</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-primary-fixed text-primary border border-primary/20 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                Reviewed
+              </span>
+</div>
+<!-- 6. Returned -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 06</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#FFEDD5] text-[#C2410C] border border-[#C2410C]/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#C2410C]"></span>
+                Returned
+              </span>
+</div>
+<!-- 7. Published -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 07</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-secondary-fixed text-on-secondary-fixed-variant border border-secondary/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                Published
+              </span>
+</div>
+<!-- 8. Draft -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 08</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-surface-container-high text-on-surface border border-outline-variant/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                Draft
+              </span>
+</div>
+<!-- 9. Processing -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 09</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-tertiary-fixed text-tertiary border border-tertiary/20 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                Processing
+              </span>
+</div>
+<!-- 10. Completed -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 10</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#DCFCE7] text-[#15803D] border border-[#15803D]/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#15803D]"></span>
+                Completed
+              </span>
+</div>
+<!-- 11. Failed -->
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-2">
+<span class="text-label-sm font-label-sm text-outline">State 11</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#FEE2E2] text-[#DC2626] border border-[#DC2626]/30 w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span>
+                Failed
+              </span>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION C: FORM SYSTEM CONTROLS -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-primary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION C: Form System Controls</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Precision research input fields equipped with standard helper text, error boundaries, drag &amp; drop zones, and live upload progress.</p>
+</div>
+<div class="bg-surface-container-lowest p-6 lg:p-8 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Text Input -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between">
+<span>Lab Name <span class="text-error">*</span></span>
+<span class="text-label-sm font-label-sm text-outline">Required</span>
+</label>
+<input class="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent" type="text" value="Quantum Photonic Dynamics"/>
+<p class="font-body-sm text-body-sm text-outline">Official collegiate laboratory course title.</p>
+</div>
+<!-- Password Input with Toggle -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface">Instrumentation Access PIN <span class="text-error">*</span></label>
+<div class="relative">
+<input class="w-full h-9 pl-3 pr-10 bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent" type="password" value="LabSecure128#"/>
+<button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-outline">Requires 8+ characters, digits &amp; symbols.</p>
+</div>
+<!-- Email Input with Validation Error Demo -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface">Supervisor Institutional Email</label>
+<input class="w-full h-9 px-3 bg-surface-container-lowest border border-error rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-error focus:border-transparent" type="email" value="julian.vance@apex.edu"/>
+<p class="font-body-sm text-body-sm text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="error">error</span>
+<span>Verification pending by STEM Department Registrar</span>
+</p>
+</div>
+<!-- Number Input -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface">Max Capacity (Students)</label>
+<input class="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent" max="60" min="1" type="number" value="30"/>
+<p class="font-body-sm text-body-sm text-outline">Adherence to OSHA fire safety regulations.</p>
+</div>
+<!-- Select Dropdown -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface">Select Department</label>
+<select class="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent">
+<option selected="">Department of Computer Science &amp; Physics</option>
+<option>Bio-Molecular Engineering</option>
+<option>Advanced Chemical Synthesis</option>
+<option>Nanotechnology Operations</option>
+</select>
+<p class="font-body-sm text-body-sm text-outline">Allocates department budget &amp; hazard matrix.</p>
+</div>
+<!-- Date Picker -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface">Protocol Effective Date</label>
+<div class="relative">
+<input class="w-full h-9 pl-9 pr-3 bg-surface-container-lowest border border-outline-variant/60 rounded-lg text-body-md font-body-md text-on-surface focus:ring-2 focus:ring-primary" type="text" value="Oct 24, 2025"/>
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline-variant text-[18px]" data-icon="calendar_today">calendar_today</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">Date of certification validation.</p>
+</div>
+</div>
+<!-- Multi-Select Tags Input -->
+<div class="space-y-1.5">
+<label class="font-label-md text-label-md text-on-surface">Associated Disciplines &amp; Tags</label>
+<div class="p-2 border border-outline-variant/60 rounded-lg bg-surface-container-lowest flex flex-wrap items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container-high text-primary rounded-md font-label-sm text-label-sm">
+                Physics
+                <button class="hover:text-error"><span class="material-symbols-outlined text-[14px]" data-icon="close">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-surface-container-high text-primary rounded-md font-label-sm text-label-sm">
+                Chemistry
+                <button class="hover:text-error"><span class="material-symbols-outlined text-[14px]" data-icon="close">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-md font-label-sm text-label-sm">
+                Spectroscopy
+                <button class="hover:text-error"><span class="material-symbols-outlined text-[14px]" data-icon="close">close</span></button>
+</span>
+<input class="flex-1 min-w-[150px] border-none p-1 text-body-sm font-body-sm focus:ring-0" placeholder="Type tag and press Enter..." type="text"/>
+</div>
+</div>
+<!-- File Upload Drag and Drop Zone with Progress Indicator -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface">Laboratory Manual / Syllabus Asset</label>
+<div class="border-2 border-dashed border-outline-variant hover:border-primary rounded-xl p-6 bg-surface-container-low/50 text-center transition-colors">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-center mx-auto mb-3 text-primary shadow-sm">
+<span class="material-symbols-outlined text-[24px]" data-icon="upload_file">upload_file</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Drop lab syllabus or experiment PDF here, max 25MB</p>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">Supports PDF, XLSX, and CSV protocols</p>
+<!-- Live Upload Progress Card -->
+<div class="max-w-md mx-auto mt-4 p-3 bg-surface-container-lowest rounded-lg border border-outline-variant/30 text-left">
+<div class="flex items-center justify-between text-label-sm font-label-sm mb-1.5">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="description">description</span>
+<span class="font-semibold text-on-surface truncate">Uploading Lab_Manual_v2.pdf...</span>
+</div>
+<span class="font-bold text-primary">78%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary transition-all duration-300" style="width: 78%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Checkbox, Radio, and Toggle Row -->
+<div class="pt-4 border-t border-outline-variant/20 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+<!-- Checkbox -->
+<label class="flex items-start gap-3 cursor-pointer">
+<input checked="" class="mt-0.5 rounded border-outline-variant text-primary focus:ring-primary w-4 h-4" type="checkbox"/>
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold block">Prerequisite Compliance</span>
+<span class="font-body-sm text-body-sm text-outline">Require lab safety certification before booking</span>
+</div>
+</label>
+<!-- Radio Options -->
+<div>
+<span class="font-label-md text-label-md text-on-surface font-semibold block mb-1.5">Assessment Type</span>
+<div class="flex items-center gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="border-outline-variant text-primary focus:ring-primary" name="assessment_type" type="radio"/>
+<span class="font-label-md text-label-md text-on-surface">Graded</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="border-outline-variant text-primary focus:ring-primary" name="assessment_type" type="radio"/>
+<span class="font-label-md text-label-md text-on-surface">Non-graded</span>
+</label>
+</div>
+</div>
+<!-- Toggle Switch -->
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low border border-outline-variant/30">
+<div>
+<span class="font-label-md text-label-md font-semibold text-on-surface block">Enable Auto-grading</span>
+<span class="font-body-sm text-body-sm text-outline">Instant telemetry score</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION D: CARDS & METRIC TILES -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-primary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION D: Cards &amp; Metric Tiles</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Telemetry stat cards, specialized laboratory property panels, and direct action triggers.</p>
+</div>
+<!-- 4 Metric Stat Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Total Labs -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex items-start justify-between">
+<div>
+<p class="font-label-md text-label-md text-outline">Total Labs</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-primary mt-1">18</h3>
+<div class="flex items-center gap-1.5 mt-2 text-label-sm font-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="trending_up">trending_up</span>
+<span>+2 this semester</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="biotech">biotech</span>
+</div>
+</div>
+<!-- Card 2: Total Experiments -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex items-start justify-between">
+<div>
+<p class="font-label-md text-label-md text-outline">Total Experiments</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-primary mt-1">142</h3>
+<div class="flex items-center gap-1.5 mt-2 text-label-sm font-label-sm text-outline font-semibold">
+<span>Across 6 Faculties</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="science">science</span>
+</div>
+</div>
+<!-- Card 3: Pending Submissions -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex items-start justify-between">
+<div>
+<p class="font-label-md text-label-md text-outline">Pending Submissions</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-error mt-1">29</h3>
+<div class="flex items-center gap-1.5 mt-2 text-label-sm font-label-sm text-error font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
+<span>Awaiting PI review</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="assignment">assignment</span>
+</div>
+</div>
+<!-- Card 4: Completed Submissions -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex items-start justify-between">
+<div>
+<p class="font-label-md text-label-md text-outline">Completed Submissions</p>
+<h3 class="font-headline-lg text-headline-lg font-bold text-[#15803D] mt-1">1,280</h3>
+<div class="flex items-center gap-1.5 mt-2 text-label-sm font-label-sm text-[#15803D] font-semibold">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+<span>99.4% Compliance rate</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-[#DCFCE7] text-[#15803D] flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="task_alt">task_alt</span>
+</div>
+</div>
+</div>
+<!-- Information & Action Cards Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Detailed Laboratory Card -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between mb-4">
+<div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold bg-[#CCFBF1] text-[#0D9488]">
+                      Operational
+                    </span>
+<span class="font-mono text-label-sm text-outline">ROOM B-204</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mt-1">Advanced Photonics &amp; Optics Lab</h3>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low text-primary">
+<span class="material-symbols-outlined" data-icon="precision_manufacturing">precision_manufacturing</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4 border-y border-outline-variant/20 mb-4">
+<div>
+<span class="text-label-sm font-label-sm text-outline block">Principal Investigator</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Dr. Julian Vance</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-outline block">Active Experiments</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">6 Live Trials</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-outline block">Laser Safety Standard</span>
+<span class="font-label-md text-label-md font-semibold text-error">Class IV Interlock</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Equipped with titanium:sapphire femtosecond laser arrays, cryostat vacuum chambers, and high-frequency optical spectrometers for undergraduate thesis execution.
+              </p>
+</div>
+<!-- 24-hr Instrument Schedule Strip (Domain Component from Styleguide) -->
+<div class="mt-6 pt-4 border-t border-outline-variant/20">
+<div class="flex items-center justify-between text-label-sm font-label-sm mb-2">
+<span class="text-outline">Instrument Allocation Today (24h Strip)</span>
+<span class="text-secondary font-semibold">Active Run: Laser 02</span>
+</div>
+<div class="h-4 w-full bg-surface-container rounded flex overflow-hidden gap-[1px]">
+<div class="h-full bg-secondary w-[20%]" title="Active Run 08:00 - 12:00"></div>
+<div class="h-full bg-surface-container-high w-[10%]"></div>
+<div class="h-full bg-[#0284C7] w-[35%]" title="Booked 14:00 - 19:00"></div>
+<div class="h-full bg-surface-container-high w-[15%]"></div>
+<div class="h-full bg-[#FEF3C7] w-[20%]" title="Maintenance Calibration"></div>
+</div>
+</div>
+</div>
+<!-- Dual Quick Action Cards Stack -->
+<div class="space-y-4 flex flex-col">
+<!-- Add Experiment CTA Card -->
+<div class="flex-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/30 flex flex-col justify-between hover:border-primary transition-colors cursor-pointer group">
+<div>
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</div>
+<h4 class="font-title-md text-title-md font-bold text-primary">Add New Experiment</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Configure step-by-step telemetry, reagent lists, and student assessment rubric.</p>
+</div>
+<button class="mt-4 w-full py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md flex items-center justify-center gap-1">
+<span>Start Setup</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Upload PDF CTA Card -->
+<div class="flex-1 bg-surface-container-low p-6 rounded-xl border border-outline-variant/30 flex flex-col justify-between hover:border-secondary transition-colors cursor-pointer group">
+<div>
+<div class="w-10 h-10 rounded-lg bg-secondary text-on-secondary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<h4 class="font-title-md text-title-md font-bold text-on-surface">Bulk Import Protocols</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Automate experiment ingest using structured college departmental syllabus PDF.</p>
+</div>
+<button class="mt-4 w-full py-2 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-lg font-label-md text-label-md flex items-center justify-center gap-1 hover:bg-surface-container transition-colors">
+<span>Upload Document</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="file_upload">file_upload</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION E: INTERACTIVE DATA TABLE SYSTEM -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-primary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION E: Interactive Data Table System</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Dense academic experiments ledger featuring live filters, status indicators, and full pagination pagination.</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<!-- Table Controls Toolbar -->
+<div class="p-4 border-b border-outline-variant/30 flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Search inside table -->
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline-variant text-[18px]" data-icon="search">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-body-sm font-body-sm bg-surface-container-low border border-outline-variant/40 rounded-lg" placeholder="Filter experiment name..." type="text"/>
+</div>
+<!-- Lab Course Filter Dropdown -->
+<select class="h-8 px-2.5 bg-surface-container-low border border-outline-variant/40 rounded-lg text-label-sm font-label-sm text-on-surface">
+<option>All Laboratories</option>
+<option>Lab B-204: Optics &amp; Laser</option>
+<option>Lab C-101: Organic Synthesis</option>
+<option>Lab E-308: Semiconductor Probe</option>
+</select>
+<!-- Status Filter Dropdown -->
+<select class="h-8 px-2.5 bg-surface-container-low border border-outline-variant/40 rounded-lg text-label-sm font-label-sm text-on-surface">
+<option>All Statuses</option>
+<option>Reviewed</option>
+<option>Submitted</option>
+<option>Pending</option>
+</select>
+</div>
+<!-- Right utilities -->
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-outline">Sort by:</span>
+<button class="h-8 px-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 rounded-lg text-label-sm font-label-sm text-on-surface flex items-center gap-1">
+<span>Due Date</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_downward">arrow_downward</span>
+</button>
+</div>
+</div>
+<!-- Responsive Data Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#F8FAFC] border-b border-[#E2E8F0] h-8">
+<th class="py-2 px-4 font-label-sm text-label-sm uppercase text-[#64748B] font-semibold">Experiment Name</th>
+<th class="py-2 px-4 font-label-sm text-label-sm uppercase text-[#64748B] font-semibold">Lab Course</th>
+<th class="py-2 px-4 font-label-sm text-label-sm uppercase text-[#64748B] font-semibold">Status</th>
+<th class="py-2 px-4 font-label-sm text-label-sm uppercase text-[#64748B] font-semibold">Due Date</th>
+<th class="py-2 px-4 font-label-sm text-label-sm uppercase text-[#64748B] font-semibold">Submissions</th>
+<th class="py-2 px-4 font-label-sm text-label-sm uppercase text-[#64748B] font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#F1F5F9]">
+<!-- Row 1 -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="tune">tune</span>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">Lab 4: Quantum Hall Effect</div>
+<div class="font-body-sm text-body-sm text-outline">EXP-PH-2025-04</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Physics 401: Quantum Mechanics</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#CCFBF1] text-[#0D9488]">
+                      Active
+                    </span>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Oct 28, 2025 · 23:59</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 82%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">24/29</span>
+</div>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+<button class="p-1 hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="biotech">biotech</span>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">Michelson Interferometer Tuning</div>
+<div class="font-body-sm text-body-sm text-outline">EXP-PH-2025-08</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Optics &amp; Lasers Lab</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-primary-fixed text-primary">
+                      Reviewed
+                    </span>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Nov 02, 2025 · 17:00</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 100%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">30/30</span>
+</div>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+<button class="p-1 hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="bubble_chart">bubble_chart</span>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">NMR Spectroscopy of Isoborneol</div>
+<div class="font-body-sm text-body-sm text-outline">EXP-CH-2025-14</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Organic Chemistry II</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#FEF3C7] text-[#D97706]">
+                      Pending
+                    </span>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Nov 07, 2025 · 18:00</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#D97706]" style="width: 45%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">11/25</span>
+</div>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+<button class="p-1 hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-[#F8FAFC] transition-colors group">
+<td class="py-3 px-4">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="device_thermostat">device_thermostat</span>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">Cryogenic Superconductivity Curve</div>
+<div class="font-body-sm text-body-sm text-outline">EXP-PH-2025-02</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Solid State Physics</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm font-semibold bg-[#E0F2FE] text-[#0284C7]">
+                      Submitted
+                    </span>
+</td>
+<td class="py-3 px-4 font-body-sm text-body-sm text-on-surface">Nov 12, 2025 · 12:00</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#0284C7]" style="width: 70%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">14/20</span>
+</div>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1 opacity-80 group-hover:opacity-100">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span></button>
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+<button class="p-1 hover:text-error transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Bar -->
+<div class="p-4 border-t border-outline-variant/30 bg-[#F8FAFC] flex flex-col sm:flex-row items-center justify-between gap-3">
+<span class="font-body-sm text-body-sm text-outline">Showing 1-5 of 48 experiments</span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 text-label-sm font-label-sm rounded border border-outline-variant/40 bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors disabled:opacity-40">Previous</button>
+<button class="w-7 h-7 text-label-sm font-label-sm rounded bg-primary text-on-primary font-bold">1</button>
+<button class="w-7 h-7 text-label-sm font-label-sm rounded hover:bg-surface-container text-on-surface font-semibold transition-colors">2</button>
+<button class="w-7 h-7 text-label-sm font-label-sm rounded hover:bg-surface-container text-on-surface font-semibold transition-colors">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="w-7 h-7 text-label-sm font-label-sm rounded hover:bg-surface-container text-on-surface font-semibold transition-colors">10</button>
+<button class="px-2.5 py-1 text-label-sm font-label-sm rounded border border-outline-variant/40 bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors">Next</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION F: OVERLAYS & MODALS SHOWCASE -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-primary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION F: Overlays &amp; Modals Showcase</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Level 4 elevation modal dialog components designed for irreversible actions, workflow completions, and inline data modifications.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Modal 1: Confirmation / Destructive -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-6 shadow-[0_20px_25px_-5px_rgb(15_23_42_/_0.1)] flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded-full bg-error-container text-error flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-[22px]" data-icon="delete_forever">delete_forever</span>
+</div>
+<h3 class="font-title-md text-title-md font-bold text-on-surface">Delete Notification?</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2 leading-relaxed">
+                Are you sure you want to delete this notification? This action cannot be undone and will remove it from all collegiate audit archives.
+              </p>
+</div>
+<div class="mt-6 pt-4 border-t border-outline-variant/20 flex items-center justify-end gap-2.5">
+<button class="px-3.5 py-1.5 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                Cancel
+              </button>
+<button class="px-3.5 py-1.5 rounded-lg bg-error text-on-error font-label-md text-label-md hover:bg-on-error-container transition-colors">
+                Delete
+              </button>
+</div>
+</div>
+<!-- Modal 2: Success State Confirmation -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-6 shadow-[0_20px_25px_-5px_rgb(15_23_42_/_0.1)] flex flex-col justify-between">
+<div>
+<div class="w-10 h-10 rounded-full bg-[#DCFCE7] text-[#15803D] flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-[22px]" data-icon="check_circle">check_circle</span>
+</div>
+<h3 class="font-title-md text-title-md font-bold text-on-surface">Experiment Created Successfully</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2 leading-relaxed">
+                Protocol <strong class="text-on-surface">EXP-PH-2025-09</strong> is now live on the collegiate dashboard. Students have been notified via campus portal.
+              </p>
+</div>
+<div class="mt-6 pt-4 border-t border-outline-variant/20 flex items-center justify-end gap-2.5">
+<button class="w-full py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors">
+                Return to Dashboard
+              </button>
+</div>
+</div>
+<!-- Modal 3: Form Quick Entry Sample -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-6 shadow-[0_20px_25px_-5px_rgb(15_23_42_/_0.1)] flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-title-md text-title-md font-bold text-on-surface">Quick Hazard Override</h3>
+<span class="material-symbols-outlined text-outline cursor-pointer" data-icon="close">close</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-3">Enter authorized Faculty Safety PIN to unlock reagent containment unit.</p>
+<input class="w-full h-9 px-3 bg-surface-container-low border border-outline-variant/50 rounded-lg text-body-md font-body-md" placeholder="PIN Code" type="password"/>
+</div>
+<div class="mt-6 pt-4 border-t border-outline-variant/20 flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low">Cancel</button>
+<button class="px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md">Authorize</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION G: TOAST / ALERT SYSTEM & FEEDBACK -->
+<!-- ===================================================================== -->
+<section class="space-y-6">
+<div class="border-l-4 border-secondary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION G: Toast / Alert System &amp; Feedback</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Non-blocking stacked system alerts conveying state results, safety warnings, and live network synchronization.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Toast: Success -->
+<div class="p-4 rounded-xl bg-surface-container-lowest border-l-4 border-[#15803D] border border-outline-variant/30 shadow-[0_4px_6px_-1px_rgb(15_23_42_/_0.06)] flex items-start justify-between">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#15803D] text-[20px] mt-0.5" data-icon="check_circle">check_circle</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Lab created successfully</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Advanced Optics Lab B-204 is now registered in the Department matrix.</p>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[16px]" data-icon="close">close</span></button>
+</div>
+<!-- Toast: Warning -->
+<div class="p-4 rounded-xl bg-surface-container-lowest border-l-4 border-[#D97706] border border-outline-variant/30 shadow-[0_4px_6px_-1px_rgb(15_23_42_/_0.06)] flex items-start justify-between">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#D97706] text-[20px] mt-0.5" data-icon="warning">warning</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Please review extracted experiments</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">2 syllabus items have missing reagent quotas before final saving.</p>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[16px]" data-icon="close">close</span></button>
+</div>
+<!-- Toast: Error -->
+<div class="p-4 rounded-xl bg-surface-container-lowest border-l-4 border-error border border-outline-variant/30 shadow-[0_4px_6px_-1px_rgb(15_23_42_/_0.06)] flex items-start justify-between">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-error text-[20px] mt-0.5" data-icon="cancel">cancel</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Unable to upload the PDF</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">File exceeds institutional 25MB ceiling. Please compress and retry.</p>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[16px]" data-icon="close">close</span></button>
+</div>
+<!-- Toast: Info -->
+<div class="p-4 rounded-xl bg-surface-container-lowest border-l-4 border-primary border border-outline-variant/30 shadow-[0_4px_6px_-1px_rgb(15_23_42_/_0.06)] flex items-start justify-between">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5" data-icon="info">info</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">3 new laboratory announcements</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Campus hazardous materials pickup schedule released for Friday.</p>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-[16px]" data-icon="close">close</span></button>
+</div>
+</div>
+</section>
+<!-- ===================================================================== -->
+<!-- SECTION H: STATES (LOADING, EMPTY & ERROR) -->
+<!-- ===================================================================== -->
+<section class="space-y-6 pb-12">
+<div class="border-l-4 border-primary pl-4">
+<h2 class="font-headline-md text-headline-md text-primary">SECTION H: States (Loading, Empty, &amp; Error)</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">High-grade asynchronous skeleton loaders, graceful empty canvas triggers, and critical session expiration alerts.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- 1. Skeleton Loader Cards -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md font-bold text-on-surface">Skeleton Loaders</h3>
+<span class="text-label-sm font-label-sm text-outline">Pulse Effect</span>
+</div>
+<div class="animate-pulse space-y-3">
+<div class="h-4 bg-surface-container rounded w-3/4"></div>
+<div class="h-3 bg-surface-container-high rounded w-1/2"></div>
+<div class="h-24 bg-surface-container-low rounded-lg w-full mt-4"></div>
+<!-- Table skeleton rows -->
+<div class="pt-3 border-t border-outline-variant/20 space-y-2">
+<div class="h-8 bg-surface-container rounded flex items-center px-2 justify-between">
+<div class="h-3 bg-outline-variant/30 rounded w-1/3"></div>
+<div class="h-3 bg-outline-variant/30 rounded w-1/4"></div>
+</div>
+<div class="h-8 bg-surface-container rounded flex items-center px-2 justify-between">
+<div class="h-3 bg-outline-variant/30 rounded w-2/5"></div>
+<div class="h-3 bg-outline-variant/30 rounded w-1/5"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Empty State Card -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] text-center flex flex-col items-center justify-center">
+<div class="w-14 h-14 rounded-full bg-surface-container-low border border-outline-variant/40 flex items-center justify-center text-outline mb-3">
+<span class="material-symbols-outlined text-[30px]" data-icon="search_off">search_off</span>
+</div>
+<h3 class="font-title-md text-title-md font-bold text-on-surface">No Experiments Found</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs mt-1 mb-5">
+              No experiments have been added to this lab yet. Initiate your syllabus setup to invite student cohorts.
+            </p>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+<span>Add Experiment</span>
+</button>
+</div>
+<!-- 3. Error Banner / Warning State -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex flex-col justify-between">
+<div>
+<div class="p-3 bg-error-container/40 border border-error/20 rounded-lg flex items-start gap-3 mb-4">
+<span class="material-symbols-outlined text-error text-[20px] mt-0.5" data-icon="timer">timer</span>
+<div>
+<h4 class="font-label-md text-label-md font-bold text-on-error-container">Session Warning</h4>
+<p class="font-body-sm text-body-sm text-on-error-container mt-0.5 leading-snug">
+                    Your institutional JWT token expires in 4 minutes. Inactive telemetry streams will be suspended.
+                  </p>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Refresh your institutional authentication handshake to maintain uninterrupted live data ingestion.
+              </p>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/20 flex items-center justify-end">
+<button class="w-full py-2 bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="refresh">refresh</span>
+<span>Refresh Session</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

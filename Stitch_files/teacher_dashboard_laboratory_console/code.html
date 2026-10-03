@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Apex STEM Labs - Teacher Console &amp; Laboratory Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#93000a",
+            "tertiary-fixed-dim": "#93ccff",
+            "primary-fixed-dim": "#b2c5ff",
+            "surface": "#faf8ff",
+            "secondary-fixed": "#89f5e7",
+            "primary-fixed": "#dae2ff",
+            "inverse-surface": "#283044",
+            "surface-container": "#eaedff",
+            "surface-container-high": "#e2e7ff",
+            "tertiary": "#001e32",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#005049",
+            "tertiary-container": "#003452",
+            "secondary-container": "#86f2e4",
+            "surface-tint": "#445c9c",
+            "surface-container-highest": "#dae2fd",
+            "secondary": "#006a61",
+            "on-error": "#ffffff",
+            "surface-container-low": "#f2f3ff",
+            "surface-dim": "#d2d9f4",
+            "on-secondary": "#ffffff",
+            "surface-bright": "#faf8ff",
+            "on-secondary-container": "#006f66",
+            "on-primary": "#ffffff",
+            "on-primary-fixed-variant": "#2a4482",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001848",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "inverse-primary": "#b2c5ff",
+            "primary": "#001849",
+            "on-tertiary-fixed": "#001d31",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#004b73",
+            "inverse-on-surface": "#eef0ff",
+            "on-secondary-fixed": "#00201d",
+            "primary-container": "#0f2d6b",
+            "on-surface-variant": "#444650",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "outline": "#757781",
+            "outline-variant": "#c5c6d2",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-tertiary-container": "#3da0e5",
+            "error-container": "#ffdad6",
+            "on-primary-container": "#7f97db",
+            "on-surface": "#131b2e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "2rem",
+            "margin": "1.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "1rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Manrope"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-sm": ["Hanken Grotesk"],
+            "display-lg": ["Manrope"],
+            "headline-lg-mobile": ["Manrope"],
+            "label-md": ["Hanken Grotesk"],
+            "headline-md": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "body-md": ["Hanken Grotesk"],
+            "title-md": ["Manrope"],
+            "body-sm": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-[#F8FAFC] text-on-surface antialiased font-body-md min-h-screen selection:bg-secondary selection:text-white">
+<!-- Fixed Left Sidebar (Shared Component Anchor) -->
+<aside class="fixed top-0 left-0 h-screen w-64 z-40 border-r border-outline-variant/30 bg-surface-container-lowest shadow-[1px_0_2px_0_rgba(15,23,42,0.04)] flex flex-col justify-between p-4">
+<!-- Top Brand & Navigation -->
+<div class="flex flex-col gap-5">
+<!-- Institutional Crest & Identity -->
+<div class="flex items-center gap-3 px-1 py-1">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-title-md font-bold tracking-tight shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[24px]">account_balance</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-title-md font-title-md font-bold text-primary tracking-tight truncate leading-tight">Apex STEM Labs</span>
+<span class="text-body-sm font-body-sm text-outline truncate">Collegiate Research Portal</span>
+</div>
+</div>
+<!-- Quick Action / New Protocol CTA -->
+<button class="w-full flex items-center justify-center gap-2 bg-primary-container text-white font-title-md text-body-md py-2.5 px-3 rounded-lg hover:bg-[#163A84] shadow-sm active:scale-[0.99] transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>New Protocol</span>
+</button>
+<!-- Main Navigation Menu -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-high text-primary font-title-md font-semibold transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-label-md font-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-[20px]">biotech</span>
+<span class="text-label-md font-label-md">Labs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-[20px]">science</span>
+<span class="text-label-md font-label-md">Experiments</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+<span class="text-label-md font-label-md">Submissions</span>
+</div>
+<span class="bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold px-1.5 py-0.5 rounded-full font-label-sm">19</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="text-label-md font-label-md">Notifications</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span class="text-label-md font-label-md">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Bottom Footer Links & Profile Badge -->
+<div class="flex flex-col gap-3 pt-3 border-t border-outline-variant/30">
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Safety Docs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span>
+<span>Support</span>
+</a>
+</div>
+<!-- Dr. Julian Vance Profile Anchor -->
+<div class="flex items-center gap-3 p-2 bg-[#F8FAFC] border border-outline-variant/30 rounded-lg">
+<div class="w-9 h-9 rounded-full bg-primary-container text-white flex items-center justify-center font-title-md font-bold text-sm shrink-0">
+          JV
+        </div>
+<div class="flex flex-col min-w-0">
+<span class="text-title-md font-title-md text-[13px] font-semibold text-primary truncate leading-tight">Dr. Julian Vance</span>
+<span class="text-body-sm font-body-sm text-outline truncate text-[11px]">Principal Investigator</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Sticky Top Navigation Bar -->
+<header class="sticky top-0 right-0 left-64 z-30 ml-64 bg-surface-container-lowest border-b border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex items-center justify-between h-14 px-6">
+<!-- Breadcrumb & Page Focus -->
+<div class="flex items-center gap-3">
+<nav class="flex items-center text-body-sm font-body-sm text-outline">
+<span>Home</span>
+<span class="material-symbols-outlined text-[14px] mx-1">chevron_right</span>
+<span>Teacher Portal</span>
+<span class="material-symbols-outlined text-[14px] mx-1">chevron_right</span>
+<span class="text-primary font-medium">Overview</span>
+</nav>
+<span class="text-outline-variant/60">|</span>
+<h1 class="text-title-md font-title-md font-bold text-primary tracking-tight">Teacher Console &amp; Laboratory Hub</h1>
+</div>
+<!-- Search & Trailing Controls -->
+<div class="flex items-center gap-3">
+<!-- Live Quick Search -->
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-body-sm font-body-sm rounded-lg border border-outline-variant/40 bg-[#F8FAFC] focus:bg-white focus:border-primary-container focus:outline-none transition-all placeholder:text-outline text-on-surface" placeholder="Search labs, experiments... (⌘K)" type="text"/>
+</div>
+<!-- Filter Dropdown -->
+<div class="relative">
+<select class="h-8 pl-2.5 pr-8 text-body-sm font-body-sm rounded-lg border border-outline-variant/40 bg-surface-container-lowest text-on-surface font-medium focus:border-primary-container focus:outline-none cursor-pointer">
+<option>All Laboratories (4)</option>
+<option>CS201 Data Structures</option>
+<option>CS204 DBMS Lab</option>
+<option>CS305 Artificial Intelligence</option>
+<option>CS202 Java Programming</option>
+</select>
+</div>
+<!-- Notification Bell with Unread Badge -->
+<button class="relative p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-colors" title="Notifications" type="button">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-1 right-1 w-4 h-4 bg-error text-white font-label-sm text-[10px] rounded-full flex items-center justify-center font-bold">3</span>
+</button>
+<!-- Help Action -->
+<button class="p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-colors" title="Documentation &amp; Safety" type="button">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+<!-- Faculty Badge -->
+<div class="flex items-center gap-2 pl-3 border-l border-outline-variant/30">
+<div class="text-right">
+<div class="text-label-md font-label-md font-bold text-primary leading-tight">Dr. Julian Vance</div>
+<div class="text-[11px] font-label-sm text-secondary font-semibold">Assoc. Professor / PI</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs">
+            JV
+          </div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="ml-64 p-6 max-w-[1600px] flex flex-col gap-6">
+<!-- 2. Top Welcome & Overview Header -->
+<section class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex flex-col gap-1 max-w-2xl">
+<div class="inline-flex items-center gap-2">
+<span class="px-2 py-0.5 bg-[#CCFBF1] text-[#0D9488] font-label-sm text-[11px] rounded font-semibold uppercase tracking-wider">Faculty Semester View</span>
+<span class="text-outline text-xs">Spring Session • Week 7</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-primary tracking-tight font-bold">Good morning, Dr. Julian Vance</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">
+          Here's an overview of your laboratory activities, active student cohorts, and pending grading queues across Computer Science &amp; Physics departments.
+        </p>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<button class="h-9 px-3.5 bg-surface-container-lowest border border-outline-variant/40 rounded-lg text-on-surface font-title-md text-body-sm font-semibold hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline">file_download</span>
+<span>Export Term Ledger</span>
+</button>
+<button class="h-9 px-4 bg-primary-container text-white rounded-lg font-title-md text-body-sm font-semibold hover:bg-[#163A84] transition-colors shadow-sm flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>+ Create Lab</span>
+</button>
+</div>
+</section>
+<!-- 3. Four Main Statistic Cards -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1: Total Labs -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-label-md font-label-md text-outline uppercase font-semibold tracking-wider">Total Labs</span>
+<div class="text-display-lg font-display-lg text-primary mt-1 font-bold">4</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">biotech</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant font-medium">4 Active Laboratories</span>
+<span class="bg-[#CCFBF1] text-[#0D9488] text-[11px] font-label-sm font-bold px-2 py-0.5 rounded-full">+1 new this sem</span>
+</div>
+</div>
+<!-- Card 2: Total Experiments -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-label-md font-label-md text-outline uppercase font-semibold tracking-wider">Total Experiments</span>
+<div class="text-display-lg font-display-lg text-primary mt-1 font-bold">28</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-[#CCFBF1] text-[#0D9488] flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">science</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant font-medium">28 Active Protocols</span>
+<span class="text-outline text-body-sm font-body-sm">Across 3 depts</span>
+</div>
+</div>
+<!-- Card 3: Pending Submissions -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-[#D97706]"></div>
+<div class="flex items-start justify-between pl-1">
+<div>
+<span class="text-label-md font-label-md text-[#D97706] uppercase font-bold tracking-wider">Pending Submissions</span>
+<div class="text-display-lg font-display-lg text-primary mt-1 font-bold">19</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">assignment_late</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between pl-1">
+<span class="text-body-sm font-body-sm text-error font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span> Requires grading
+          </span>
+<a class="text-body-sm font-body-sm text-primary font-bold hover:underline" href="#submissions-queue">Review Now →</a>
+</div>
+</div>
+<!-- Card 4: Total Students -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-label-md font-label-md text-outline uppercase font-semibold tracking-wider">Total Enrolled</span>
+<div class="text-display-lg font-display-lg text-primary mt-1 font-bold">164</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">groups</span>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant font-medium">164 Enrolled Students</span>
+<span class="text-[#0D9488] text-body-sm font-body-sm font-semibold">98.2% attendance</span>
+</div>
+</div>
+</section>
+<!-- 4. Quick Actions Panel -->
+<section class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="text-label-md font-label-md text-outline uppercase font-semibold mb-3 px-1">Quick Laboratory Operations</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+<!-- Action 1 -->
+<button class="group flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 hover:border-primary-container bg-[#F8FAFC] hover:bg-white hover:shadow-sm transition-all duration-150 text-left" type="button">
+<div class="w-9 h-9 rounded-lg bg-primary-container text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">add_box</span>
+</div>
+<div>
+<div class="text-title-md font-title-md text-[13px] font-bold text-primary leading-tight">Create Lab</div>
+<div class="text-body-sm font-body-sm text-outline text-[11px]">Modal &amp; form setup</div>
+</div>
+</button>
+<!-- Action 2 -->
+<button class="group flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 hover:border-primary-container bg-[#F8FAFC] hover:bg-white hover:shadow-sm transition-all duration-150 text-left" type="button">
+<div class="w-9 h-9 rounded-lg bg-[#CCFBF1] text-[#0D9488] flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">post_add</span>
+</div>
+<div>
+<div class="text-title-md font-title-md text-[13px] font-bold text-primary leading-tight">Add Experiment</div>
+<div class="text-body-sm font-body-sm text-outline text-[11px]">Manual protocol creation</div>
+</div>
+</button>
+<!-- Action 3 -->
+<button class="group flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 hover:border-primary-container bg-[#F8FAFC] hover:bg-white hover:shadow-sm transition-all duration-150 text-left" type="button">
+<div class="w-9 h-9 rounded-lg bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+</div>
+<div>
+<div class="text-title-md font-title-md text-[13px] font-bold text-primary leading-tight">Upload Lab PDF</div>
+<div class="text-body-sm font-body-sm text-outline text-[11px]">Smart syllabus extractor</div>
+</div>
+</button>
+<!-- Action 4 -->
+<button class="group flex items-center gap-3 p-3 rounded-lg border border-outline-variant/30 hover:border-primary-container bg-[#F8FAFC] hover:bg-white hover:shadow-sm transition-all duration-150 text-left" type="button">
+<div class="w-9 h-9 rounded-lg bg-[#FEF3C7] text-[#D97706] flex items-center justify-center group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+</div>
+<div>
+<div class="text-title-md font-title-md text-[13px] font-bold text-primary leading-tight">Create Notification</div>
+<div class="text-body-sm font-body-sm text-outline text-[11px]">Broadcast to cohort</div>
+</div>
+</button>
+</div>
+</section>
+<!-- 5. Main Grid (Two-Column Layout: Left 65% / Right 35%) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- LEFT COLUMN (65% = 8 cols) -->
+<div class="lg:col-span-8 flex flex-col gap-6" id="submissions-queue">
+<!-- 'Recent Student Submissions' Data Table -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<div class="px-5 py-4 border-b border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">fact_check</span>
+<h3 class="text-title-md font-title-md font-bold text-primary">Recent Student Submissions</h3>
+<span class="bg-[#FEF3C7] text-[#D97706] text-label-sm font-label-sm px-2 py-0.5 rounded-full font-bold">19 Pending</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-body-sm font-body-sm text-primary font-semibold hover:underline" type="button">Batch Approve</button>
+<span class="text-outline-variant/50">|</span>
+<button class="text-body-sm font-body-sm text-outline hover:text-on-surface" type="button">Filter By Lab</button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#F8FAFC] border-b border-outline-variant/30 text-[11px] font-label-sm text-outline uppercase tracking-wider">
+<th class="py-2.5 px-4 font-semibold">Student Name &amp; ID</th>
+<th class="py-2.5 px-4 font-semibold">Laboratory</th>
+<th class="py-2.5 px-4 font-semibold">Experiment Title</th>
+<th class="py-2.5 px-4 font-semibold">Submitted Date</th>
+<th class="py-2.5 px-4 font-semibold">Status</th>
+<th class="py-2.5 px-4 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20 text-body-sm font-body-sm">
+<!-- Row 1: Pending -->
+<tr class="hover:bg-[#F8FAFC] transition-colors">
+<td class="py-3 px-4">
+<div class="font-bold text-on-surface">Aarav Patel</div>
+<div class="text-[11px] text-outline font-mono">ID: 202301042</div>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium text-primary">Data Structures</span>
+<span class="text-outline text-xs block">CS201 • Sec A</span>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium">Exp 04: Red-Black Tree Balancing</span>
+<span class="text-outline text-xs block">C++ Memory Pointer Implementation</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">
+<div>Today, 09:24 AM</div>
+<span class="text-[11px] text-[#0D9488] font-medium">On-time</span>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-label-sm font-semibold bg-[#FEF3C7] text-[#D97706]">
+                      Pending Review
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<button class="h-7 px-3 bg-primary-container text-white text-xs font-semibold rounded hover:bg-[#163A84] transition-colors" type="button">
+                      Review Submission
+                    </button>
+</td>
+</tr>
+<!-- Row 2: Submitted / Queue -->
+<tr class="hover:bg-[#F8FAFC] transition-colors">
+<td class="py-3 px-4">
+<div class="font-bold text-on-surface">Sophia Lin</div>
+<div class="text-[11px] text-outline font-mono">ID: 202301115</div>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium text-primary">Artificial Intelligence</span>
+<span class="text-outline text-xs block">CS305 • Sec A</span>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium">Exp 06: A* Pathfinding Heuristics</span>
+<span class="text-outline text-xs block">Python Notebook &amp; Visualizer</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">
+<div>Today, 08:45 AM</div>
+<span class="text-[11px] text-[#0D9488] font-medium">On-time</span>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-label-sm font-semibold bg-[#E0F2FE] text-[#0284C7]">
+                      Submitted
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<button class="h-7 px-3 bg-primary-container text-white text-xs font-semibold rounded hover:bg-[#163A84] transition-colors" type="button">
+                      Review Submission
+                    </button>
+</td>
+</tr>
+<!-- Row 3: Reviewed -->
+<tr class="hover:bg-[#F8FAFC] transition-colors">
+<td class="py-3 px-4">
+<div class="font-bold text-on-surface">Marcus Vance</div>
+<div class="text-[11px] text-outline font-mono">ID: 202301077</div>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium text-primary">DBMS Laboratory</span>
+<span class="text-outline text-xs block">CS204 • Sec B</span>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium">Exp 05: B+ Tree Indexing Queries</span>
+<span class="text-outline text-xs block">PostgreSQL Schema Benchmark</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">
+<div>Yesterday, 04:15 PM</div>
+<span class="text-[11px] text-[#0D9488] font-medium">Score: 94/100</span>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-label-sm font-semibold bg-[#CCFBF1] text-[#0D9488]">
+                      Reviewed
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<button class="h-7 px-3 bg-surface-container-lowest border border-outline-variant/40 text-on-surface hover:bg-surface-container-low text-xs font-semibold rounded transition-colors" type="button">
+                      View Feedback
+                    </button>
+</td>
+</tr>
+<!-- Row 4: Returned -->
+<tr class="hover:bg-[#F8FAFC] transition-colors">
+<td class="py-3 px-4">
+<div class="font-bold text-on-surface">Elena Rostova</div>
+<div class="text-[11px] text-outline font-mono">ID: 202301188</div>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium text-primary">Java Programming</span>
+<span class="text-outline text-xs block">CS202 • Sec C</span>
+</td>
+<td class="py-3 px-4">
+<span class="font-medium">Exp 03: Multithreaded Sockets</span>
+<span class="text-outline text-xs block">Deadlock condition caught</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">
+<div>Yesterday, 11:30 AM</div>
+<span class="text-[11px] text-error font-medium">Needs Re-run</span>
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-label-sm font-semibold bg-[#FEE2E2] text-[#DC2626]">
+                      Returned
+                    </span>
+</td>
+<td class="py-3 px-4 text-right">
+<button class="h-7 px-3 bg-surface-container-lowest border border-outline-variant/40 text-on-surface hover:bg-surface-container-low text-xs font-semibold rounded transition-colors" type="button">
+                      Re-evaluate
+                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-5 py-3 bg-[#F8FAFC] border-t border-outline-variant/30 flex items-center justify-between text-body-sm font-body-sm text-outline">
+<span>Showing 1 to 4 of 19 pending student evaluations</span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low disabled:opacity-50 text-xs font-medium" disabled="" type="button">Previous</button>
+<button class="px-2.5 py-1 rounded bg-primary-container text-white text-xs font-medium" type="button">1</button>
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low text-xs font-medium" type="button">2</button>
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low text-xs font-medium" type="button">3</button>
+<button class="px-2.5 py-1 rounded border border-outline-variant/30 bg-white text-on-surface hover:bg-surface-container-low text-xs font-medium" type="button">Next</button>
+</div>
+</div>
+</div>
+<!-- 'Manage Laboratories (Quick View)' Cards -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">science</span>
+<h3 class="text-title-md font-title-md font-bold text-primary">Manage Laboratories (Quick View)</h3>
+</div>
+<a class="text-body-sm font-body-sm text-primary font-semibold hover:underline" href="#">View All 4 Labs →</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Lab Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold bg-[#E0F2FE] text-[#0284C7]">CS201 • Sec A</span>
+<h4 class="text-title-md font-title-md font-bold text-primary mt-1.5">Data Structures Lab</h4>
+<span class="text-outline text-xs">Mon / Wed • 09:00 - 11:30 AM</span>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0D9488]" title="Active Semester"></span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-4 p-2 bg-[#F8FAFC] rounded-lg text-center">
+<div>
+<div class="text-label-sm font-label-sm text-outline">EXPERIMENTS</div>
+<div class="text-title-md font-title-md font-bold text-primary">8 Completed</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-outline">COHORT</div>
+<div class="text-title-md font-title-md font-bold text-primary">42 Students</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-outline-variant/20">
+<button class="text-xs font-semibold text-primary hover:text-[#163A84] flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span> Manage Experiments
+                </button>
+<button class="text-xs font-semibold text-outline hover:text-on-surface flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                </button>
+</div>
+</div>
+<!-- Lab Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold bg-[#E0F2FE] text-[#0284C7]">CS204 • Sec B</span>
+<h4 class="text-title-md font-title-md font-bold text-primary mt-1.5">Database Management Systems Lab</h4>
+<span class="text-outline text-xs">Tue / Thu • 01:30 - 04:00 PM</span>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0D9488]" title="Active Semester"></span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-4 p-2 bg-[#F8FAFC] rounded-lg text-center">
+<div>
+<div class="text-label-sm font-label-sm text-outline">EXPERIMENTS</div>
+<div class="text-title-md font-title-md font-bold text-primary">6 Completed</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-outline">COHORT</div>
+<div class="text-title-md font-title-md font-bold text-primary">38 Students</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-outline-variant/20">
+<button class="text-xs font-semibold text-primary hover:text-[#163A84] flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span> Manage Experiments
+                </button>
+<button class="text-xs font-semibold text-outline hover:text-on-surface flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                </button>
+</div>
+</div>
+<!-- Lab Card 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold bg-[#CCFBF1] text-[#0D9488]">CS305 • Sec A</span>
+<h4 class="text-title-md font-title-md font-bold text-primary mt-1.5">Artificial Intelligence Lab</h4>
+<span class="text-outline text-xs">Friday • 10:00 AM - 01:00 PM</span>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0D9488]" title="Active Semester"></span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-4 p-2 bg-[#F8FAFC] rounded-lg text-center">
+<div>
+<div class="text-label-sm font-label-sm text-outline">EXPERIMENTS</div>
+<div class="text-title-md font-title-md font-bold text-primary">9 Completed</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-outline">COHORT</div>
+<div class="text-title-md font-title-md font-bold text-primary">44 Students</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-outline-variant/20">
+<button class="text-xs font-semibold text-primary hover:text-[#163A84] flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span> Manage Experiments
+                </button>
+<button class="text-xs font-semibold text-outline hover:text-on-surface flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                </button>
+</div>
+</div>
+<!-- Lab Card 4 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between">
+<div>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold bg-[#FEF3C7] text-[#D97706]">CS202 • Sec C</span>
+<h4 class="text-title-md font-title-md font-bold text-primary mt-1.5">Java Programming Lab</h4>
+<span class="text-outline text-xs">Wednesday • 02:00 - 05:00 PM</span>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-[#0D9488]" title="Active Semester"></span>
+</div>
+<div class="grid grid-cols-2 gap-2 mt-4 p-2 bg-[#F8FAFC] rounded-lg text-center">
+<div>
+<div class="text-label-sm font-label-sm text-outline">EXPERIMENTS</div>
+<div class="text-title-md font-title-md font-bold text-primary">5 Completed</div>
+</div>
+<div>
+<div class="text-label-sm font-label-sm text-outline">COHORT</div>
+<div class="text-title-md font-title-md font-bold text-primary">40 Students</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-outline-variant/20">
+<button class="text-xs font-semibold text-primary hover:text-[#163A84] flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span> Manage Experiments
+                </button>
+<button class="text-xs font-semibold text-outline hover:text-on-surface flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span> Edit
+                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN (35% = 4 cols) -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<!-- Live Lab Status & Safety Compliance Badge -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#0D9488] text-[20px]">verified</span>
+<span class="text-title-md font-title-md font-bold text-primary">EHS Lab Compliance</span>
+</div>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-label-sm font-bold bg-[#CCFBF1] text-[#0D9488]">CERTIFIED</span>
+</div>
+<div class="flex flex-col gap-3 mt-3 text-body-sm font-body-sm">
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">clean_hands</span>
+<span class="text-on-surface">Clean Room Filtration</span>
+</div>
+<span class="text-[#0D9488] font-bold text-xs">ISO Class 6 (Pass)</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">security</span>
+<span class="text-on-surface">OSHA Collegiate Standard</span>
+</div>
+<span class="text-primary font-mono text-xs">29 CFR 1910.1450</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-[#F8FAFC]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">history</span>
+<span class="text-on-surface">Last Audit Cycle</span>
+</div>
+<span class="text-outline text-xs">Feb 24, 2025</span>
+</div>
+</div>
+</div>
+<!-- 'Recent Announcements & Notifications' -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">campaign</span>
+<h3 class="text-title-md font-title-md font-bold text-primary">Announcements</h3>
+</div>
+<button class="text-xs font-semibold text-primary hover:underline" type="button">+ New Broadcast</button>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Item 1 -->
+<div class="p-3 rounded-lg border border-outline-variant/20 hover:border-outline-variant/40 bg-[#F8FAFC] transition-colors">
+<div class="flex items-center justify-between text-xs mb-1">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-sm font-bold bg-[#E0F2FE] text-[#0284C7]">All Students</span>
+<span class="text-outline">Yesterday</span>
+</div>
+<div class="text-title-md font-title-md text-[13px] font-bold text-primary">Midterm Practical Exam Timetable</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px] mt-1 line-clamp-2">
+                The Lab 4 practical exam schedule has been published. Slot selections open this Thursday at 12:00 PM.
+              </p>
+</div>
+<!-- Item 2 -->
+<div class="p-3 rounded-lg border border-outline-variant/20 hover:border-outline-variant/40 bg-[#F8FAFC] transition-colors">
+<div class="flex items-center justify-between text-xs mb-1">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-sm font-bold bg-[#FEF3C7] text-[#D97706]">Data Structures Sec A</span>
+<span class="text-outline">2 days ago</span>
+</div>
+<div class="text-title-md font-title-md text-[13px] font-bold text-primary">Red-Black Tree Test Cases Uploaded</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px] mt-1 line-clamp-2">
+                Edge case assertions for double black node rotation have been pushed to the collegiate sandbox.
+              </p>
+</div>
+</div>
+</div>
+<!-- 'Recent Teacher & System Activity' Feed -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex flex-col gap-4">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">timeline</span>
+<h3 class="text-title-md font-title-md font-bold text-primary">Activity Audit Log</h3>
+</div>
+<span class="text-xs text-outline font-medium">Real-time sync</span>
+</div>
+<!-- Timeline -->
+<div class="relative pl-5 border-l-2 border-outline-variant/30 flex flex-col gap-5 text-body-sm font-body-sm">
+<!-- Timeline Item 1 -->
+<div class="relative">
+<span class="absolute -left-[27px] top-0.5 w-3.5 h-3.5 rounded-full bg-[#0D9488] ring-4 ring-white"></span>
+<div class="font-semibold text-primary leading-tight">PDF processed for AI Lab v2.pdf</div>
+<div class="text-xs text-outline mt-0.5">12 experiments extracted successfully via smart parser.</div>
+<span class="text-[11px] text-outline-variant font-medium block mt-1">14 minutes ago</span>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative">
+<span class="absolute -left-[27px] top-0.5 w-3.5 h-3.5 rounded-full bg-primary ring-4 ring-white"></span>
+<div class="font-semibold text-primary leading-tight">Submission reviewed for Marcus Vance</div>
+<div class="text-xs text-outline mt-0.5">Assigned final score: 94/100 (DBMS Exp 05).</div>
+<span class="text-[11px] text-outline-variant font-medium block mt-1">1 hour ago</span>
+</div>
+<!-- Timeline Item 3 -->
+<div class="relative">
+<span class="absolute -left-[27px] top-0.5 w-3.5 h-3.5 rounded-full bg-[#0284C7] ring-4 ring-white"></span>
+<div class="font-semibold text-primary leading-tight">Laboratory created: Advanced Quantum Photonic Lab</div>
+<div class="text-xs text-outline mt-0.5">Syllabus archived &amp; roster integration finalized.</div>
+<span class="text-[11px] text-outline-variant font-medium block mt-1">Yesterday, 03:40 PM</span>
+</div>
+<!-- Timeline Item 4 -->
+<div class="relative">
+<span class="absolute -left-[27px] top-0.5 w-3.5 h-3.5 rounded-full bg-[#D97706] ring-4 ring-white"></span>
+<div class="font-semibold text-primary leading-tight">Notification published: Midterm Practical Exam Timetable</div>
+<div class="text-xs text-outline mt-0.5">Broadcast delivered to 164 registered student portals.</div>
+<span class="text-[11px] text-outline-variant font-medium block mt-1">Yesterday, 10:15 AM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Non-blocking Toast Notification (Bottom Right) -->
+<aside aria-label="Notifications" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-primary-container text-white rounded-xl shadow-lg border border-white/10 animate-fade-in backdrop-blur-md">
+<div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[#86F2E4] text-[18px]">info</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-sm font-body-sm font-semibold leading-tight">Welcome back Dr. Vance</span>
+<span class="text-[11px] text-[#B2C5FF]">19 submissions awaiting evaluation</span>
+</div>
+<a class="ml-2 px-2.5 py-1 rounded bg-[#006A61] hover:bg-[#005049] text-white text-xs font-semibold transition-colors" href="#submissions-queue">
+      Grade
+    </a>
+<button class="text-white/60 hover:text-white ml-1 p-0.5" onclick="this.parentElement.remove()" title="Dismiss" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</aside>
+</body></html>

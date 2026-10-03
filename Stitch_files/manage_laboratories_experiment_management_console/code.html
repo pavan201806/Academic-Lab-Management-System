@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Apex STEM Labs - Manage Laboratories &amp; Experiments</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Manrope & Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#93000a",
+            "tertiary-fixed-dim": "#93ccff",
+            "primary-fixed-dim": "#b2c5ff",
+            "surface": "#faf8ff",
+            "secondary-fixed": "#89f5e7",
+            "primary-fixed": "#dae2ff",
+            "inverse-surface": "#283044",
+            "surface-container": "#eaedff",
+            "surface-container-high": "#e2e7ff",
+            "tertiary": "#001e32",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#005049",
+            "tertiary-container": "#003452",
+            "secondary-container": "#86f2e4",
+            "surface-tint": "#445c9c",
+            "surface-container-highest": "#dae2fd",
+            "secondary": "#006a61",
+            "on-error": "#ffffff",
+            "surface-container-low": "#f2f3ff",
+            "surface-dim": "#d2d9f4",
+            "on-secondary": "#ffffff",
+            "surface-bright": "#faf8ff",
+            "on-secondary-container": "#006f66",
+            "on-primary": "#ffffff",
+            "on-primary-fixed-variant": "#2a4482",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001848",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "inverse-primary": "#b2c5ff",
+            "primary": "#001849",
+            "on-tertiary-fixed": "#001d31",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#004b73",
+            "inverse-on-surface": "#eef0ff",
+            "on-secondary-fixed": "#00201d",
+            "primary-container": "#0f2d6b",
+            "on-surface-variant": "#444650",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "outline": "#757781",
+            "outline-variant": "#c5c6d2",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-tertiary-container": "#3da0e5",
+            "error-container": "#ffdad6",
+            "on-primary-container": "#7f97db",
+            "on-surface": "#131b2e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "2rem",
+            "margin": "1.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "1rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Manrope"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-sm": ["Hanken Grotesk"],
+            "display-lg": ["Manrope"],
+            "headline-lg-mobile": ["Manrope"],
+            "label-md": ["Hanken Grotesk"],
+            "headline-md": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "body-md": ["Hanken Grotesk"],
+            "title-md": ["Manrope"],
+            "body-sm": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400"}],
+            "label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600"}],
+            "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-lg-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "label-md": ["13px", {"lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+            "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400"}],
+            "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md min-h-screen flex flex-col">
+<!-- ========================================================================= -->
+<!-- APPLICATION SHELL: SIDENAVBAR (JSON ANCHOR SPECIFICATION) -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-64 z-40 border-r border-outline-variant/30 dark:border-outline-variant/10 bg-surface-container-lowest dark:bg-inverse-surface shadow-[1px_0_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex flex-col justify-between h-full p-4">
+<!-- Nav Top / Header -->
+<div class="space-y-6">
+<!-- Brand & Crest -->
+<div class="flex items-center gap-3 px-2 py-1">
+<div class="w-9 h-9 rounded-lg bg-primary-container text-white flex items-center justify-center font-title-md font-bold shadow-sm">
+<span class="material-symbols-outlined text-xl">biotech</span>
+</div>
+<div>
+<div class="text-title-md font-title-md font-bold text-primary dark:text-inverse-primary tracking-tight leading-tight">Apex STEM Labs</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant leading-tight">Collegiate Research Portal</div>
+</div>
+</div>
+<!-- Primary CTA from JSON -->
+<div>
+<button class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary-container text-white text-label-md font-label-md hover:bg-primary transition-all duration-150 shadow-sm active:scale-[0.99]">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>New Protocol</span>
+</button>
+</div>
+<!-- Navigation Tabs (Active: Labs) -->
+<nav class="space-y-1">
+<!-- 1. Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span class="text-label-md font-label-md">Dashboard</span>
+</a>
+<!-- 2. Labs (ACTIVE TAB AS REQUESTED) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-high dark:bg-primary-container text-primary dark:text-on-primary-fixed font-title-md font-semibold hover:bg-surface-container-high transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">biotech</span>
+<span class="text-label-md font-label-md">Labs</span>
+<span class="ml-auto w-2 h-2 rounded-full bg-primary"></span>
+</a>
+<!-- 3. Experiments -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">science</span>
+<span class="text-label-md font-label-md">Experiments</span>
+</a>
+<!-- 4. Submissions -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">assignment_turned_in</span>
+<span class="text-label-md font-label-md">Submissions</span>
+</a>
+<!-- 5. Notifications -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">notifications</span>
+<span class="text-label-md font-label-md">Notifications</span>
+<span class="ml-auto px-1.5 py-0.2 rounded-full bg-surface-container-highest text-primary text-[10px] font-bold">3</span>
+</a>
+<!-- 6. Profile -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">person</span>
+<span class="text-label-md font-label-md">Profile</span>
+</a>
+<!-- 7. Settings -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-body-md hover:bg-surface-container-low transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-lg">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Footer Tabs (JSON Anchor) -->
+<div class="border-t border-outline-variant/30 pt-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-base">verified_user</span>
+<span>Safety Docs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-base">help</span>
+<span>Support</span>
+</a>
+<div class="mt-2 pt-2 border-t border-outline-variant/20 px-2 flex items-center justify-between text-on-surface-variant">
+<span class="text-label-sm font-label-sm">Apex Core v4.19</span>
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+</div>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE CONTAINER -->
+<!-- ========================================================================= -->
+<div class="pl-64 flex flex-col flex-1 min-w-0">
+<!-- ========================================================================= -->
+<!-- TOP APP BAR (JSON COMPONENT ANCHOR & HEADER SPECIFICATION) -->
+<!-- ========================================================================= -->
+<header class="sticky top-0 right-0 w-full z-30 border-b border-outline-variant/30 bg-surface-container-lowest shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex items-center justify-between h-14 px-6 w-full">
+<!-- Left: Breadcrumb Anchor -->
+<div class="flex items-center gap-2 text-body-md font-body-md">
+<span class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Portal</span>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+<span class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Academics</span>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+<span class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Laboratories</span>
+<span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+<span class="text-primary font-title-md font-semibold">Management</span>
+</div>
+<!-- Center: Search & Navigation Links from JSON Anchor -->
+<div class="hidden xl:flex items-center gap-6">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+<input class="w-full h-8 pl-8 pr-3 text-body-sm font-body-sm bg-surface-container-low border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Quick search catalog..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-label-md font-label-md">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Directory</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors" href="#">Hazard Matrix</a>
+<a class="text-primary font-semibold border-b-2 border-primary pb-0.5" href="#">Equip Scheduler</a>
+</div>
+</div>
+<!-- Right: Actions & User Identity Profile -->
+<div class="flex items-center gap-3">
+<!-- Notification & Help from JSON -->
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors relative" title="Notifications">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error ring-2 ring-white"></span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" title="Help">
+<span class="material-symbols-outlined text-xl">help_outline</span>
+</button>
+<div class="h-5 w-px bg-outline-variant/40 mx-1"></div>
+<!-- Quick Secondary Action from JSON -->
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-error/30 text-error hover:bg-error-container/30 text-label-sm font-label-sm font-semibold transition-colors">
+<span class="material-symbols-outlined text-base">power_settings_new</span>
+<span>Emergency Stop</span>
+</button>
+<!-- User Profile -->
+<div class="flex items-center gap-2 pl-2">
+<div class="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-xs shadow-inner">
+              JV
+            </div>
+<div class="hidden md:block text-left">
+<div class="text-body-sm font-title-md font-semibold text-on-surface leading-tight">Dr. Julian Vance</div>
+<div class="text-[11px] text-on-surface-variant leading-tight">Principal Investigator (Teacher)</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- CONTENT CANVAS -->
+<!-- ========================================================================= -->
+<main class="flex-1 p-6 space-y-6 max-w-[1600px] mx-auto w-full">
+<!-- ========================================================================= -->
+<!-- TOP STATUS ALERT / SUCCESS NOTIFICATION TOAST -->
+<!-- ========================================================================= -->
+<div class="bg-surface-container-lowest border border-emerald-200/80 rounded-lg p-3.5 shadow-sm flex items-center justify-between transition-all duration-200" id="toastSuccess">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</div>
+<div>
+<div class="text-body-sm font-title-md font-semibold text-on-surface">Laboratory created successfully: <span class="font-mono text-primary font-bold">CS-201P</span> registered to Department matrix.</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">Synchronized with Academic Catalog &amp; Lab Bench Allocation.</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800">Synced</span>
+<button class="text-on-surface-variant hover:text-on-surface p-1" onclick="document.getElementById('toastSuccess').remove()">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- SECTION 1: LABORATORIES LEDGER & COURSE ROSTER -->
+<!-- ========================================================================= -->
+<section class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<!-- Header & Action Row -->
+<div class="p-6 border-b border-outline-variant/20 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-2.5">
+<h1 class="text-headline-md font-headline-md font-bold text-primary tracking-tight">Laboratories</h1>
+<span class="px-2 py-0.5 text-label-sm font-label-sm rounded-full bg-surface-container-high text-primary font-semibold">4 Active Registries</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">
+              Create and manage your laboratory courses, academic cohorts, and syllabus protocol allocations.
+            </p>
+</div>
+<div class="flex items-center flex-wrap gap-2.5">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-outline-variant/40 rounded-lg text-body-sm font-body-md text-on-surface hover:bg-surface-container-low transition-colors shadow-sm">
+<span class="material-symbols-outlined text-base text-outline">file_download</span>
+<span>Export CSV</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-outline-variant/40 rounded-lg text-body-sm font-body-md text-on-surface hover:bg-surface-container-low transition-colors shadow-sm">
+<span class="material-symbols-outlined text-base text-outline">archive</span>
+<span>Batch Archive</span>
+</button>
+<!-- Primary Action -->
+<button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-container text-white rounded-lg text-label-md font-label-md font-semibold hover:bg-primary shadow-sm hover:shadow transition-all active:scale-[0.98]" onclick="document.getElementById('createLabDrawer').classList.remove('hidden')">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>+ Create Lab</span>
+</button>
+</div>
+</div>
+<!-- Robust Filter Bar -->
+<div class="p-4 bg-surface/50 border-b border-outline-variant/20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+<!-- Search input -->
+<div class="relative xl:col-span-2">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+<input class="w-full h-9 pl-8 pr-3 text-body-sm font-body-sm bg-white border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Search laboratory title, code, or supervisor..." type="text"/>
+</div>
+<!-- Dept dropdown -->
+<div>
+<select class="w-full h-9 px-3 text-body-sm font-body-sm bg-white border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container text-on-surface">
+<option selected="">Computer Science &amp; Eng</option>
+<option>Electrical &amp; Electronics</option>
+<option>Mechanical &amp; Robotics</option>
+<option>Biochemical Engineering</option>
+</select>
+</div>
+<!-- Year dropdown -->
+<div>
+<select class="w-full h-9 px-3 text-body-sm font-body-sm bg-white border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container text-on-surface">
+<option selected="">3rd Year</option>
+<option>1st Year (Freshman)</option>
+<option>2nd Year (Sophomore)</option>
+<option>4th Year (Senior)</option>
+</select>
+</div>
+<!-- Semester dropdown -->
+<div>
+<select class="w-full h-9 px-3 text-body-sm font-body-sm bg-white border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container text-on-surface">
+<option selected="">Semester 5</option>
+<option>Semester 1</option>
+<option>Semester 2</option>
+<option>Semester 3</option>
+<option>Semester 4</option>
+<option>Semester 6</option>
+</select>
+</div>
+<!-- Section & Status -->
+<div class="flex items-center gap-2">
+<select class="w-1/2 h-9 px-2 text-body-sm font-body-sm bg-white border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container text-on-surface">
+<option selected="">Sec A &amp; B</option>
+<option>Section A</option>
+<option>Section B</option>
+<option>Section C</option>
+</select>
+<select class="w-1/2 h-9 px-2 text-body-sm font-body-sm bg-white border border-outline-variant/40 rounded-lg focus:outline-none focus:border-primary-container text-on-surface">
+<option selected="">Active</option>
+<option>Draft</option>
+<option>Inactive</option>
+</select>
+</div>
+</div>
+<!-- Data Table: Laboratories Ledger -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/60 border-b border-outline-variant/30 text-label-sm font-label-sm text-outline uppercase tracking-wider">
+<th class="py-3 px-4 font-semibold">Lab Name &amp; Subject</th>
+<th class="py-3 px-3 font-semibold">Lab Code</th>
+<th class="py-3 px-3 font-semibold">Department</th>
+<th class="py-3 px-3 font-semibold">Year &amp; Sem</th>
+<th class="py-3 px-3 font-semibold">Section</th>
+<th class="py-3 px-3 font-semibold text-center">Experiments</th>
+<th class="py-3 px-3 font-semibold text-center">Enrollment</th>
+<th class="py-3 px-3 font-semibold">Status</th>
+<th class="py-3 px-4 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20 text-body-sm font-body-sm">
+<!-- Row 1: Selected / Primary Focus -->
+<tr class="hover:bg-surface-container-low/40 transition-colors bg-surface-container-high/20">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs">
+                      DS
+                    </div>
+<div>
+<div class="font-title-md font-semibold text-on-surface">Data Structures &amp; Algorithms Lab</div>
+<div class="text-[11px] text-on-surface-variant font-mono">B.Tech Comp Sci Core • Fall Cycle</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono text-primary font-semibold bg-surface-container px-2 py-0.5 rounded text-xs">CS-201P</span>
+</td>
+<td class="py-3.5 px-3 text-on-surface-variant">Computer Science &amp; Eng</td>
+<td class="py-3.5 px-3">
+<span class="text-on-surface font-medium">3rd Yr</span>
+<span class="text-outline text-xs block">Sem 5</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="px-2 py-0.5 rounded text-xs font-medium bg-surface-container-high text-primary">Sec A</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="font-semibold text-on-surface">14</span>
+<span class="text-outline text-[11px] block">Units</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="inline-flex items-center gap-1 font-medium text-on-surface">
+<span class="material-symbols-outlined text-sm text-outline">group</span>
+<span>64 Students</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#CCFBF1] text-[#0D9488]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0D9488]"></span>
+                    Active
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View</button>
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors" onclick="document.getElementById('createLabDrawer').classList.remove('hidden')">Edit</button>
+<a class="px-2 py-1 text-xs font-semibold text-white bg-primary-container hover:bg-primary rounded transition-colors shadow-xs" href="#experiments-console">Manage Experiments</a>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-xs">
+                      DB
+                    </div>
+<div>
+<div class="font-title-md font-semibold text-on-surface">Database Management Systems Lab</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Relational Engines &amp; SQL/NoSQL</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono text-primary font-semibold bg-surface-container px-2 py-0.5 rounded text-xs">CS-204P</span>
+</td>
+<td class="py-3.5 px-3 text-on-surface-variant">Computer Science &amp; Eng</td>
+<td class="py-3.5 px-3">
+<span class="text-on-surface font-medium">2nd Yr</span>
+<span class="text-outline text-xs block">Sem 3</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="px-2 py-0.5 rounded text-xs font-medium bg-surface-container-high text-primary">Sec B</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="font-semibold text-on-surface">12</span>
+<span class="text-outline text-[11px] block">Units</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="inline-flex items-center gap-1 font-medium text-on-surface">
+<span class="material-symbols-outlined text-sm text-outline">group</span>
+<span>58 Students</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#CCFBF1] text-[#0D9488]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0D9488]"></span>
+                    Active
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View</button>
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">Edit</button>
+<a class="px-2 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded transition-colors" href="#experiments-console">Manage Experiments</a>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-xs">
+                      AI
+                    </div>
+<div>
+<div class="font-title-md font-semibold text-on-surface">Artificial Intelligence &amp; Heuristics Lab</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Neural Models &amp; Search Protocols</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono text-primary font-semibold bg-surface-container px-2 py-0.5 rounded text-xs">CS-305P</span>
+</td>
+<td class="py-3.5 px-3 text-on-surface-variant">Computer Science &amp; Eng</td>
+<td class="py-3.5 px-3">
+<span class="text-on-surface font-medium">4th Yr</span>
+<span class="text-outline text-xs block">Sem 7</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="px-2 py-0.5 rounded text-xs font-medium bg-surface-container-high text-primary">Sec A</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="font-semibold text-on-surface">10</span>
+<span class="text-outline text-[11px] block">Units</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="inline-flex items-center gap-1 font-medium text-on-surface">
+<span class="material-symbols-outlined text-sm text-outline">group</span>
+<span>42 Students</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#CCFBF1] text-[#0D9488]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0D9488]"></span>
+                    Active
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View</button>
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">Edit</button>
+<a class="px-2 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded transition-colors" href="#experiments-console">Manage Experiments</a>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-xs">
+                      JV
+                    </div>
+<div>
+<div class="font-title-md font-semibold text-on-surface">Java &amp; Object Oriented Systems Lab</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Multithreading, JVM &amp; Patterns</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono text-primary font-semibold bg-surface-container px-2 py-0.5 rounded text-xs">CS-202P</span>
+</td>
+<td class="py-3.5 px-3 text-on-surface-variant">Computer Science &amp; Eng</td>
+<td class="py-3.5 px-3">
+<span class="text-on-surface font-medium">2nd Yr</span>
+<span class="text-outline text-xs block">Sem 4</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="px-2 py-0.5 rounded text-xs font-medium bg-surface-container-high text-primary">Sec C</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="font-semibold text-on-surface">16</span>
+<span class="text-outline text-[11px] block">Units</span>
+</td>
+<td class="py-3.5 px-3 text-center">
+<span class="inline-flex items-center gap-1 font-medium text-on-surface">
+<span class="material-symbols-outlined text-sm text-outline">group</span>
+<span>60 Students</span>
+</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#D97706]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+                    Draft
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View</button>
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">Edit</button>
+<a class="px-2 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded transition-colors" href="#experiments-console">Manage Experiments</a>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer Pagination Controls -->
+<div class="p-4 border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-body-sm font-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span>Showing <span class="font-semibold text-on-surface">1 to 4</span> of <span class="font-semibold text-on-surface">4</span> laboratories</span>
+<span class="text-outline">|</span>
+<span class="text-xs">Per page:</span>
+<select class="h-7 text-xs px-2 bg-white border border-outline-variant/40 rounded focus:outline-none">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+</select>
+</div>
+<div class="flex items-center gap-1">
+<button class="h-8 px-2.5 rounded border border-outline-variant/30 text-outline text-xs opacity-50 cursor-not-allowed" disabled="">Previous</button>
+<button class="h-8 w-8 rounded bg-primary-container text-white text-xs font-bold">1</button>
+<button class="h-8 px-2.5 rounded border border-outline-variant/30 text-outline text-xs opacity-50 cursor-not-allowed" disabled="">Next</button>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 2 & 3: GRID LAYOUT (CREATE/EDIT DRAWER & EXPERIMENTS CONSOLE) -->
+<!-- ========================================================================= -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+<!-- ========================================================================= -->
+<!-- SECTION 2: CREATE / EDIT LABORATORY FORM DRAWER (XL: 5 COLUMNS) -->
+<!-- ========================================================================= -->
+<div class="xl:col-span-5 bg-surface-container-lowest border border-outline-variant/30 rounded-lg shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden" id="createLabDrawer">
+<!-- Drawer Header -->
+<div class="p-5 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/30">
+<div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">edit_note</span>
+<h2 class="text-title-md font-title-md font-bold text-primary">Edit Laboratory</h2>
+</div>
+<p class="text-label-sm font-label-sm text-on-surface-variant font-mono mt-0.5">CS-201P: Data Structures &amp; Algorithms</p>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800">Operational</span>
+</div>
+</div>
+<!-- Drawer Form Body -->
+<form class="p-5 space-y-4" onsubmit="event.preventDefault();">
+<!-- Basic Information -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface font-semibold mb-1">Laboratory Name *</label>
+<input class="w-full h-9 px-3 text-body-sm font-body-sm bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container text-on-surface" type="text" value="Data Structures &amp; Algorithms Lab"/>
+</div>
+<!-- Lab Code with Validation Hint -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="text-label-md font-label-md text-on-surface font-semibold">Laboratory Code *</label>
+<span class="text-xs text-emerald-600 font-medium flex items-center gap-0.5">
+<span class="material-symbols-outlined text-sm">check</span> Code available
+                </span>
+</div>
+<input class="w-full h-9 px-3 font-mono text-body-sm font-body-sm uppercase bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container text-primary font-bold" type="text" value="CS-201P"/>
+<p class="text-[11px] text-on-surface-variant mt-1">Must strictly follow institution schema: [DEPT]-[LEVEL][CODE]P (e.g. CS-201P).</p>
+</div>
+<!-- Department dropdown -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface font-semibold mb-1">Department Allocation *</label>
+<select class="w-full h-9 px-3 text-body-sm font-body-sm bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container text-on-surface">
+<option selected="">Computer Science &amp; Engineering</option>
+<option>Information Technology</option>
+<option>Electrical &amp; Electronics Engineering</option>
+</select>
+</div>
+<!-- Academic Cohort Split (Year, Sem, Section) -->
+<div class="grid grid-cols-3 gap-2">
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface font-semibold mb-1">Academic Year</label>
+<input class="w-full h-9 px-2 text-center text-body-sm font-body-sm bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container" type="text" value="2024-2025"/>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface font-semibold mb-1">Semester</label>
+<select class="w-full h-9 px-2 text-body-sm font-body-sm bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container">
+<option selected="">Semester 5</option>
+<option>Semester 3</option>
+<option>Semester 4</option>
+</select>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface font-semibold mb-1">Section</label>
+<select class="w-full h-9 px-2 text-body-sm font-body-sm bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container">
+<option selected="">Section A</option>
+<option>Section B</option>
+<option>Section C</option>
+</select>
+</div>
+</div>
+<!-- Description Textarea -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface font-semibold mb-1">Educational Scope &amp; Safety Prerequisites</label>
+<textarea class="w-full p-2.5 text-body-sm font-body-sm bg-white border border-outline-variant/50 rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Describe the educational scope, objectives, safety protocols, and student bench prerequisites." rows="3">Rigorous implementation of fundamental abstract data types, asymptotic run-time analysis benchmarks, and high-performance pointer logic. Workbench requirement: Linux GCC/GDB workspace clearance.</textarea>
+</div>
+<!-- Settings Toggles & Compliance Checkboxes -->
+<div class="space-y-3 pt-2 border-t border-outline-variant/20">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold">Governance &amp; Student Access</span>
+<!-- Active Laboratory Switch -->
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low/40 border border-outline-variant/20">
+<div>
+<div class="text-label-md font-label-md font-semibold text-on-surface">Active Laboratory</div>
+<div class="text-[11px] text-on-surface-variant">Permits instrument scheduling and laboratory bench access.</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-outline-variant/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Publish to Student Portal -->
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low/40 border border-outline-variant/20">
+<div>
+<div class="text-label-md font-label-md font-semibold text-on-surface">Publish to Student Portal</div>
+<div class="text-[11px] text-on-surface-variant">Syllabus rubrics and experiments become visible to roster.</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-outline-variant/60 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+<!-- Require Safety Clearance Badge Checkbox -->
+<div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-surface-container-low/40 border border-outline-variant/20">
+<input checked="" class="mt-0.5 rounded border-outline text-primary-container focus:ring-primary-container" id="safetyBadge" type="checkbox"/>
+<label class="text-body-sm font-body-sm cursor-pointer" for="safetyBadge">
+<span class="font-semibold text-on-surface block">Require Safety Clearance Badge</span>
+<span class="text-on-surface-variant text-[11px]">Students must execute prerequisite Institutional OSHA/Digital Lab Safety module prior to experiment submission.</span>
+</label>
+</div>
+</div>
+<!-- Drawer Actions -->
+<div class="pt-4 border-t border-outline-variant/30 flex items-center justify-end gap-2.5">
+<button class="px-3.5 py-1.5 border border-outline-variant/50 rounded-lg text-body-sm font-label-md text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                Cancel
+              </button>
+<button class="px-3.5 py-1.5 border border-primary-container/40 text-primary-container rounded-lg text-body-sm font-label-md font-semibold hover:bg-primary-fixed/20 transition-colors" type="button">
+                Save as Draft
+              </button>
+<button class="px-4 py-1.5 bg-primary-container text-white rounded-lg text-body-sm font-label-md font-semibold hover:bg-primary shadow-sm transition-all active:scale-[0.98]" type="submit">
+                Save Lab
+              </button>
+</div>
+</form>
+</div>
+<!-- ========================================================================= -->
+<!-- SECTION 3: LABORATORY EXPERIMENTS CONSOLE (XL: 7 COLUMNS) -->
+<!-- ========================================================================= -->
+<div class="xl:col-span-7 space-y-4" id="experiments-console">
+<!-- Breadcrumb / Lab Context Header Card -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-5 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs px-2 py-0.5 rounded bg-primary-fixed font-bold text-primary">CS-201P</span>
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#CCFBF1] text-[#0D9488]">Published</span>
+<span class="text-xs text-on-surface-variant font-medium">• 14 Experiments Total</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm font-bold text-primary mt-1">Data Structures &amp; Algorithms Lab</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">Faculty In-charge: Dr. Julian Vance • Academic Cohort 2024-2025</p>
+</div>
+<!-- Action Triggers -->
+<div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/20 bg-surface-container-high/40 text-primary hover:bg-surface-container-high text-label-md font-label-md font-semibold transition-colors shadow-xs">
+<span class="material-symbols-outlined text-base text-secondary">flash_on</span>
+<span>⚡ Import from PDF Manual</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-container text-white text-label-md font-label-md font-semibold hover:bg-primary transition-all shadow-sm active:scale-[0.98]">
+<span class="material-symbols-outlined text-base">add</span>
+<span>+ Add Experiment</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Experiments Table Panel -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<div class="p-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface/30">
+<div class="flex items-center gap-3">
+<span class="text-title-md font-title-md font-bold text-on-surface">Curriculum Experiment Sequence</span>
+<span class="text-xs text-on-surface-variant">Showing active practical syllabus</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="relative w-44">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-xs">search</span>
+<input class="w-full h-7 pl-6 pr-2 text-xs bg-white border border-outline-variant/30 rounded focus:outline-none" placeholder="Filter units..." type="text"/>
+</div>
+<button class="p-1 text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-base">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Experiment Table Component -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/60 border-b border-outline-variant/30 text-label-sm font-label-sm text-outline uppercase tracking-wider">
+<th class="py-2.5 px-3 font-semibold text-center w-14">No.</th>
+<th class="py-2.5 px-4 font-semibold">Experiment Title</th>
+<th class="py-2.5 px-3 font-semibold">Source</th>
+<th class="py-2.5 px-3 font-semibold">Created Date</th>
+<th class="py-2.5 px-3 font-semibold">Submissions</th>
+<th class="py-2.5 px-3 font-semibold">Status</th>
+<th class="py-2.5 px-4 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/20 text-body-sm font-body-sm">
+<!-- Exp 01 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-3 text-center font-mono font-bold text-primary">
+                      01
+                    </td>
+<td class="py-3 px-4">
+<div class="font-title-md font-semibold text-on-surface">Implementation of Singly &amp; Doubly Linked Lists</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Pointers, memory deallocation, inversion routine</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface-container text-on-surface-variant">
+<span class="material-symbols-outlined text-xs text-outline">edit_document</span>
+                        Manual
+                      </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant text-xs">
+                      Oct 12, 2024
+                    </td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 84%"></div>
+</div>
+<span class="font-mono text-xs font-semibold text-on-surface">54/64</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#CCFBF1] text-[#0D9488]">
+                        Published
+                      </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View Rubric</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Edit">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Unpublish">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="p-1 text-error hover:bg-error-container/30 rounded" title="Delete">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Exp 02 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-3 text-center font-mono font-bold text-primary">
+                      02
+                    </td>
+<td class="py-3 px-4">
+<div class="font-title-md font-semibold text-on-surface">Stack Operations &amp; Postfix Expression Evaluation</div>
+<div class="text-[11px] text-on-surface-variant font-mono">LIFO stack memory model, operator precedence parser</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-secondary-container/40 text-on-secondary-container">
+<span class="material-symbols-outlined text-xs text-secondary">picture_as_pdf</span>
+                        PDF Extracted
+                      </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant text-xs">
+                      Oct 19, 2024
+                    </td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 75%"></div>
+</div>
+<span class="font-mono text-xs font-semibold text-on-surface">48/64</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#CCFBF1] text-[#0D9488]">
+                        Published
+                      </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View Rubric</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Edit">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Unpublish">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="p-1 text-error hover:bg-error-container/30 rounded" title="Delete">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Exp 03 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-3 text-center font-mono font-bold text-primary">
+                      03
+                    </td>
+<td class="py-3 px-4">
+<div class="font-title-md font-semibold text-on-surface">Binary Search Tree Traversal &amp; Balancing</div>
+<div class="text-[11px] text-on-surface-variant font-mono">In-order, pre-order, post-order, AVL tree rotation</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-secondary-container/40 text-on-secondary-container">
+<span class="material-symbols-outlined text-xs text-secondary">picture_as_pdf</span>
+                        PDF Extracted
+                      </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant text-xs">
+                      Oct 26, 2024
+                    </td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 50%"></div>
+</div>
+<span class="font-mono text-xs font-semibold text-on-surface">32/64</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#CCFBF1] text-[#0D9488]">
+                        Published
+                      </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View Rubric</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Edit">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Unpublish">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+<button class="p-1 text-error hover:bg-error-container/30 rounded" title="Delete">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Exp 04 -->
+<tr class="hover:bg-surface-container-low/40 transition-colors">
+<td class="py-3 px-3 text-center font-mono font-bold text-primary">
+                      04
+                    </td>
+<td class="py-3 px-4">
+<div class="font-title-md font-semibold text-on-surface">Dijkstra's Shortest Path Algorithm on Adjacency Matrix</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Priority queues, edge relaxation, negative cycle guard</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface-container text-on-surface-variant">
+<span class="material-symbols-outlined text-xs text-outline">edit_document</span>
+                        Manual
+                      </span>
+</td>
+<td class="py-3 px-3 text-on-surface-variant text-xs">
+                      Nov 02, 2024
+                    </td>
+<td class="py-3 px-3">
+<div class="flex items-center gap-2">
+<div class="w-16 bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-outline h-1.5 rounded-full" style="width: 0%"></div>
+</div>
+<span class="font-mono text-xs font-semibold text-outline">0/64</span>
+</div>
+</td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FEF3C7] text-[#D97706]">
+                        Draft
+                      </span>
+</td>
+<td class="py-3 px-4 text-right">
+<div class="inline-flex items-center gap-1">
+<button class="px-2 py-1 text-xs font-semibold text-primary hover:bg-surface-container rounded transition-colors">View Rubric</button>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded" title="Edit">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="Publish">
+<span class="material-symbols-outlined text-sm">publish</span>
+</button>
+<button class="p-1 text-error hover:bg-error-container/30 rounded" title="Delete">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Experiment Console Footer -->
+<div class="p-3 bg-surface/50 border-t border-outline-variant/20 flex items-center justify-between text-xs text-on-surface-variant">
+<span>Automated grading rubric validation active</span>
+<button class="text-primary font-semibold hover:underline flex items-center gap-1">
+<span>View Full Syllabus Matrix</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

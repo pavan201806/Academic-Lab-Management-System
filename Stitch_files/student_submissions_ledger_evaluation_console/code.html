@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Apex STEM Labs - Student Submissions Management</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Manrope & Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#93000a",
+            "tertiary-fixed-dim": "#93ccff",
+            "primary-fixed-dim": "#b2c5ff",
+            "surface": "#faf8ff",
+            "secondary-fixed": "#89f5e7",
+            "primary-fixed": "#dae2ff",
+            "inverse-surface": "#283044",
+            "surface-container": "#eaedff",
+            "surface-container-high": "#e2e7ff",
+            "tertiary": "#001e32",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#005049",
+            "tertiary-container": "#003452",
+            "secondary-container": "#86f2e4",
+            "surface-tint": "#445c9c",
+            "surface-container-highest": "#dae2fd",
+            "secondary": "#006a61",
+            "on-error": "#ffffff",
+            "surface-container-low": "#f2f3ff",
+            "surface-dim": "#d2d9f4",
+            "on-secondary": "#ffffff",
+            "surface-bright": "#faf8ff",
+            "on-secondary-container": "#006f66",
+            "on-primary": "#ffffff",
+            "on-primary-fixed-variant": "#2a4482",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001848",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "inverse-primary": "#b2c5ff",
+            "primary": "#001849",
+            "on-tertiary-fixed": "#001d31",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#004b73",
+            "inverse-on-surface": "#eef0ff",
+            "on-secondary-fixed": "#00201d",
+            "primary-container": "#0f2d6b",
+            "on-surface-variant": "#444650",
+            "tertiary-fixed": "#cce5ff",
+            "on-background": "#131b2e",
+            "outline": "#757781",
+            "outline-variant": "#c5c6d2",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-tertiary-container": "#3da0e5",
+            "error-container": "#ffdad6",
+            "on-primary-container": "#7f97db",
+            "on-surface": "#131b2e"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "2rem",
+            "margin": "1.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "1rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Manrope"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-sm": ["Hanken Grotesk"],
+            "display-lg": ["Manrope"],
+            "headline-lg-mobile": ["Manrope"],
+            "label-md": ["Hanken Grotesk"],
+            "headline-md": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "body-md": ["Hanken Grotesk"],
+            "title-md": ["Manrope"],
+            "body-sm": ["Hanken Grotesk"],
+            "mono": ["JetBrains Mono", "monospace"]
+          },
+          "fontSize": {
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface h-full flex overflow-hidden antialiased font-body-md text-body-md selection:bg-primary-container selection:text-white">
+<!-- ========================================================================= -->
+<!-- SIDEBAR NAVIGATION (Anchored from Shared Components JSON)                -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-64 z-40 border-r border-outline-variant/30 bg-surface-container-lowest shadow-[1px_0_2px_0_rgba(15,23,42,0.04)] hidden md:block">
+<div class="flex flex-col justify-between h-full p-4">
+<!-- Top Section: Brand & Primary Links -->
+<div class="space-y-6">
+<!-- Brand Header -->
+<div class="flex items-center gap-3 px-2 pt-1">
+<div class="h-10 w-10 rounded-lg bg-primary-container text-white flex items-center justify-center font-title-md font-bold shadow-sm ring-1 ring-white/10">
+<span class="material-symbols-outlined text-white" style="font-size: 22px;">biotech</span>
+</div>
+<div class="flex flex-col">
+<span class="text-title-md font-title-md font-bold text-primary tracking-tight leading-tight">Apex STEM Labs</span>
+<span class="text-label-sm font-label-sm text-outline tracking-wider uppercase">Collegiate Research</span>
+</div>
+</div>
+<!-- Action CTA from JSON -->
+<div>
+<button class="w-full flex items-center justify-center gap-2 py-2 px-3 bg-primary-container hover:bg-[#163a84] text-white rounded-lg font-title-md text-label-md transition-all shadow-[0_1px_2px_0_rgba(15,23,42,0.08)] active:scale-[0.99]">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+<span>New Protocol</span>
+</button>
+</div>
+<!-- Navigation Tab Group -->
+<nav class="space-y-1">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">dashboard</span>
+<span class="flex-1">Dashboard</span>
+</a>
+<!-- Labs -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">biotech</span>
+<span class="flex-1">Labs</span>
+</a>
+<!-- Experiments -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">science</span>
+<span class="flex-1">Experiments</span>
+</a>
+<!-- Submissions (ACTIVE per Semantic Mapping) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-high text-primary font-title-md font-semibold transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">assignment_turned_in</span>
+<span class="flex-1">Submissions</span>
+<!-- Badge as specified in prompt -->
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]">19 Pending</span>
+</a>
+<!-- Notifications -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">notifications</span>
+<span class="flex-1">Notifications</span>
+</a>
+<!-- Profile -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">person</span>
+<span class="flex-1">Profile</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150 active:scale-[0.99]" href="#">
+<span class="material-symbols-outlined text-outline">settings</span>
+<span class="flex-1">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Footer Section: Safety Docs & Support -->
+<div class="pt-4 border-t border-outline-variant/30 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-outline">verified_user</span>
+<span>Safety Docs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-outline">help</span>
+<span>Support</span>
+</a>
+<!-- Academic Accreditation Footer Badge -->
+<div class="p-2.5 mt-2 bg-surface-container-low rounded-lg border border-outline-variant/20 flex items-center gap-3">
+<div class="h-7 w-7 rounded bg-white shadow-xs border border-outline-variant/40 flex items-center justify-center text-primary-container font-mono text-xs font-bold">
+            CS
+          </div>
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">ABEST-Accredited</span>
+<span class="text-[10px] text-outline">Institutional Node 4</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE CONTAINER (Offset by Sidebar)                              -->
+<!-- ========================================================================= -->
+<div class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden bg-background">
+<!-- Confirmation Toast Notification (Top floating alert per prompt) -->
+<div class="fixed top-3 right-6 z-50 flex items-center gap-2.5 px-3.5 py-2 bg-white rounded-lg border border-[#CCFBF1] shadow-[0_10px_15px_-3px_rgb(15_23_42/0.08)] animate-pulse">
+<span class="h-2 w-2 rounded-full bg-[#0D9488]"></span>
+<span class="material-symbols-outlined text-[#0D9488]" style="font-size: 18px;">check_circle</span>
+<span class="text-body-sm font-label-md text-on-surface">Grading rubric validated. Ready to publish feedback to student portal.</span>
+<button class="ml-2 text-outline hover:text-on-surface"><span class="material-symbols-outlined" style="font-size: 16px;">close</span></button>
+</div>
+<!-- ----------------------------------------------------------------------- -->
+<!-- TOP APP BAR (Per JSON & Breadcrumb requirements)                        -->
+<!-- ----------------------------------------------------------------------- -->
+<header class="sticky top-0 right-0 w-full z-30 bg-surface-container-lowest border-b border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] h-14 flex items-center justify-between px-6">
+<!-- Left: Breadcrumbs -->
+<nav class="flex items-center gap-2 text-body-sm text-outline">
+<span class="text-on-surface-variant hover:text-primary cursor-pointer font-medium">Portal</span>
+<span class="material-symbols-outlined text-outline/60" style="font-size: 14px;">chevron_right</span>
+<span class="text-on-surface-variant hover:text-primary cursor-pointer font-medium">Submissions</span>
+<span class="material-symbols-outlined text-outline/60" style="font-size: 14px;">chevron_right</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary font-mono text-xs font-semibold">CS-201P</span>
+<span class="material-symbols-outlined text-outline/60" style="font-size: 14px;">chevron_right</span>
+<span class="text-primary font-semibold font-title-md">Student Review Console</span>
+</nav>
+<!-- Center / Links from JSON -->
+<div class="hidden lg:flex items-center gap-6">
+<a class="text-on-surface-variant hover:text-on-surface font-body-md transition-colors" href="#">Directory</a>
+<a class="text-on-surface-variant hover:text-on-surface font-body-md transition-colors" href="#">Hazard Matrix</a>
+<a class="text-on-surface-variant hover:text-on-surface font-body-md transition-colors" href="#">Equip Scheduler</a>
+</div>
+<!-- Right: Trailing Actions & Profile -->
+<div class="flex items-center gap-3">
+<button class="p-2 text-outline hover:text-primary hover:bg-surface-container-low rounded-lg transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-error"></span>
+</button>
+<button class="p-2 text-outline hover:text-primary hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-6 w-[1px] bg-outline-variant/40 mx-1"></div>
+<!-- User Profile Component -->
+<div class="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer">
+<div class="h-8 w-8 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-xs shadow-xs ring-2 ring-[#0284C7]/20">
+            JV
+          </div>
+<div class="flex flex-col text-left">
+<span class="text-body-sm font-semibold text-primary leading-tight">Dr. Julian Vance</span>
+<span class="text-[11px] font-label-sm text-outline">Principal Investigator (Teacher)</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ----------------------------------------------------------------------- -->
+<!-- MAIN CONTENT VIEWPORT (Scrollable)                                      -->
+<!-- ----------------------------------------------------------------------- -->
+<main class="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
+<!-- TOP FILTER & OVERVIEW CONTROL BAR -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant/30 p-4 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]">
+<!-- Header & Subtitle -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-3 border-b border-outline-variant/20">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold">Student Submissions</h1>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD]">Fall 2024 Lab Cycle</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">
+              Review, evaluate, and provide collegiate feedback on laboratory experiment reports and source code.
+            </p>
+</div>
+<!-- Global Export / Batch actions -->
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 bg-white border border-outline-variant/40 text-on-surface hover:bg-surface-container-low rounded-lg text-body-sm font-medium flex items-center gap-1.5 transition-colors shadow-xs">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Export CSV</span>
+</button>
+<button class="px-3 py-1.5 bg-primary-container text-white rounded-lg text-body-sm font-medium flex items-center gap-1.5 hover:bg-[#163a84] transition-colors shadow-xs">
+<span class="material-symbols-outlined text-sm">rule</span>
+<span>Batch Evaluate</span>
+</button>
+</div>
+</div>
+<!-- Filter Controls Row -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-3 pt-3">
+<!-- Search Field (4 cols) -->
+<div class="md:col-span-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-outline" style="font-size: 18px;">search</span>
+<input class="w-full h-9 pl-9 pr-3 rounded-lg border border-outline-variant/60 text-body-sm text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/10 bg-white" placeholder="Aarav Patel or 202301042..." type="text"/>
+</div>
+</div>
+<!-- Laboratory Dropdown (2 cols) -->
+<div class="md:col-span-3">
+<select class="w-full h-9 px-3 rounded-lg border border-outline-variant/60 text-body-sm text-on-surface bg-white focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/10">
+<option selected="">Data Structures Lab - CS201</option>
+<option>Operating Systems Lab - CS203</option>
+<option>Digital Logic Circuits - EC102</option>
+</select>
+</div>
+<!-- Experiment Filter (2 cols) -->
+<div class="md:col-span-2">
+<select class="w-full h-9 px-3 rounded-lg border border-outline-variant/60 text-body-sm text-on-surface bg-white focus:outline-none focus:border-primary-container">
+<option selected="">Exp 04: Red-Black Tree Balancing</option>
+<option>Exp 03: AVL Tree Height Balancing</option>
+<option>Exp 02: Min-Max Heap Implementation</option>
+<option>Exp 01: Splay Trees &amp; Amortized Run</option>
+</select>
+</div>
+<!-- Section Dropdown (1 col) -->
+<div class="md:col-span-1">
+<select class="w-full h-9 px-2 rounded-lg border border-outline-variant/60 text-body-sm text-on-surface bg-white focus:outline-none focus:border-primary-container">
+<option selected="">Sec A</option>
+<option>Sec B</option>
+<option>Sec C</option>
+</select>
+</div>
+<!-- Date Range Picker (3 cols) -->
+<div class="md:col-span-3">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-outline" style="font-size: 18px;">calendar_today</span>
+<input class="w-full h-9 pl-9 pr-3 rounded-lg border border-outline-variant/60 text-body-sm text-on-surface bg-white focus:outline-none focus:border-primary-container" type="text" value="Oct 1 - Oct 31, 2024"/>
+</div>
+</div>
+</div>
+<!-- Submission Status Quick Pill Toggles -->
+<div class="flex items-center gap-2 mt-3 pt-3 border-t border-outline-variant/10 text-body-sm">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider mr-1">Status:</span>
+<button class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] flex items-center gap-1.5 shadow-xs">
+<span class="h-1.5 w-1.5 rounded-full bg-[#D97706]"></span>
+<span>Pending (19)</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#E0F2FE] text-[#0284C7] hover:bg-[#bae6fd]/40 border border-transparent transition-colors flex items-center gap-1.5">
+<span class="h-1.5 w-1.5 rounded-full bg-[#0284C7]"></span>
+<span>Submitted (42)</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#CCFBF1] text-[#0D9488] hover:bg-[#99f6e4]/40 border border-transparent transition-colors flex items-center gap-1.5">
+<span class="h-1.5 w-1.5 rounded-full bg-[#0D9488]"></span>
+<span>Reviewed (120)</span>
+</button>
+<button class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#FEE2E2] text-[#DC2626] hover:bg-[#fecaca]/40 border border-transparent transition-colors flex items-center gap-1.5">
+<span class="h-1.5 w-1.5 rounded-full bg-[#DC2626]"></span>
+<span>Returned (3)</span>
+</button>
+</div>
+</section>
+<!-- --------------------------------------------------------------------- -->
+<!-- SPLIT TWO-COLUMN PRODUCTION WORKSPACE                                -->
+<!-- --------------------------------------------------------------------- -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start min-h-0">
+<!-- =================================================================== -->
+<!-- LEFT COLUMN (45% -> 5 cols on lg, 6 cols on xl): LEDGER TABLE     -->
+<!-- =================================================================== -->
+<section class="lg:col-span-5 flex flex-col bg-surface-container-lowest rounded-lg border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<!-- Table Header Banner -->
+<div class="px-4 py-3 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-size: 19px;">table_chart</span>
+<h2 class="font-title-md text-title-md font-semibold text-primary">Submissions Ledger</h2>
+</div>
+<div class="flex items-center gap-1 text-label-sm text-outline">
+<span>Sort:</span>
+<button class="font-medium text-primary hover:underline flex items-center">
+                Date (Newest) <span class="material-symbols-outlined" style="font-size: 14px;">arrow_drop_down</span>
+</button>
+</div>
+</div>
+<!-- Scrollable Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/20 text-label-sm font-label-sm text-outline uppercase tracking-wider h-8">
+<th class="py-2 px-3">Student &amp; ID</th>
+<th class="py-2 px-3">Experiment</th>
+<th class="py-2 px-2">Date</th>
+<th class="py-2 px-2">Status</th>
+<th class="py-2 px-3 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10 text-body-sm">
+<!-- ROW 1: Aarav Patel (ACTIVE / SELECTED) -->
+<tr class="bg-surface-container-high/40 border-l-4 border-l-primary-container hover:bg-surface-container-high/60 transition-colors cursor-pointer">
+<td class="py-3 px-3">
+<div class="font-semibold text-primary">Aarav Patel</div>
+<div class="text-[11px] font-mono text-outline">202301042</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface truncate max-w-[130px]">Exp 04: Red-Black Tree</div>
+<div class="text-[10px] text-outline">C++ / Valgrind</div>
+</td>
+<td class="py-3 px-2 whitespace-nowrap text-xs text-on-surface-variant">
+                    Today, 09:24 AM
+                  </td>
+<td class="py-3 px-2 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]">
+                      Pending
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<span class="inline-flex items-center gap-1 text-xs font-semibold text-primary-container bg-surface-container-lowest px-2 py-1 rounded shadow-xs border border-primary-container/20">
+<span class="material-symbols-outlined" style="font-size: 14px;">visibility</span>
+                      Selected
+                    </span>
+</td>
+</tr>
+<!-- ROW 2: Sophia Lin -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Sophia Lin</div>
+<div class="text-[11px] font-mono text-outline">202301115</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface truncate max-w-[130px]">Exp 04: Red-Black Tree</div>
+<div class="text-[10px] text-outline">C++ / Valgrind</div>
+</td>
+<td class="py-3 px-2 whitespace-nowrap text-xs text-on-surface-variant">
+                    Today, 08:45 AM
+                  </td>
+<td class="py-3 px-2 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD]">
+                      Submitted
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="text-xs font-medium text-primary hover:text-primary-container hover:bg-surface-container-low px-2 py-1 rounded transition-colors border border-outline-variant/30">
+                      Review
+                    </button>
+</td>
+</tr>
+<!-- ROW 3: Marcus Vance -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Marcus Vance</div>
+<div class="text-[11px] font-mono text-outline">202301077</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface truncate max-w-[130px]">Exp 04: Red-Black Tree</div>
+<div class="text-[10px] text-outline">C++ / Valgrind</div>
+</td>
+<td class="py-3 px-2 whitespace-nowrap text-xs text-on-surface-variant">
+                    Yesterday
+                  </td>
+<td class="py-3 px-2 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#CCFBF1] text-[#0D9488] border border-[#99F6E4]">
+                      94/100
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="text-xs font-medium text-outline hover:text-on-surface hover:bg-surface-container-low px-2 py-1 rounded transition-colors">
+                      View
+                    </button>
+</td>
+</tr>
+<!-- ROW 4: Elena Rostova -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Elena Rostova</div>
+<div class="text-[11px] font-mono text-outline">202301188</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface truncate max-w-[130px]">Exp 03: Multithreaded Sockets</div>
+<div class="text-[10px] text-outline">C / POSIX</div>
+</td>
+<td class="py-3 px-2 whitespace-nowrap text-xs text-on-surface-variant">
+                    Oct 22
+                  </td>
+<td class="py-3 px-2 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]">
+                      Returned
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="text-xs font-medium text-[#DC2626] hover:bg-[#FEE2E2]/60 px-2 py-1 rounded transition-colors border border-[#FECACA]">
+                      Re-evaluate
+                    </button>
+</td>
+</tr>
+<!-- ROW 5: Devansh Sharma -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface">Devansh Sharma</div>
+<div class="text-[11px] font-mono text-outline">202301204</div>
+</td>
+<td class="py-3 px-3">
+<div class="font-medium text-on-surface truncate max-w-[130px]">Exp 04: Red-Black Tree</div>
+<div class="text-[10px] text-outline">C++ / Valgrind</div>
+</td>
+<td class="py-3 px-2 whitespace-nowrap text-xs text-on-surface-variant">
+                    Oct 24
+                  </td>
+<td class="py-3 px-2 whitespace-nowrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]">
+                      Pending
+                    </span>
+</td>
+<td class="py-3 px-3 text-right">
+<button class="text-xs font-medium text-primary hover:text-primary-container hover:bg-surface-container-low px-2 py-1 rounded transition-colors border border-outline-variant/30">
+                      Review
+                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Bar -->
+<div class="p-3 border-t border-outline-variant/20 flex items-center justify-between bg-surface-container-lowest text-body-sm">
+<span class="text-xs text-outline">Showing 5 of 184 submissions (Page 1 of 4)</span>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded text-outline hover:text-on-surface hover:bg-surface-container-low disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+</button>
+<button class="h-6 w-6 rounded bg-primary-container text-white text-xs font-semibold">1</button>
+<button class="h-6 w-6 rounded text-on-surface hover:bg-surface-container-low text-xs">2</button>
+<button class="h-6 w-6 rounded text-on-surface hover:bg-surface-container-low text-xs">3</button>
+<button class="h-6 w-6 rounded text-on-surface hover:bg-surface-container-low text-xs">4</button>
+<button class="p-1 rounded text-outline hover:text-on-surface hover:bg-surface-container-low">
+<span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+<!-- =================================================================== -->
+<!-- RIGHT COLUMN (55% -> 7 cols on lg): DETAILED SUBMISSION REVIEW     -->
+<!-- =================================================================== -->
+<section class="lg:col-span-7 flex flex-col gap-4">
+<!-- Detailed Review Box Container -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden">
+<!-- Panel Header Banner -->
+<div class="p-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/30">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                  AP
+                </div>
+<div>
+<h2 class="font-title-md text-title-md font-bold text-primary">Review Submission: Aarav Patel (202301042)</h2>
+<div class="flex items-center gap-2 text-xs text-outline">
+<span>CS-201P: Section A</span>
+<span>•</span>
+<span class="text-[#0D9488] font-medium flex items-center gap-1">
+<span class="h-1.5 w-1.5 rounded-full bg-[#0D9488]"></span> Verified Student Identity
+                    </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Previous Submission">
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+</button>
+<button class="p-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Next Submission">
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="p-5 space-y-4">
+<!-- 1. Student & Cohort Information Card -->
+<div class="bg-surface-container-low/40 rounded-lg p-3.5 border border-outline-variant/20">
+<div class="text-label-sm font-label-sm uppercase tracking-wider text-outline mb-2 flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">badge</span>
+                  Student &amp; Cohort Telemetry
+                </div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-y-2.5 gap-x-4 text-body-sm">
+<div>
+<span class="text-outline text-xs block">Full Name:</span>
+<span class="font-semibold text-on-surface">Aarav Patel</span>
+</div>
+<div>
+<span class="text-outline text-xs block">Enrollment ID:</span>
+<span class="font-mono text-on-surface font-medium">202301042</span>
+</div>
+<div>
+<span class="text-outline text-xs block">Department:</span>
+<span class="font-medium text-on-surface">Computer Science &amp; Eng</span>
+</div>
+<div>
+<span class="text-outline text-xs block">Academic Year:</span>
+<span class="font-medium text-on-surface">3rd Year (Semester 5)</span>
+</div>
+<div>
+<span class="text-outline text-xs block">Section:</span>
+<span class="font-medium text-on-surface">Sec A</span>
+</div>
+<div>
+<span class="text-outline text-xs block">Lab Attendance:</span>
+<span class="font-semibold text-[#0D9488]">98% (12/12 Labs)</span>
+</div>
+</div>
+</div>
+<!-- 2. Experiment Context Card -->
+<div class="rounded-lg p-3.5 border border-outline-variant/30 bg-white">
+<div class="flex items-center justify-between mb-2">
+<div class="text-label-sm font-label-sm uppercase tracking-wider text-outline flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">science</span>
+                    Experiment Context
+                  </div>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-primary font-mono">CS-201P</span>
+</div>
+<div class="space-y-1.5">
+<div class="font-semibold text-primary text-body-lg">
+                    Exp 04: Red-Black Tree Balancing &amp; Left/Right Rotations
+                  </div>
+<p class="text-body-sm text-on-surface-variant leading-relaxed">
+<strong class="text-on-surface font-medium">Objective:</strong> Implement BST balance check and execute correct pointer rotations without memory leaks. Validate balance factors under high-frequency insertions and deletions.
+                  </p>
+</div>
+</div>
+<!-- 3. Student Submission Artifacts & Remarks -->
+<div class="rounded-lg p-3.5 border border-outline-variant/30 bg-white space-y-3">
+<div class="flex items-center justify-between">
+<div class="text-label-sm font-label-sm uppercase tracking-wider text-outline flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">folder_zip</span>
+                    Submission Artifacts &amp; Self-Report
+                  </div>
+<div class="flex items-center gap-1 text-xs text-[#0D9488] font-medium bg-[#CCFBF1] px-2 py-0.5 rounded">
+<span class="material-symbols-outlined" style="font-size: 14px;">schedule</span>
+<span>Today, Oct 24, 2024 at 09:24:18 AM (On-time)</span>
+</div>
+</div>
+<!-- Attached Files Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<!-- File 1: PDF Report -->
+<div class="p-2.5 rounded-lg border border-outline-variant/40 bg-surface-container-low/20 flex flex-col justify-between gap-2 hover:border-primary-container/40 transition-colors">
+<div class="flex items-start gap-2.5">
+<div class="p-2 rounded bg-error-container/60 text-error">
+<span class="material-symbols-outlined" style="font-size: 20px;">picture_as_pdf</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="text-body-sm font-semibold text-on-surface truncate" title="Lab04_Report_AaravPatel.pdf">Lab04_Report_AaravPatel.pdf</div>
+<div class="text-xs text-outline">1.8 MB • PDF Document</div>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-1 border-t border-outline-variant/20">
+<button class="flex-1 py-1 px-2 rounded bg-white hover:bg-surface-container-high border border-outline-variant/40 text-xs font-medium text-primary flex items-center justify-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">download</span> Download
+                      </button>
+<button class="flex-1 py-1 px-2 rounded bg-primary-container hover:bg-[#163a84] text-white text-xs font-medium flex items-center justify-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">preview</span> Preview PDF
+                      </button>
+</div>
+</div>
+<!-- File 2: Source Code -->
+<div class="p-2.5 rounded-lg border border-outline-variant/40 bg-surface-container-low/20 flex flex-col justify-between gap-2 hover:border-primary-container/40 transition-colors">
+<div class="flex items-start gap-2.5">
+<div class="p-2 rounded bg-[#E0F2FE] text-[#0284C7]">
+<span class="material-symbols-outlined" style="font-size: 20px;">terminal</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="text-body-sm font-mono font-semibold text-on-surface truncate" title="red_black_tree.cpp">red_black_tree.cpp</div>
+<div class="text-xs text-outline">14.2 KB • C++ Source File</div>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-1 border-t border-outline-variant/20">
+<button class="w-full py-1 px-2 rounded bg-white hover:bg-surface-container-high border border-outline-variant/40 text-xs font-semibold text-primary flex items-center justify-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">code</span> View Code in Sandbox
+                      </button>
+</div>
+</div>
+</div>
+<!-- Student Remarks Box -->
+<div class="p-3 rounded-lg bg-surface-container-low/50 border-l-2 border-primary-container text-body-sm">
+<span class="font-semibold text-primary text-xs uppercase tracking-wide block mb-1">Student's Submission Remarks:</span>
+<p class="text-on-surface italic">
+                    "Implemented both insertFixup and deleteFixup methods. Memory tested clean with Valgrind with zero memory leaks. Tested 10,000 random sequences without violation of RB properties."
+                  </p>
+</div>
+</div>
+<!-- 4. Teacher Evaluation & Grading Section -->
+<div class="rounded-lg p-4 border-2 border-primary-container/20 bg-surface-container-lowest space-y-4 shadow-sm">
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-size: 20px;">grading</span>
+<h3 class="font-title-md text-title-md font-bold text-primary">Teacher Evaluation &amp; Rubric Grading</h3>
+</div>
+<!-- Grade Input Box -->
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/40">
+<span class="text-xs font-medium text-outline">Total Score:</span>
+<div class="flex items-center gap-1">
+<input class="w-14 h-8 px-2 text-center font-bold text-body-lg text-primary rounded border border-primary-container bg-white focus:outline-none focus:ring-2 focus:ring-primary-container/20" max="100" min="0" type="number" value="92"/>
+<span class="font-semibold text-outline text-body-md">/ 100</span>
+</div>
+</div>
+</div>
+<!-- Rubric Breakdown -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="p-2.5 rounded border border-outline-variant/20 bg-white">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-medium text-on-surface">Code Correctness</span>
+<span class="text-xs font-bold text-primary font-mono">45 / 50</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 90%;"></div>
+</div>
+</div>
+<div class="p-2.5 rounded border border-outline-variant/20 bg-white">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-medium text-on-surface">Complexity Analysis</span>
+<span class="text-xs font-bold text-[#0D9488] font-mono">25 / 25</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-[#0D9488] h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+<div class="p-2.5 rounded border border-outline-variant/20 bg-white">
+<div class="flex justify-between items-center mb-1">
+<span class="text-xs font-medium text-on-surface">Lab Report Clarity</span>
+<span class="text-xs font-bold text-primary font-mono">22 / 25</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 88%;"></div>
+</div>
+</div>
+</div>
+<!-- Teacher Remarks Textarea -->
+<div>
+<label class="block text-body-sm font-semibold text-on-surface mb-1.5">
+                    Collegiate Feedback &amp; Qualitative Notes:
+                  </label>
+<textarea class="w-full p-2.5 rounded-lg border border-outline-variant/60 text-body-sm text-on-surface bg-white focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/10 placeholder:text-outline" rows="3">Excellent handling of double-black node cases in deleteFixup. Good test cases coverage. Make sure to comment the color flip condition more thoroughly next time.</textarea>
+</div>
+<!-- Return Submission Option Checkbox -->
+<div class="flex items-center gap-2 pt-1">
+<input class="h-4 w-4 rounded border-outline text-error focus:ring-error" id="return-resubmission" type="checkbox"/>
+<label class="text-xs font-medium text-on-surface select-none cursor-pointer" for="return-resubmission">
+                    Return for Re-submission <span class="text-outline font-normal">(requires mandatory reason communicated to student)</span>
+</label>
+</div>
+<!-- Actions Bar -->
+<div class="pt-3 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-2">
+<button class="px-3 py-2 rounded-lg border border-error/40 text-error hover:bg-error-container/40 text-body-sm font-semibold flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined" style="font-size: 16px;">replay</span>
+<span>Return Submission</span>
+</button>
+<div class="flex items-center gap-2">
+<button class="px-3 py-2 rounded-lg text-outline hover:text-on-surface text-body-sm font-medium transition-colors">
+                      Cancel
+                    </button>
+<button class="px-4 py-2 bg-primary-container hover:bg-[#163a84] text-white rounded-lg text-body-sm font-semibold flex items-center gap-2 shadow-[0_2px_4px_-1px_rgba(15,23,42,0.1)] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined" style="font-size: 18px;">publish</span>
+<span>Mark as Reviewed &amp; Publish Grade</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

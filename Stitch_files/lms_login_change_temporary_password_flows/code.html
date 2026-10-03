@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Apex STEM Labs - Portal Authentication &amp; Security</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Manrope & Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#d2d9f4",
+            "primary-fixed": "#dae2ff",
+            "outline": "#757781",
+            "error": "#ba1a1a",
+            "on-error-container": "#93000a",
+            "surface-variant": "#dae2fd",
+            "secondary": "#006a61",
+            "primary-container": "#0f2d6b",
+            "inverse-primary": "#b2c5ff",
+            "on-tertiary-fixed": "#001d31",
+            "on-primary-fixed": "#001848",
+            "primary": "#001849",
+            "on-tertiary-fixed-variant": "#004b73",
+            "surface-bright": "#faf8ff",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "surface-container-highest": "#dae2fd",
+            "on-tertiary": "#ffffff",
+            "surface": "#faf8ff",
+            "tertiary": "#001e32",
+            "secondary-fixed": "#89f5e7",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#eaedff",
+            "on-secondary-fixed-variant": "#005049",
+            "inverse-surface": "#283044",
+            "tertiary-fixed": "#cce5ff",
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#eef0ff",
+            "outline-variant": "#c5c6d2",
+            "background": "#faf8ff",
+            "on-surface-variant": "#444650",
+            "surface-container-low": "#f2f3ff",
+            "on-tertiary-container": "#3da0e5",
+            "on-background": "#131b2e",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#00201d",
+            "primary-fixed-dim": "#b2c5ff",
+            "on-secondary-container": "#006f66",
+            "tertiary-fixed-dim": "#93ccff",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-surface": "#131b2e",
+            "surface-container-high": "#e2e7ff",
+            "on-primary-fixed-variant": "#2a4482",
+            "on-primary-container": "#7f97db",
+            "tertiary-container": "#003452",
+            "secondary-container": "#86f2e4",
+            "surface-tint": "#445c9c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.5rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem",
+            "gutter-sm": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-md": "1rem",
+            "gutter-lg": "2rem",
+            "space-xl": "2rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "title-md": ["Manrope"],
+            "headline-sm": ["Manrope"],
+            "headline-lg": ["Manrope"],
+            "headline-md": ["Manrope"],
+            "body-sm": ["Hanken Grotesk"],
+            "label-md": ["Hanken Grotesk"],
+            "body-md": ["Hanken Grotesk"],
+            "display-lg": ["Manrope"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-sm": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Manrope"]
+          },
+          "fontSize": {
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .material-symbols-outlined[data-weight="fill"] {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Institutional Top Header -->
+<header class="bg-surface-container-lowest border-b border-outline-variant/30 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] sticky top-0 z-30">
+<div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-lg bg-primary text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+</div>
+<div>
+<span class="text-title-md font-title-md font-bold text-primary tracking-tight block">Apex STEM Labs</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant block">Collegiate Laboratory Management Portal</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-2 px-2.5 py-1 bg-surface-container-low rounded border border-outline-variant/30">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Auth Gate v2.4 • ISO 27001 Certified</span>
+</div>
+<a class="text-label-md font-label-md text-primary flex items-center gap-1.5 hover:text-on-surface-variant transition-colors" href="#support">
+<span class="material-symbols-outlined text-[18px]" data-icon="help_outline">help_outline</span>
+<span>Helpdesk</span>
+</a>
+</div>
+</div>
+</header>
+<!-- Interactive State Controller Bar (Reviewer Simulation Controls) -->
+<aside aria-label="Simulation Controls" class="bg-surface-container border-b border-outline-variant/20 px-6 py-2.5">
+<div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="tune">tune</span>
+<span class="text-label-md font-label-md text-primary font-bold">Simulator Controls:</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Switch production states to inspect validation flows:</span>
+</div>
+<div class="flex items-center gap-2 overflow-x-auto">
+<button class="px-3 py-1 rounded text-label-sm font-label-sm bg-primary text-on-primary shadow-xs transition-colors" id="btn-state-default" onclick="setLoginState('default')" type="button">
+          Default State
+        </button>
+<button class="px-3 py-1 rounded text-label-sm font-label-sm bg-surface-container-lowest text-on-surface border border-outline-variant/40 hover:bg-surface-container-low transition-colors" id="btn-state-loading" onclick="setLoginState('loading')" type="button">
+          Loading Spinner
+        </button>
+<button class="px-3 py-1 rounded text-label-sm font-label-sm bg-surface-container-lowest text-on-surface border border-outline-variant/40 hover:bg-surface-container-low transition-colors" id="btn-state-error" onclick="setLoginState('error')" type="button">
+          Error Alert
+        </button>
+<div class="h-4 w-px bg-outline-variant/40 mx-1"></div>
+<button class="px-3 py-1 rounded text-label-sm font-label-sm bg-surface-container-lowest text-on-surface border border-outline-variant/40 hover:bg-surface-container-low transition-colors" onclick="toggleSecurityNotice(true)" type="button">
+          Show Gate Success
+        </button>
+</div>
+</div>
+</aside>
+<!-- Main Canvas Container -->
+<main class="flex-1 max-w-[1600px] w-full mx-auto px-4 md:px-8 py-8 md:py-12">
+<!-- Institutional Notification Banner -->
+<div class="mb-8 p-3.5 bg-surface-container-low border border-outline-variant/30 rounded-lg flex items-center justify-between gap-3 shadow-[0_1px_2px_0_rgba(15,23,42,0.02)]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="policy">policy</span>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+<strong class="font-label-md text-primary">Academic Cyber Defense Notice:</strong> Single Sign-On session tokens will expire automatically after 45 minutes of telemetry inactivity. Unscheduled instrument access requires supervisor MFA confirmation.
+        </p>
+</div>
+<span class="text-label-sm font-label-sm text-secondary bg-surface-container-lowest px-2 py-0.5 rounded border border-outline-variant/20 whitespace-nowrap">TLS 1.3 SECURED</span>
+</div>
+<!-- Dual Security Card Layout (Bento Grid) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- ==========================================
+           CARD 1: PRODUCTION LOGIN SCREEN (5 Columns)
+           ========================================== -->
+<section class="lg:col-span-5 bg-surface-container-lowest rounded-xl border border-outline-variant/40 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="p-6 md:p-8 border-b border-outline-variant/20 bg-surface-container-lowest">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-fixed flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[28px]" data-icon="biotech">biotech</span>
+</div>
+<div>
+<span class="text-headline-sm font-headline-sm text-primary tracking-tight block">Lab Management System</span>
+<span class="text-label-md font-label-md text-on-surface-variant block">Apex STEM Labs • Portal Authentication</span>
+</div>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant">
+            Enter your collegiate research credentials to access hazardous materials databases, spectrometry schedules, and active workbenches.
+          </p>
+<!-- Role Switcher -->
+<div class="mt-6 p-1 bg-surface-container-low rounded-lg flex items-center border border-outline-variant/30">
+<button class="flex-1 py-1.5 px-3 rounded-md text-label-md font-label-md text-primary bg-surface-container-lowest shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] transition-all flex items-center justify-center gap-1.5" id="role-student" onclick="selectRole('student')" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="school">school</span>
+<span>Student / Researcher</span>
+</button>
+<button class="flex-1 py-1.5 px-3 rounded-md text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-1.5" id="role-faculty" onclick="selectRole('faculty')" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="badge">badge</span>
+<span>Faculty / Teacher</span>
+</button>
+</div>
+<div class="mt-2 text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant" id="role-hint">Signing in as: <strong class="text-primary font-label-md">Enrolled Student / Postdoc</strong></span>
+</div>
+</div>
+<!-- Body Form -->
+<div class="p-6 md:p-8 space-y-5">
+<!-- Inline Error Alert (Dynamic State Simulation) -->
+<div class="hidden p-3.5 bg-error-container/40 border border-error/30 rounded-lg flex items-start gap-3" id="login-error-alert">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5" data-icon="error">error</span>
+<div>
+<p class="text-label-md font-label-md text-on-error-container">Invalid username or temporary password</p>
+<p class="text-body-sm font-body-sm text-on-error-container/90 mt-0.5">Please verify your credentials or contact the STEM Lab Systems Administrator at room BIO-204.</p>
+</div>
+</div>
+<!-- Form Fields -->
+<form class="space-y-4" onsubmit="handleLoginSubmit(event)">
+<!-- Username Input -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface mb-1.5" for="username">
+                Username / Enrollment ID <span class="text-error">*</span>
+</label>
+<div class="relative rounded-lg shadow-2xs">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="badge">badge</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2 text-body-md font-body-md text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-colors" id="username" name="username" placeholder="e.g. 202301001 or prof.vance" required="" type="text" value="202301001"/>
+</div>
+<p class="mt-1 text-label-sm font-label-sm text-on-surface-variant">Use your registrar 9-digit institutional token</p>
+</div>
+<!-- Password Input -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block text-label-md font-label-md text-on-surface" for="password">
+                  Password <span class="text-error">*</span>
+</label>
+<a class="text-label-md font-label-md text-primary hover:underline focus:outline-none" href="#reset">
+                  Forgot password?
+                </a>
+</div>
+<div class="relative rounded-lg shadow-2xs">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="lock">lock</span>
+</div>
+<input class="block w-full pl-10 pr-10 py-2 text-body-md font-body-md text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-colors" id="password" name="password" placeholder="Enter current portal password" required="" type="password" value="TempChem#2024"/>
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface" onclick="togglePasswordVisibility('password', 'toggle-icon-login')" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility" id="toggle-icon-login">visibility</span>
+</button>
+</div>
+</div>
+<!-- Remember Me & Compliance -->
+<div class="flex items-start justify-between pt-1">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary-container/30 cursor-pointer" id="remember_me" name="remember_me" type="checkbox"/>
+<span class="text-body-sm font-body-sm text-on-surface">Remember me on this workstation</span>
+</label>
+</div>
+<!-- Primary Action Button (Configurable States) -->
+<div class="pt-2">
+<button class="w-full py-2.5 px-4 bg-primary hover:bg-primary-container text-on-primary font-title-md text-title-md rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-primary active:scale-[0.99]" id="btn-login-submit" type="submit">
+<!-- Default State Content -->
+<span class="flex items-center gap-2" id="login-state-label">
+<span class="material-symbols-outlined text-[20px]" data-icon="login">login</span>
+<span>Sign In to Portal</span>
+</span>
+<!-- Loading State Content (hidden by default) -->
+<span class="hidden flex items-center gap-2.5" id="login-state-spinner">
+<svg class="animate-spin h-4 w-4 text-on-primary" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+<span>Authenticating credentials...</span>
+</span>
+</button>
+</div>
+</form>
+<!-- Security Footer Notice -->
+<div class="pt-4 border-t border-outline-variant/20 flex items-start gap-2.5">
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0 mt-0.5" data-icon="verified_user">verified_user</span>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+<strong class="font-label-md text-on-surface">Security compliance notice:</strong> Authorized academic and research personnel only. All access, failed attempts, and protocol approvals are logged under Department of Higher Education audit policies.
+            </p>
+</div>
+</div>
+</section>
+<!-- ==========================================
+           CARD 2: CHANGE TEMPORARY PASSWORD GATE (7 Columns)
+           ========================================== -->
+<section class="lg:col-span-7 bg-surface-container-lowest rounded-xl border border-outline-variant/40 shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="p-6 md:p-8 border-b border-outline-variant/20 bg-surface-container-lowest">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2.5">
+<span class="inline-flex items-center justify-center p-2 rounded-lg bg-surface-container-high text-primary">
+<span class="material-symbols-outlined text-[24px]" data-icon="lock_reset">lock_reset</span>
+</span>
+<div>
+<span class="text-headline-sm font-headline-sm text-primary tracking-tight block">Create Your New Password</span>
+<span class="text-label-md font-label-md text-secondary block font-semibold">First-Time Login Security Gate</span>
+</div>
+</div>
+<span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded bg-error-container text-on-error-container text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[14px]" data-icon="shield">shield</span>
+<span>Enforced Policy</span>
+</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mt-2">
+            For security compliance, you must change your assigned temporary password before accessing laboratory equipment, protocols, and submission records.
+          </p>
+<!-- Gate Banner Warning -->
+<div class="mt-4 p-3 rounded-lg bg-surface-container-low border border-outline-variant/30 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="crisis_alert">crisis_alert</span>
+<div class="flex-1">
+<span class="text-label-md font-label-md text-primary block">Mandatory First-Time Setup</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Access to spectrometers, clean rooms, and chemical logs is restricted until completed.</span>
+</div>
+</div>
+</div>
+<!-- Success Preview Banner (Dynamic State) -->
+<div class="hidden mx-6 md:mx-8 mt-6 p-4 rounded-lg bg-secondary-container/40 border border-secondary/30 flex items-center gap-3" id="gate-success-banner">
+<span class="material-symbols-outlined text-secondary text-[24px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<div class="flex-1">
+<p class="text-label-md font-label-md text-on-secondary-container">Password successfully updated!</p>
+<p class="text-body-sm font-body-sm text-on-secondary-container/90">Redirecting to Lab Dashboard in 3 seconds...</p>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1" onclick="toggleSecurityNotice(false)" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Form Body -->
+<div class="p-6 md:p-8 space-y-6">
+<form class="space-y-5" onsubmit="handlePasswordUpdate(event)">
+<!-- Current Temporary Password -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface mb-1.5" for="current_temp_password">
+                Current Temporary Password <span class="text-error">*</span>
+</label>
+<div class="relative rounded-lg shadow-2xs">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="key">key</span>
+</div>
+<input class="block w-full pl-10 pr-10 py-2 text-body-md font-body-md text-on-surface bg-surface-container-low border border-outline-variant/50 rounded-lg cursor-not-allowed" id="current_temp_password" name="current_temp_password" readonly="" type="password" value="TempChem#2024"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface" onclick="togglePasswordVisibility('current_temp_password', 'toggle-temp-pwd')" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility" id="toggle-temp-pwd">visibility</span>
+</button>
+</div>
+<p class="mt-1 text-label-sm font-label-sm text-on-surface-variant">System-generated onboarding string distributed via departmental registrar email</p>
+</div>
+<!-- New Password & Live Strength Indicator -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface mb-1.5" for="new_password">
+                New Password <span class="text-error">*</span>
+</label>
+<div class="relative rounded-lg shadow-2xs">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="lock_open">lock_open</span>
+</div>
+<input class="block w-full pl-10 pr-10 py-2 text-body-md font-body-md text-on-surface bg-surface-container-lowest border border-outline-variant/60 rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-colors" id="new_password" name="new_password" oninput="updateStrengthGauge(this.value)" placeholder="Enter complex passphrase" type="password" value="ApexBio2024!🔬"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface" onclick="togglePasswordVisibility('new_password', 'toggle-new-pwd')" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility" id="toggle-new-pwd">visibility</span>
+</button>
+</div>
+<!-- Password Strength Bar & Label -->
+<div class="mt-2.5">
+<div class="flex items-center justify-between text-body-sm font-body-sm mb-1.5">
+<span class="text-on-surface-variant">Calculated Entropy:</span>
+<span class="text-label-md font-label-md text-secondary flex items-center gap-1" id="strength-label">
+<span class="material-symbols-outlined text-[16px]" data-icon="verified">verified</span>
+<span>Strong (85% Complexity)</span>
+</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden flex gap-0.5 p-0.5">
+<div class="h-full rounded-full bg-secondary transition-all duration-300" id="strength-bar" style="width: 85%;"></div>
+</div>
+</div>
+</div>
+<!-- Confirm New Password -->
+<div>
+<label class="block text-label-md font-label-md text-on-surface mb-1.5" for="confirm_password">
+                Confirm New Password <span class="text-error">*</span>
+</label>
+<div class="relative rounded-lg shadow-2xs">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="task_alt">task_alt</span>
+</div>
+<input class="block w-full pl-10 pr-10 py-2 text-body-md font-body-md text-on-surface bg-surface-container-lowest border border-secondary rounded-lg focus:ring-2 focus:ring-secondary/20 transition-colors" id="confirm_password" name="confirm_password" placeholder="Repeat new password" type="password" value="ApexBio2024!🔬"/>
+<div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-[20px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+</div>
+</div>
+<p class="mt-1 text-label-sm font-label-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check">check</span>
+<span>Passphrase entries match verified hash</span>
+</p>
+</div>
+<!-- Institutional Checklist (Requirements) -->
+<div class="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30">
+<span class="text-label-md font-label-md text-primary block mb-2.5">Collegiate Password Standards Checklist</span>
+<ul class="grid grid-cols-1 md:grid-cols-2 gap-2 text-body-sm font-body-sm">
+<li class="flex items-center gap-2 text-on-surface" id="req-len">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<span>At least 8 characters</span>
+</li>
+<li class="flex items-center gap-2 text-on-surface" id="req-upper">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<span>At least one uppercase letter (A-Z)</span>
+</li>
+<li class="flex items-center gap-2 text-on-surface" id="req-num">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<span>At least one numerical digit (0-9)</span>
+</li>
+<li class="flex items-center gap-2 text-on-surface" id="req-special">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+<span>At least one symbol (!@#$%^&amp;*)</span>
+</li>
+</ul>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col sm:flex-row items-center gap-3 pt-3">
+<button class="w-full sm:flex-1 py-2.5 px-4 bg-primary hover:bg-primary-container text-on-primary font-title-md text-title-md rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-primary active:scale-[0.99]" type="submit">
+<span class="material-symbols-outlined text-[20px]" data-icon="lock_open">lock_open</span>
+<span>Update Password &amp; Enter Portal</span>
+</button>
+<button class="w-full sm:w-auto py-2.5 px-4 bg-surface-container-lowest border border-outline-variant/60 hover:bg-surface-container-low text-on-surface font-title-md text-title-md rounded-lg transition-colors flex items-center justify-center gap-1.5" onclick="resetTemporaryForm()" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_back">arrow_back</span>
+<span>Cancel / Return to Login</span>
+</button>
+</div>
+</form>
+<!-- Hardware Device Note -->
+<div class="flex items-center gap-3 p-3 bg-surface-container/50 rounded-lg text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="info">info</span>
+<span>Once saved, you will be automatically bonded with your active laboratory badge ID: <code class="font-mono text-label-sm font-label-sm text-primary">RFID#8829-CHEM-E</code></span>
+</div>
+</div>
+</section>
+</div>
+<!-- Telemetry & Compliance Footprint Bento Card -->
+<section class="mt-8 bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6 shadow-[0_1px_2px_0_rgba(15,23,42,0.02)]">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-on-surface-variant">
+<div class="flex items-start gap-3">
+<div class="p-2 rounded bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="shield_with_heart">shield_with_heart</span>
+</div>
+<div>
+<h4 class="text-label-md font-label-md text-primary">OSHA Lab Standard Compliant</h4>
+<p class="text-body-sm font-body-sm mt-0.5">29 CFR 1910.1450 chemical hygiene and hazardous reagent log trace enabled.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="p-2 rounded bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="schedule">schedule</span>
+</div>
+<div>
+<h4 class="text-label-md font-label-md text-primary">24/7 Access Arbitration</h4>
+<p class="text-body-sm font-body-sm mt-0.5">Automated lockout for high-power nuclear resonance and optical lasers after 22:00.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="p-2 rounded bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="devices">devices</span>
+</div>
+<div>
+<h4 class="text-label-md font-label-md text-primary">Multi-Station Session Lock</h4>
+<p class="text-body-sm font-body-sm mt-0.5">Concurrent workstation sessions restricted to prevent conflicting experiment logs.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="p-2 rounded bg-surface-container-low text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="contact_support">contact_support</span>
+</div>
+<div>
+<h4 class="text-label-md font-label-md text-primary">Need Lab Keycard Reset?</h4>
+<p class="text-body-sm font-body-sm mt-0.5">Visit Sciences Division Helpdesk or call ext. 4402 (Mon–Fri, 08:00–17:00 EST).</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Institutional Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant/30 py-6 px-6 mt-auto">
+<div class="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="text-title-md font-title-md font-bold text-primary">Apex STEM Labs</span>
+<span class="text-body-sm font-body-sm">• Department of Chemistry &amp; Biomedical Sciences</span>
+</div>
+<div class="flex flex-wrap items-center gap-6 text-label-md font-label-md">
+<a class="hover:text-primary transition-colors" href="#safety-manual">Lab Safety Manual</a>
+<a class="hover:text-primary transition-colors" href="#hazard-matrix">Hazard Matrix</a>
+<a class="hover:text-primary transition-colors" href="#incident-reporting">Incident Reporting</a>
+<a class="hover:text-primary transition-colors" href="#privacy">Data Privacy &amp; FERPA</a>
+</div>
+<div class="text-body-sm font-body-sm">
+        © 2024 Apex STEM Research Syndicate. All rights reserved.
+      </div>
+</div>
+</footer>
+<!-- Script for Interactive Micro-interactions & State Toggles -->
+<script>
+    // State switcher for login demo
+    function setLoginState(state) {
+      const btnLabel = document.getElementById('login-state-label');
+      const btnSpinner = document.getElementById('login-state-spinner');
+      const errorAlert = document.getElementById('login-error-alert');
+      const btnDefault = document.getElementById('btn-state-default');
+      const btnLoading = document.getElementById('btn-state-loading');
+      const btnError = document.getElementById('btn-state-error');
+
+      // Reset tabs styling
+      [btnDefault, btnLoading, btnError].forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-on-primary');
+        btn.classList.add('bg-surface-container-lowest', 'text-on-surface');
+      });
+
+      if (state === 'default') {
+        btnDefault.classList.add('bg-primary', 'text-on-primary');
+        btnDefault.classList.remove('bg-surface-container-lowest', 'text-on-surface');
+        btnLabel.classList.remove('hidden');
+        btnSpinner.classList.add('hidden');
+        errorAlert.classList.add('hidden');
+      } else if (state === 'loading') {
+        btnLoading.classList.add('bg-primary', 'text-on-primary');
+        btnLoading.classList.remove('bg-surface-container-lowest', 'text-on-surface');
+        btnLabel.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+        errorAlert.classList.add('hidden');
+      } else if (state === 'error') {
+        btnError.classList.add('bg-primary', 'text-on-primary');
+        btnError.classList.remove('bg-surface-container-lowest', 'text-on-surface');
+        btnLabel.classList.remove('hidden');
+        btnSpinner.classList.add('hidden');
+        errorAlert.classList.remove('hidden');
+      }
+    }
+
+    // Role switcher
+    function selectRole(role) {
+      const studentBtn = document.getElementById('role-student');
+      const facultyBtn = document.getElementById('role-faculty');
+      const hint = document.getElementById('role-hint');
+      const userInput = document.getElementById('username');
+
+      if (role === 'student') {
+        studentBtn.className = 'flex-1 py-1.5 px-3 rounded-md text-label-md font-label-md text-primary bg-surface-container-lowest shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] transition-all flex items-center justify-center gap-1.5';
+        facultyBtn.className = 'flex-1 py-1.5 px-3 rounded-md text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-1.5';
+        hint.innerHTML = 'Signing in as: <strong class="text-primary font-label-md">Enrolled Student / Postdoc</strong>';
+        userInput.value = '202301001';
+      } else {
+        facultyBtn.className = 'flex-1 py-1.5 px-3 rounded-md text-label-md font-label-md text-primary bg-surface-container-lowest shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] transition-all flex items-center justify-center gap-1.5';
+        studentBtn.className = 'flex-1 py-1.5 px-3 rounded-md text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center justify-center gap-1.5';
+        hint.innerHTML = 'Signing in as: <strong class="text-primary font-label-md">Principal Investigator / Faculty PI</strong>';
+        userInput.value = 'prof.vance';
+      }
+    }
+
+    // Toggle password reveal
+    function togglePasswordVisibility(fieldId, iconId) {
+      const input = document.getElementById(fieldId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerText = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.innerText = 'visibility';
+      }
+    }
+
+    // Dynamic strength bar recalculation demo
+    function updateStrengthGauge(val) {
+      const bar = document.getElementById('strength-bar');
+      const label = document.getElementById('strength-label');
+      
+      const hasLength = val.length >= 8;
+      const hasUpper = /[A-Z]/.test(val);
+      const hasNum = /[0-9]/.test(val);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+
+      let score = 0;
+      if (hasLength) score += 25;
+      if (hasUpper) score += 25;
+      if (hasNum) score += 25;
+      if (hasSpecial) score += 25;
+
+      bar.style.width = score + '%';
+
+      if (score <= 25) {
+        bar.className = 'h-full rounded-full bg-error transition-all duration-300';
+        label.className = 'text-label-md font-label-md text-error flex items-center gap-1';
+        label.innerHTML = '<span class="material-symbols-outlined text-[16px]" data-icon="report">report</span><span>Weak (25% Complexity)</span>';
+      } else if (score <= 50) {
+        bar.className = 'h-full rounded-full bg-on-tertiary-container transition-all duration-300';
+        label.className = 'text-label-md font-label-md text-on-tertiary-container flex items-center gap-1';
+        label.innerHTML = '<span class="material-symbols-outlined text-[16px]" data-icon="info">info</span><span>Fair (50% Complexity)</span>';
+      } else if (score <= 75) {
+        bar.className = 'h-full rounded-full bg-secondary-fixed-dim transition-all duration-300';
+        label.className = 'text-label-md font-label-md text-secondary flex items-center gap-1';
+        label.innerHTML = '<span class="material-symbols-outlined text-[16px]" data-icon="shield">shield</span><span>Good (75% Complexity)</span>';
+      } else {
+        bar.className = 'h-full rounded-full bg-secondary transition-all duration-300';
+        label.className = 'text-label-md font-label-md text-secondary flex items-center gap-1';
+        label.innerHTML = '<span class="material-symbols-outlined text-[16px]" data-icon="verified">verified</span><span>Strong (85% Complexity)</span>';
+      }
+    }
+
+    // Show/hide gate success banner
+    function toggleSecurityNotice(show) {
+      const banner = document.getElementById('gate-success-banner');
+      if (show) {
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    // Form submission simulations
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      setLoginState('loading');
+      setTimeout(() => {
+        setLoginState('default');
+        alert('Authentication simulated. In production, this verifies with University LDAP / SSO.');
+      }, 1500);
+    }
+
+    function handlePasswordUpdate(e) {
+      e.preventDefault();
+      toggleSecurityNotice(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetTemporaryForm() {
+      const newPwd = document.getElementById('new_password');
+      const confirmPwd = document.getElementById('confirm_password');
+      newPwd.value = '';
+      confirmPwd.value = '';
+      updateStrengthGauge('');
+      toggleSecurityNotice(false);
+    }
+  </script>
+</body></html>
