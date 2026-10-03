@@ -9,188 +9,150 @@
 
 **Phase 0 — Foundation**
 
-Status: Not Started
+Status: Completed (Verified)
 
 ---
 
 ## Completed
 
-- Project requirements documented.
-- Architecture documented.
-- Coding rules documented.
-- Implementation phases documented.
-- Design system documented.
-- Stitch UI references collected.
-- Project folder created.
+- **Documentation & Rules:**
+  - Project requirements documented in `docs/PRD.md`.
+  - Three-tier architecture documented in `docs/Architecture.md`.
+  - AI coding rules and operational constraints documented in `docs/Rules.md`.
+  - Phased roadmap documented in `docs/Phases.md`.
+  - Design system specifications documented in `docs/Design.md`.
+  - Memory ledger initialized in `docs/memory.md`.
+- **UI Reference Inspection:**
+  - Inspected all 12 Stitch screen/component directories in `Stitch_files/`.
+  - Analyzed design tokens (`DESIGN.md` in `academic_precision`), color palette (`#0F2D6B` primary, `#0D9488` teal secondary, `#0284C7` tertiary, `#F8FAFC` base canvas), typography (`Manrope` headings + `Hanken Grotesk` body + `JetBrains Mono` code), elevation scales, and component specifications.
+- **Frontend Foundation:**
+  - Initialized React 18 + Vite application in `frontend/`.
+  - Installed `react-router-dom` and `axios`.
+  - Created directory structure matching `docs/Architecture.md`: `assets/`, `components/`, `layouts/`, `pages/`, `routes/`, `services/`, `hooks/`, `context/`, `utils/`, `styles/`.
+  - Configured global CSS design system (`designTokens.css`, `index.css`) with Stitch tokens and base reset/utility styles.
+  - Implemented configured Axios API client (`services/api.js`) with request/response interceptors and base URL support.
+  - Implemented React Router root layout shell (`RootLayout.jsx`), `HomePage.jsx` verification view, and `NotFoundPage.jsx`.
+  - Built and verified production bundle (`vite build`) successfully.
+- **Backend Foundation:**
+  - Initialized Node.js + Express application in `backend/`.
+  - Installed `express`, `cors`, `dotenv`, and `mongoose`.
+  - Created directory structure matching `docs/Architecture.md`: `config/`, `controllers/`, `middleware/`, `models/`, `routes/`, `services/`, `validators/`, `utils/`.
+  - Configured environment manager (`config/env.js`) and MongoDB connection layer with graceful offline resilience (`config/db.js`).
+  - Implemented centralized error handling (`middleware/errorHandler.js`, `middleware/notFound.js`, `utils/appError.js`, `utils/apiResponse.js`).
+  - Implemented and verified health check endpoint `GET /api/health`.
+- **Environment & Git Hygiene:**
+  - Configured `.gitignore` across root, frontend, and backend for dependencies, build artifacts, and secret files.
+  - Created `.env.example` in root, `backend/`, and `frontend/` with placeholders.
 
 ---
 
 ## Currently Working On
 
-- Preparing the project for implementation.
-- Phase 0 foundation setup has not started yet.
+- Phase 0 foundation is complete and verified. Ready for Phase 1 (Authentication).
 
 ---
 
 ## Next Tasks
 
-1. Initialize frontend with React + Vite.
-2. Initialize backend with Node.js + Express.
-3. Configure MongoDB/Mongoose.
-4. Configure environment variables.
-5. Create initial frontend/backend folder structure.
-6. Add backend health-check endpoint.
-7. Verify frontend and backend startup.
-8. Verify foundation against `docs/Architecture.md`.
-9. Review Phase 0 before starting Phase 1.
+1. **Phase 1 — Authentication:**
+   - Implement `User` model with Mongoose (`name`, `rollNumber`, `passwordHash`, `role`, `mustChangePassword`, `section`, `active`).
+   - Implement password hashing with `bcryptjs`.
+   - Implement JWT token generation and verification middleware.
+   - Implement authentication controllers/routes (`POST /api/auth/login`, `POST /api/auth/change-password`, `GET /api/auth/me`).
+   - Enforce alphanumeric roll number / username validation (`^[A-Za-z0-9]+$`).
+   - Implement frontend Login screen and First-Login Change Temporary Password modal matching Stitch reference `Stitch_files/lms_login_change_temporary_password_flows/`.
+   - Setup React Auth Context, protected routes, and role-based redirect logic.
 
 ---
 
 ## Important Decisions
 
 ### Technology Stack
+- **Frontend:** React 18 + Vite, React Router v6, Axios, Vanilla CSS with Stitch design tokens.
+- **Backend:** Node.js + Express, Mongoose, JWT, CORS.
+- **Database:** MongoDB Atlas (Mongoose connection layer ready).
+- **Deployment Targets:** Vercel (Frontend), Render (Backend), MongoDB Atlas (Database).
 
-- Frontend: React + Vite
-- Routing: React Router
-- HTTP Client: Axios
-- Backend: Node.js + Express
-- Database: MongoDB Atlas
-- ODM: Mongoose
-- Authentication: JWT
-- Password Hashing: Secure password hashing
-- Frontend Deployment: Vercel
-- Backend Deployment: Render
+### Authentication & Roles
+- Exactly three roles: `ADMIN_HOD`, `TEACHER`, `STUDENT`.
+- `Main Teacher` and `Assistant Teacher` are assignment types under the `TEACHER` role.
+- User identifiers (roll numbers/usernames) are strictly alphanumeric (`^[A-Za-z0-9]+$`).
 
-### User Roles
+### Experiment Attempts & Scoring Rules
+- Default official attempts: 3 (manual runs do not consume attempts).
+- Highest official score is preserved.
+- Scoring model: Programming (10 marks) + Viva (5 marks) = 15 marks per experiment (180 marks total for 12 experiments).
 
-- ADMIN_HOD
-- TEACHER
-- STUDENT
+### Experiment PDF Extraction Workflow
+- `Upload PDF → Extract → Review → Edit → Confirm → Save`. Extracted drafts are never committed automatically.
 
-Main Teacher and Assistant Teacher are assignment types within the Teacher role, not separate authentication roles.
-
-### User Identifiers
-
-Student and teacher roll numbers/usernames are alphanumeric.
-
-Examples:
-
-- `23341A4504`
-- `504`
-- `23A1B07`
-
-Validation must allow letters and numbers but reject spaces and special characters.
-
-### Experiment Attempts
-
-- Default official attempts: 3
-- Manual code execution does not consume official attempts.
-- Highest official experiment score is retained.
-
-### Scoring
-
-- Programming/automated evaluation: 10 marks
-- Viva: 5 marks
-- Total per experiment: 15 marks
-- 12 experiments: 180 maximum marks
-
-### PDF Experiment Extraction
-
-The workflow is:
-
-Upload PDF → Extract → Review → Edit → Confirm → Save
-
-Extracted experiment information must never be automatically saved without teacher review.
-
-### Historical Data
-
-Academic records, submissions, evaluations, marks, viva records, and other important historical data must be preserved.
-
-### Notifications
-
-Only teachers can delete notifications. Backend authorization must enforce this rule.
-
-### UI Reference
-
-The Stitch screens in `Stitch_files/` are the primary visual reference.
-
-The implementation should reproduce the intended Stitch design rather than replacing it with a generic dashboard.
+### UI & Styling Strategy
+- Stitch files in `Stitch_files/` serve as the visual reference. Design system tokens are codified in `frontend/src/styles/designTokens.css`.
 
 ---
 
 ## Current Database Structure
 
-Not implemented yet.
-
-Planned core entities are documented in:
-
-`docs/Architecture.md`
+- **Connection Layer:** `backend/src/config/db.js` configured with Mongoose.
+- **Status:** Connection layer initialized and tested; currently reports disconnected/unconfigured when no live `MONGODB_URI` is provided in `.env`.
+- **Models Registry:** `backend/src/models/index.js` prepared for Phase 1 schemas.
 
 ---
 
 ## API Status
 
-Not implemented yet.
+- `GET /api/health` — Working (Returns 200 with service status, uptime, and database connection state).
+- Other API routes (`/api/auth`, `/api/users`, `/api/labs`, etc.) are structured in route registry for upcoming phases.
 
 ---
 
 ## Known Issues
 
-None currently.
+- None.
 
 ---
 
 ## Important Files
 
 ### Project Documentation
-
 - `docs/PRD.md`
 - `docs/Architecture.md`
 - `docs/Rules.md`
 - `docs/Phases.md`
 - `docs/Design.md`
-- `docs/Memory.md`
+- `docs/memory.md`
 
-### UI References
+### Stitch Design References
+- `Stitch_files/` (12 modules including design tokens, layouts, auth flows, consoles, student/teacher suites)
 
-- `Stitch_files/`
+### Backend Architecture Files
+- `backend/src/server.js` (Server entry point)
+- `backend/src/app.js` (Express configuration & route mounting)
+- `backend/src/config/env.js` & `backend/src/config/db.js` (Config & database)
+- `backend/src/routes/index.js` & `backend/src/routes/health.routes.js` (API routing)
+- `backend/src/controllers/health.controller.js` (Health controller)
+- `backend/src/middleware/errorHandler.js` & `backend/src/middleware/notFound.js` (Error handling)
+- `backend/src/utils/apiResponse.js` & `backend/src/utils/appError.js` (Standard API formatting)
+
+### Frontend Architecture Files
+- `frontend/src/main.jsx` & `frontend/src/App.jsx` (Application root)
+- `frontend/src/routes/AppRoutes.jsx` (Routing foundation)
+- `frontend/src/layouts/RootLayout.jsx` (App shell layout)
+- `frontend/src/styles/designTokens.css` & `frontend/src/styles/index.css` (Stitch tokens & styles)
+- `frontend/src/services/api.js` & `frontend/src/services/healthService.js` (Axios client & services)
 
 ---
 
 ## Design Status
 
-Stitch UI references are available.
-
-Implementation has not started.
+- Stitch UI references fully cataloged and mapped.
+- Core design tokens (colors, typography, radii, shadows, spacing) integrated into `frontend/src/styles/designTokens.css`.
 
 ---
 
 ## Deployment Status
 
-Not started.
-
-Target:
-
-- Frontend → Vercel
-- Backend → Render
-- Database → MongoDB Atlas
-
----
-
-## Do Not Forget
-
-- Read all files in `docs/` before making major architectural changes.
-- Inspect relevant Stitch screens before implementing their corresponding pages.
-- Do not invent requirements.
-- Do not change business rules without approval.
-- Do not treat Main Teacher and Assistant Teacher as separate roles.
-- Roll numbers/usernames are alphanumeric.
-- Do not expose hidden test cases to students.
-- Manual runs do not consume official attempts.
-- Preserve submission and evaluation history.
-- Only teachers can delete notifications.
-- Never store plaintext passwords.
-- Never commit secrets.
-- Student code execution must be isolated/sandboxed.
-- A feature is not complete when only its UI exists; frontend, backend, database, validation, authorization, error handling, and testing must work together.
-- Update this file after meaningful implementation changes.
+- Foundation prepared for:
+  - Frontend: Vercel
+  - Backend: Render
+  - Database: MongoDB Atlas
