@@ -5,6 +5,8 @@ import { experimentService } from '../../services/experimentService';
 import { submissionService } from '../../services/submissionService';
 import { evaluationService } from '../../services/evaluationService';
 import { testCaseService } from '../../services/testCaseService';
+import { vivaService } from '../../services/vivaService';
+import { reevaluationService } from '../../services/reevaluationService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CodeEditor from '../../components/code/CodeEditor';
 
@@ -90,6 +92,19 @@ const StudentExperimentDetailPage = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
 
+  // Phase 8: Viva & Re-evaluation State
+  const [vivaData, setVivaData] = useState({
+    currentViva: null,
+    history: [],
+    reevaluationRequest: null
+  });
+  const [showReevalModal, setShowReevalModal] = useState(false);
+  const [reevalReason, setReevalReason] = useState('');
+  const [submittingReeval, setSubmittingReeval] = useState(false);
+  const [reevalError, setReevalError] = useState('');
+  const [reevalSuccess, setReevalSuccess] = useState('');
+  const [showVivaHistoryModal, setShowVivaHistoryModal] = useState(false);
+
   // Active tab on page: 'workbench' | 'guide' | 'history'
   const [activeViewTab, setActiveViewTab] = useState('workbench');
 
@@ -112,11 +127,12 @@ const StudentExperimentDetailPage = () => {
         setSourceCode(STARTER_TEMPLATES[defaultLang] || '// Write your code here');
       }
 
-      // Fetch public test cases, submissions and evaluations
+      // Fetch public test cases, submissions, evaluations, and viva data
       await Promise.all([
         fetchSubmissionHistory(),
         fetchEvaluations(),
-        fetchPublicTestCases()
+        fetchPublicTestCases(),
+        fetchVivaData()
       ]);
     } catch (err) {
       console.error('Failed to load experiment:', err);
@@ -161,6 +177,16 @@ const StudentExperimentDetailPage = () => {
       });
     } catch (err) {
       console.error('Failed to load student evaluations:', err);
+    }
+  };
+
+  const fetchVivaData = async () => {
+    try {
+      const res = await vivaService.getStudentViva(experimentId);
+      const data = res.data || res;
+      setVivaData(data || { currentViva: null, history: [], reevaluationRequest: null });
+    } catch (err) {
+      console.error('Failed to load viva data:', err);
     }
   };
 
@@ -250,6 +276,34 @@ const StudentExperimentDetailPage = () => {
     }
   };
 
+  // Student submits re-evaluation request
+  const handleRequestReevaluation = async (e) => {
+    e.preventDefault();
+    if (!reevalReason || reevalReason.trim().length < 5) {
+      setReevalError('Please provide a reason of at least 5 characters.');
+      return;
+    }
+
+    setSubmittingReeval(true);
+    setReevalError('');
+    setReevalSuccess('');
+    try {
+      await reevaluationService.requestReevaluation({
+        experimentId,
+        reason: reevalReason
+      });
+      setReevalSuccess('Re-evaluation request submitted to faculty.');
+      setShowReevalModal(false);
+      setReevalReason('');
+      await fetchVivaData();
+    } catch (err) {
+      console.error('Failed to request re-evaluation:', err);
+      setReevalError(err.response?.data?.message || 'Failed to submit re-evaluation request.');
+    } finally {
+      setSubmittingReeval(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'SUCCESS':
@@ -273,6 +327,13 @@ const StudentExperimentDetailPage = () => {
     evaluationsData.evaluations && evaluationsData.evaluations.length > 0
       ? evaluationsData.evaluations[evaluationsData.evaluations.length - 1]
       : null;
+
+  const currentViva = vivaData.currentViva;
+  const reevaluationRequest = vivaData.reevaluationRequest;
+
+  const automatedHighest = evaluationsData.highestScore || 0;
+  const vivaScore = currentViva ? currentViva.marks : 0;
+  const totalScore = currentViva ? Math.round((automatedHighest + vivaScore) * 100) / 100 : null;
 
   const attemptsUsed = evaluationsData.totalAttempts || submissions.length;
   const attemptsRemaining = Math.max(0, 3 - attemptsUsed);
@@ -334,7 +395,7 @@ const StudentExperimentDetailPage = () => {
         </div>
       </div>
 
-      {/* Experiment Banner & Scoring Metric Bar */}
+      {/* Experiment Banner & Academic Scoring Bar */}
       <div
         style={{
           backgroundColor: 'var(--color-surface)',
@@ -373,11 +434,12 @@ const StudentExperimentDetailPage = () => {
           </h1>
         </div>
 
-        {/* Phase 7 Evaluation Summary Metrics */}
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        {/* Phase 7 & 8 Scoring Metrics Suite */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Automated Score / 10 */}
           <div
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.85rem',
               backgroundColor: 'var(--color-canvas)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--color-border)',
@@ -385,16 +447,17 @@ const StudentExperimentDetailPage = () => {
             }}
           >
             <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Highest Score
+              Auto Score
             </span>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-              {evaluationsData.highestScore} <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 10</span>
+            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+              {evaluationsData.highestScore} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 10</span>
             </div>
           </div>
 
+          {/* Viva Score / 5 */}
           <div
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.85rem',
               backgroundColor: 'var(--color-canvas)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--color-border)',
@@ -402,10 +465,28 @@ const StudentExperimentDetailPage = () => {
             }}
           >
             <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Latest Attempt
+              Viva Score
             </span>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: latestEvaluation ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
-              {latestEvaluation ? `${latestEvaluation.score} / 10` : '— / 10'}
+            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: currentViva ? '#16a34a' : 'var(--color-text-muted)' }}>
+              {currentViva ? `${currentViva.marks}` : '—'} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 5</span>
+            </div>
+          </div>
+
+          {/* Academic Total / 15 */}
+          <div
+            style={{
+              padding: '0.4rem 0.85rem',
+              backgroundColor: currentViva ? 'var(--color-primary-subtle)' : 'var(--color-canvas)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-primary)',
+              textAlign: 'center'
+            }}
+          >
+            <span style={{ fontSize: '0.6875rem', color: 'var(--color-primary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Score
+            </span>
+            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+              {totalScore !== null ? `${totalScore}` : '—'} <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 500 }}>/ 15</span>
             </div>
           </div>
 
@@ -436,7 +517,7 @@ const StudentExperimentDetailPage = () => {
         </div>
       </div>
 
-      {/* Submit Success / Error Notifications */}
+      {/* Notifications */}
       {submitSuccessMsg && (
         <div
           style={{
@@ -453,6 +534,25 @@ const StudentExperimentDetailPage = () => {
         >
           <span>🎉 {submitSuccessMsg}</span>
           <button onClick={() => setSubmitSuccessMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#166534' }}>✕</button>
+        </div>
+      )}
+
+      {reevalSuccess && (
+        <div
+          style={{
+            padding: '0.75rem 1rem',
+            backgroundColor: '#DCFCE7',
+            border: '1px solid #86EFAC',
+            color: '#166534',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.875rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
+          <span>📬 {reevalSuccess}</span>
+          <button onClick={() => setReevalSuccess('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#166534' }}>✕</button>
         </div>
       )}
 
@@ -474,6 +574,144 @@ const StudentExperimentDetailPage = () => {
           <button onClick={() => setSubmitErrorMsg('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991B1B' }}>✕</button>
         </div>
       )}
+
+      {/* Phase 8: VIVA EVALUATION & RE-EVALUATION STATUS CARD */}
+      <div
+        className="card"
+        style={{
+          padding: '1.25rem',
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.25rem' }}>🎙</span>
+            <h3 style={{ fontSize: '1rem', margin: 0, color: 'var(--color-text-primary)' }}>
+              Viva Voce Assessment (Oral Defense &bull; 5 Marks)
+            </h3>
+            {currentViva ? (
+              <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>
+                ✓ EVALUATED ({currentViva.marks} / 5)
+              </span>
+            ) : (
+              <span className="badge badge-warning" style={{ fontSize: '0.6875rem' }}>
+                ⏳ Awaiting Faculty Evaluation
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {vivaData.history.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setShowVivaHistoryModal(true)}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+              >
+                📜 Viva History ({vivaData.history.length} versions)
+              </button>
+            )}
+
+            {currentViva && !reevaluationRequest && (
+              <button
+                type="button"
+                onClick={() => {
+                  setReevalError('');
+                  setShowReevalModal(true);
+                }}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+              >
+                🔄 Request Re-evaluation
+              </button>
+            )}
+          </div>
+        </div>
+
+        {currentViva ? (
+          <div
+            style={{
+              backgroundColor: 'var(--color-surface-hover)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-border)',
+              padding: '0.875rem 1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+              fontSize: '0.8125rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div>
+                <strong>Evaluated By:</strong> {currentViva.evaluatedBy?.name || 'Faculty'} &bull;{' '}
+                <span style={{ color: 'var(--color-text-secondary)' }}>
+                  {new Date(currentViva.evaluatedAt || currentViva.createdAt).toLocaleDateString()}
+                </span>
+                {currentViva.evaluationVersion > 1 && (
+                  <span className="badge badge-warning" style={{ marginLeft: '0.5rem', fontSize: '0.6875rem' }}>
+                    Version #{currentViva.evaluationVersion} (Re-evaluated)
+                  </span>
+                )}
+              </div>
+
+              <div style={{ fontSize: '1.125rem', fontWeight: 800, color: '#16a34a' }}>
+                {currentViva.marks} / 5 Marks
+              </div>
+            </div>
+
+            {currentViva.remarks && (
+              <div style={{ color: 'var(--color-text-primary)' }}>
+                <strong>Faculty Remarks:</strong> <em>"{currentViva.remarks}"</em>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+            After you have completed your experiment execution and official submission, present your solution to your lab faculty for oral defense evaluation.
+          </p>
+        )}
+
+        {/* Re-evaluation Request Status Banner */}
+        {reevaluationRequest && (
+          <div
+            style={{
+              backgroundColor: 'var(--color-canvas)',
+              border: '1px dashed var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.75rem 1rem',
+              fontSize: '0.75rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}
+          >
+            <div>
+              <strong>Re-evaluation Request:</strong>{' '}
+              {reevaluationRequest.status === 'PENDING' && <span className="badge badge-warning">⏳ Under Review</span>}
+              {reevaluationRequest.status === 'COMPLETED' && <span className="badge badge-success">✓ Approved &amp; Updated</span>}
+              {reevaluationRequest.status === 'REJECTED' && <span className="badge badge-error">✗ Declined</span>}
+              <div style={{ color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
+                <strong>Reason:</strong> {reevaluationRequest.reason}
+              </div>
+              {reevaluationRequest.reviewRemarks && (
+                <div style={{ color: 'var(--color-primary)', marginTop: '0.2rem' }}>
+                  <strong>Faculty Feedback:</strong> {reevaluationRequest.reviewRemarks}
+                </div>
+              )}
+            </div>
+
+            <div style={{ color: 'var(--color-text-muted)' }}>
+              Requested on {new Date(reevaluationRequest.requestedAt).toLocaleDateString()}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* TAB 1: CODE STUDIO WORKBENCH */}
       {activeViewTab === 'workbench' && (
@@ -623,7 +861,7 @@ const StudentExperimentDetailPage = () => {
             height="460px"
           />
 
-          {/* Phase 7 Test Case Evaluation Results Card (If latest evaluation exists) */}
+          {/* Phase 7 Test Case Evaluation Results Card */}
           {latestEvaluation && (
             <div
               className="card"
@@ -640,7 +878,7 @@ const StudentExperimentDetailPage = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '1.25rem' }}>🧪</span>
                   <h3 style={{ fontSize: '1rem', margin: 0, color: 'var(--color-text-primary)' }}>
-                    Evaluation Results: Attempt #{latestEvaluation.attemptNumber}
+                    Automated Evaluation Results: Attempt #{latestEvaluation.attemptNumber}
                   </h3>
                   {latestEvaluation.isHighestScore && (
                     <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>
@@ -1069,6 +1307,180 @@ const StudentExperimentDetailPage = () => {
               >
                 Confirm &amp; Submit
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REQUEST RE-EVALUATION MODAL */}
+      {showReevalModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              padding: '1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)' }}>
+                <span style={{ fontSize: '1.25rem' }}>🔄</span>
+                <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Request Viva Re-evaluation</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReevalModal(false)}
+                className="btn btn-secondary"
+                style={{ padding: '0.2rem 0.5rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+              Current Viva Score: <strong>{currentViva?.marks} / 5</strong>. If you believe your oral defense warrants a reassessment, specify the technical justification below.
+            </p>
+
+            {reevalError && (
+              <div className="alert alert-error" style={{ fontSize: '0.8125rem' }}>
+                {reevalError}
+              </div>
+            )}
+
+            <form onSubmit={handleRequestReevaluation} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  Reason for Re-evaluation Request <span style={{ color: 'var(--color-error)' }}>*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={reevalReason}
+                  onChange={(e) => setReevalReason(e.target.value)}
+                  placeholder="Explain why you are requesting a reassessment of your Viva voce assessment..."
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    fontSize: '0.8125rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--color-border)',
+                    backgroundColor: 'var(--color-canvas)',
+                    color: 'var(--color-text-primary)',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowReevalModal(false)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReeval}
+                  className="btn btn-primary"
+                >
+                  {submittingReeval ? 'Submitting...' : 'Submit Re-evaluation Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIVA VERSION HISTORY MODAL */}
+      {showVivaHistoryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '540px',
+              width: '100%',
+              padding: '1.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)' }}>
+                <span style={{ fontSize: '1.25rem' }}>📜</span>
+                <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Viva Evaluation History</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowVivaHistoryModal(false)}
+                className="btn btn-secondary"
+                style={{ padding: '0.2rem 0.5rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {vivaData.history.map((item) => (
+                <div
+                  key={item._id}
+                  style={{
+                    backgroundColor: item.isCurrent ? 'var(--color-surface-hover)' : 'var(--color-canvas)',
+                    border: item.isCurrent ? '1px solid #16a34a' : '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.875rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '0.875rem' }}>
+                      Version #{item.evaluationVersion} {item.isCurrent && '★ Current Official Score'}
+                    </strong>
+                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#16a34a' }}>
+                      {item.marks} / 5
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                    Evaluated by {item.evaluatedBy?.name || 'Faculty'} on {new Date(item.evaluatedAt).toLocaleDateString()}
+                  </div>
+
+                  {item.remarks && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)', marginTop: '0.2rem' }}>
+                      <em>"{item.remarks}"</em>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>

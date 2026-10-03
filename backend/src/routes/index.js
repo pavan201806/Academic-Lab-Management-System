@@ -10,6 +10,8 @@ const experimentRoutes = require('./experiment.routes');
 const submissionRoutes = require('./submission.routes');
 const testCaseRoutes = require('./testCase.routes');
 const evaluationRoutes = require('./evaluation.routes');
+const vivaRoutes = require('./viva.routes');
+const reevaluationRoutes = require('./reevaluation.routes');
 
 // Mount routes
 router.use('/health', healthRoutes);
@@ -22,12 +24,7 @@ router.use('/experiments', experimentRoutes);
 router.use('/submissions', submissionRoutes);
 router.use('/test-cases', testCaseRoutes);
 router.use('/evaluations', evaluationRoutes);
-
-// Additional routes defined in Architecture.md:
-// router.use('/submissions', submissionRoutes);
-// router.use('/evaluations', evaluationRoutes);
-// router.use('/viva', vivaRoutes);
-// router.use('/notifications', notificationRoutes);
-// router.use('/reports', reportRoutes);
+router.use('/viva', vivaRoutes);
+router.use('/reevaluations', reevaluationRoutes);
 
 module.exports = router;

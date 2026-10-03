@@ -5,6 +5,7 @@ import { labService } from '../../services/labService';
 import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import TestCaseManagementModal from '../../components/testcases/TestCaseManagementModal';
+import VivaManagementModal from '../../components/viva/VivaManagementModal';
 
 const PROGRAMMING_LANGUAGES = ['C', 'C++', 'Java', 'Python'];
 
@@ -30,6 +31,8 @@ const TeacherExperimentManagementPage = () => {
   const [reopeningExp, setReopeningExp] = useState(null);
   const [showTestCasesModal, setShowTestCasesModal] = useState(false);
   const [selectedTestCasesExp, setSelectedTestCasesExp] = useState(null);
+  const [showVivaModal, setShowVivaModal] = useState(false);
+  const [selectedVivaExp, setSelectedVivaExp] = useState(null);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -616,6 +619,23 @@ const TeacherExperimentManagementPage = () => {
                     }}
                   >
                     🧪 Test Cases & Scoring
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedVivaExp(exp);
+                      setShowVivaModal(true);
+                    }}
+                    className="btn btn-secondary"
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '0.35rem 0.75rem',
+                      borderColor: '#16a34a',
+                      color: '#16a34a',
+                      fontWeight: 600
+                    }}
+                  >
+                    🎙 Viva &amp; Re-eval (/5)
                   </button>
 
                   {exp.status === 'DRAFT' && (
@@ -1214,6 +1234,19 @@ const TeacherExperimentManagementPage = () => {
           setSelectedTestCasesExp(null);
         }}
         experiment={selectedTestCasesExp}
+      />
+
+      {/* ========================================================================= */}
+      {/* VIVA & RE-EVALUATION MODAL                                                */}
+      {/* ========================================================================= */}
+      <VivaManagementModal
+        isOpen={showVivaModal}
+        onClose={() => {
+          setShowVivaModal(false);
+          setSelectedVivaExp(null);
+        }}
+        experiment={selectedVivaExp}
+        labId={labId}
       />
     </div>
   );

@@ -6,6 +6,8 @@ const Experiment = require('./experiment.model');
 const Submission = require('./submission.model');
 const TestCase = require('./testCase.model');
 const Evaluation = require('./evaluation.model');
+const VivaEvaluation = require('./vivaEvaluation.model');
+const ReevaluationRequest = require('./reevaluationRequest.model');
 
 module.exports = {
   User,
@@ -15,7 +17,9 @@ module.exports = {
   Experiment,
   Submission,
   TestCase,
-  Evaluation
+  Evaluation,
+  VivaEvaluation,
+  ReevaluationRequest
 };
 
 
