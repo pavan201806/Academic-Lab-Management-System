@@ -5,9 +5,11 @@ const isValidRollNumber = (value) => {
 };
 
 const authValidators = require('./auth.validator');
+const academicValidators = require('./academic.validator');
 
 module.exports = {
   ALPHANUMERIC_REGEX,
   isValidRollNumber,
-  ...authValidators
+  ...authValidators,
+  ...academicValidators
 };

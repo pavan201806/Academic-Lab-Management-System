@@ -60,7 +60,8 @@ const LoginPage = () => {
       if (result.user.mustChangePassword) {
         navigate('/change-password', { replace: true });
       } else {
-        const from = location.state?.from?.pathname || '/dashboard';
+        const defaultPath = result.user?.role === 'ADMIN_HOD' ? '/admin/dashboard' : '/dashboard';
+        const from = location.state?.from?.pathname || defaultPath;
         navigate(from, { replace: true });
       }
     }

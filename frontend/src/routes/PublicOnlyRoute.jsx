@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const PublicOnlyRoute = ({ children }) => {
-  const { isAuthenticated, loading, mustChangePassword } = useAuth();
+  const { isAuthenticated, loading, mustChangePassword, user } = useAuth();
 
   if (loading) {
     return (
@@ -18,10 +18,12 @@ const PublicOnlyRoute = ({ children }) => {
     if (mustChangePassword) {
       return <Navigate to="/change-password" replace />;
     }
-    return <Navigate to="/dashboard" replace />;
+    const target = user?.role === 'ADMIN_HOD' ? '/admin/dashboard' : '/dashboard';
+    return <Navigate to={target} replace />;
   }
 
   return children;
 };
 
 export default PublicOnlyRoute;
+

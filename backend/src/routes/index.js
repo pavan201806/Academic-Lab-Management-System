@@ -2,15 +2,20 @@ const express = require('express');
 const router = express.Router();
 const healthRoutes = require('./health.routes');
 const authRoutes = require('./auth.routes');
+const userRoutes = require('./user.routes');
+const sectionRoutes = require('./section.routes');
+const labRoutes = require('./lab.routes');
+const labAssignmentRoutes = require('./labAssignment.routes');
 
-// Mount health and auth routes
+// Mount routes
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/sections', sectionRoutes);
+router.use('/labs', labRoutes);
+router.use('/lab-assignments', labAssignmentRoutes);
 
 // Additional routes defined in Architecture.md:
-// router.use('/users', userRoutes);
-// router.use('/labs', labRoutes);
-// router.use('/sections', sectionRoutes);
 // router.use('/experiments', experimentRoutes);
 // router.use('/submissions', submissionRoutes);
 // router.use('/evaluations', evaluationRoutes);
