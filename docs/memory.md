@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 11 — Admin/HOD Dashboard**
+**Phase 13 — Security, Validation & Hardening**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -92,6 +92,24 @@ Status: Completed & Verified (Ready for Review)
     - **Backend Regression Tests:** 283/283 PASSED across all phases.
     - **Frontend Production Build:** Built cleanly with Vite (0 errors).
     - **Docker Runtime Testing Status:** Docker sandbox configuration tests pass; real Docker runtime integration testing remains pending because Docker is not available in the Windows environment.
+
+- **Phase 13 — Security, Validation & Hardening:**
+  - **Status:** COMPLETE
+  - **Security Audit & Hardening Implemented:**
+    - **Authentication & Password Hardening:** Enforced account active-state checks, token expiration/signature verification, strict password entropy (minimum 8 characters, uppercase, number, symbol), temporary-password security gate, and prevention of reusing current temporary passwords as new passwords.
+    - **Secret & Token Leak Protection:** Strict User schema `toJSON` sanitization stripping `passwordHash` and `__v`, secure `comparePassword` handling, and minimal non-sensitive JWT payloads (`userId`, `role`, `mustChangePassword`).
+    - **Role Authorization & Spoofing Defense:** Server-authoritative role resolution ignoring client-supplied role/identity parameters in request body or queries. Verified access controls across `ADMIN_HOD`, `TEACHER`, and `STUDENT` roles.
+    - **IDOR & Scope Isolation:** Enforced strict multi-tenant boundary checks across submissions, evaluations, viva voicings, re-evaluations, lab curricula, section cohorts, notifications, and reports. Students cannot view or tamper with other students' records; teachers cannot modify or grade outside assigned lab/section pairs.
+    - **Mass-Assignment Defense:** Whitelisted updatable fields in user management, experiment authoring, lab management, and section allocations; protected fields (`role`, `passwordHash`, `createdBy`, `lab`, `score`, `attemptNumber`, `isHighestScore`, `version`) cannot be forged via client payloads.
+    - **Input Validation & Type Guards:** Sanitized MongoDB ObjectIds via `validateObjectIdParam` returning controlled `400 Bad Request` without leaking raw Mongoose stack traces. Formatted malformed JSON `SyntaxError` instances to clean responses. Enforced numeric boundaries ($0 \le \text{viva} \le 5$, $1 \le \text{experimentNumber} \le 12$, positive marks, string scalar guards). Added `validateAssignStudentInput`.
+    - **File Upload & PDF Extraction Security:** Multipart upload validations with MIME type check, 10MB file size limits, `%PDF-` magic header verification, empty file rejection, and transient memory parsing preventing filesystem path traversal.
+    - **Code Execution Sandbox Audit:** Confirmed Docker container isolation parameters (`--network none`, `--user 1000:1000`, `--cap-drop ALL`, `--security-opt no-new-privileges`, `--cpus 1.0`, `--memory 256m`, `--pids-limit 64`), execution timeouts (5000ms), 64KB source code limit, 16KB stdin limit, and safe fallback reporting (`EXECUTION_ERROR`) without host execution fallback.
+    - **Defensive Headers & Rate Limiting:** Added `securityHeaders` middleware (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-XSS-Protection: 0`, `X-Download-Options: noopen`, `X-Permitted-Cross-Domain-Policies: none`, `app.disable('x-powered-by')`) and sliding-window `rateLimiter` on auth, code execution, and upload routes.
+  - **Verification & Test Results:**
+    - **Phase 13 Dedicated Security Test Suite:** 34/34 PASSED (`backend/src/tests/security_hardening.test.js`)
+    - **Total Regression Suite:** 317/317 PASSED (283 baseline + 34 Phase 13)
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors)
+    - **Docker Runtime Testing Status:** Docker sandbox configuration and guardrail tests pass; real Docker runtime integration testing remains pending because Docker is unavailable on the current Windows development environment.
 
 ---
 

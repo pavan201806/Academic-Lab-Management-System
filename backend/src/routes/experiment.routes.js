@@ -3,6 +3,7 @@ const router = express.Router();
 const experimentController = require('../controllers/experiment.controller');
 const { authenticate, authorize, requirePasswordChangeCompleted } = require('../middleware/auth');
 const { upload, handleUploadError } = require('../middleware/upload');
+const { uploadLimiter } = require('../middleware/rateLimiter');
 const {
   validateObjectIdParam,
   validateExperimentInput,
@@ -33,6 +34,7 @@ router.patch('/:id/status', authorize('ADMIN_HOD', 'TEACHER'), validateObjectIdP
 router.post(
   '/extract-pdf',
   authorize('ADMIN_HOD', 'TEACHER'),
+  uploadLimiter,
   upload.single('pdf'),
   handleUploadError,
   experimentController.extractPdfExperiments

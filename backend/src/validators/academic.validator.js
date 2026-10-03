@@ -139,11 +139,27 @@ const validateCreateUserInput = (req, res, next) => {
   next();
 };
 
+const validateAssignStudentInput = (req, res, next) => {
+  const { studentId, sectionCode } = req.body;
+
+  if (!studentId || !validateObjectId(studentId)) {
+    return next(new AppError('Valid student reference ID is required', 400));
+  }
+
+  if (sectionCode !== undefined && typeof sectionCode !== 'string') {
+    return next(new AppError('Section code must be a string', 400));
+  }
+
+  next();
+};
+
 module.exports = {
   validateObjectId,
   validateObjectIdParam,
   validateSectionInput,
   validateLabInput,
   validateLabAssignmentInput,
-  validateCreateUserInput
+  validateCreateUserInput,
+  validateAssignStudentInput
 };
+

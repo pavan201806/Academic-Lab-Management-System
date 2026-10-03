@@ -6,7 +6,13 @@ const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Internal Server Error';
   let errors = err.errors || null;
 
-  // Log error details
+  // Handle JSON syntax parse errors
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    statusCode = 400;
+    message = 'Malformed JSON in request body';
+  }
+
+  // Log error details (internal logs only)
   if (statusCode >= 500) {
     logger.error(`${req.method} ${req.originalUrl} - ${err.stack || err.message}`);
   } else {
@@ -37,3 +43,4 @@ const errorHandler = (err, req, res, next) => {
 };
 
 module.exports = errorHandler;
+

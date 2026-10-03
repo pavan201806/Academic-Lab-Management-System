@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const submissionController = require('../controllers/submission.controller');
 const { authenticate, authorize, requirePasswordChangeCompleted } = require('../middleware/auth');
+const { codeExecutionLimiter } = require('../middleware/rateLimiter');
 const {
   validateObjectIdParam,
   validateRunInput,
@@ -15,6 +16,7 @@ router.use(requirePasswordChangeCompleted);
 router.post(
   '/run',
   authorize('STUDENT'),
+  codeExecutionLimiter,
   validateRunInput,
   submissionController.runCode
 );
@@ -22,6 +24,7 @@ router.post(
 router.post(
   '/submit',
   authorize('STUDENT'),
+  codeExecutionLimiter,
   validateSubmitInput,
   submissionController.submitCode
 );

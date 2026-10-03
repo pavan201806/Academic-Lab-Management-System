@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node src/utils/seed.js",
-    "test": "node src/tests/auth.test.js && node src/tests/api.auth.test.js && node src/tests/security.verification.test.js && node src/tests/academic.test.js && node src/tests/lab.access.test.js && node src/tests/experiment.test.js && node src/tests/pdf.extraction.test.js && node src/tests/submission.test.js && node src/tests/sandbox.security.test.js && node src/tests/evaluation.test.js && node src/tests/viva.test.js && node src/tests/notification_progress.test.js && node src/tests/report.test.js && node src/tests/admin_dashboard.test.js"
+    "test": "node src/tests/auth.test.js && node src/tests/api.auth.test.js && node src/tests/security.verification.test.js && node src/tests/academic.test.js && node src/tests/lab.access.test.js && node src/tests/experiment.test.js && node src/tests/pdf.extraction.test.js && node src/tests/submission.test.js && node src/tests/sandbox.security.test.js && node src/tests/evaluation.test.js && node src/tests/viva.test.js && node src/tests/notification_progress.test.js && node src/tests/report.test.js && node src/tests/admin_dashboard.test.js && node src/tests/security_hardening.test.js"
   },
   "keywords": [
     "academic",

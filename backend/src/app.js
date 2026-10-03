@@ -4,8 +4,15 @@ const config = require('./config/env');
 const apiRoutes = require('./routes');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
+const securityHeaders = require('./middleware/securityHeaders');
 
 const app = express();
+
+// Disable X-Powered-By header to prevent technology disclosure
+app.disable('x-powered-by');
+
+// Apply security headers
+app.use(securityHeaders);
 
 // Enable CORS with configured origin
 app.use(
