@@ -376,13 +376,22 @@ const LabDetailsPage = () => {
           </div>
 
           {isTeacherOrAdmin && (
-            <Link
-              to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments` : `/teacher/labs/${lab._id}/experiments`}
-              className="btn btn-primary"
-              style={{ fontSize: '0.8125rem' }}
-            >
-              ⚙️ Manage &amp; Author Protocols &rarr;
-            </Link>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Link
+                to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/submissions` : `/teacher/labs/${lab._id}/submissions`}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.8125rem' }}
+              >
+                📜 Submissions Ledger &rarr;
+              </Link>
+              <Link
+                to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments` : `/teacher/labs/${lab._id}/experiments`}
+                className="btn btn-primary"
+                style={{ fontSize: '0.8125rem' }}
+              >
+                ⚙️ Manage &amp; Author Protocols &rarr;
+              </Link>
+            </div>
           )}
         </div>
 

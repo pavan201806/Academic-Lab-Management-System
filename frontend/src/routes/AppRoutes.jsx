@@ -30,6 +30,9 @@ import StudentExperimentDetailPage from '../pages/student/StudentExperimentDetai
 // Phase 5 PDF Extraction Suite Page
 import PdfExperimentExtractionPage from '../pages/teacher/PdfExperimentExtractionPage';
 
+// Phase 6 Submissions Ledger Page
+import TeacherSubmissionsLedgerPage from '../pages/teacher/TeacherSubmissionsLedgerPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -69,7 +72,7 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* Phase 2, 4 & 5: Admin Academic Structure, Experiments & PDF Import */}
+      {/* Phase 2, 4, 5 & 6: Admin Academic Structure, Experiments, PDF Import & Submissions */}
       <Route
         path="/admin"
         element={
@@ -84,13 +87,14 @@ const AppRoutes = () => {
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
+        <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
         <Route path="sections" element={<SectionManagementPage />} />
         <Route path="teachers" element={<TeacherManagementPage />} />
         <Route path="students" element={<StudentManagementPage />} />
         <Route path="assignments" element={<LabAssignmentPage />} />
       </Route>
 
-      {/* Phase 3, 4 & 5: Teacher Laboratory Management, Authoring & PDF Extraction Console */}
+      {/* Phase 3, 4, 5 & 6: Teacher Laboratory Management, Authoring, PDF Extraction & Submissions */}
       <Route
         path="/teacher"
         element={
@@ -104,6 +108,7 @@ const AppRoutes = () => {
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
+        <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
       </Route>
 
       {/* Phase 3 & 4: Student Laboratory Hub & Experiment Protocol View */}

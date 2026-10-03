@@ -7,12 +7,14 @@ const isValidRollNumber = (value) => {
 const authValidators = require('./auth.validator');
 const academicValidators = require('./academic.validator');
 const experimentValidators = require('./experiment.validator');
+const submissionValidators = require('./submission.validator');
 
 module.exports = {
   ALPHANUMERIC_REGEX,
   isValidRollNumber,
   ...authValidators,
   ...academicValidators,
-  ...experimentValidators
+  ...experimentValidators,
+  ...submissionValidators
 };
 

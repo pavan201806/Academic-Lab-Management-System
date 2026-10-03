@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 5 — PDF Experiment Extraction**
+**Phase 6 — Code Execution and Submission**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -29,53 +29,92 @@ Status: Completed & Verified (Ready for Review)
 - **Phase 4 — Experiment Management:**
   - Experiment Mongoose model, 1–12 capacity limit, controlled lifecycle (`DRAFT`, `SCHEDULED`, `PUBLISHED`, `CLOSED`, `REOPENED`), deadline and extension validation, batch reordering, Stitch authoring console and student protocol viewer.
 - **Phase 5 — PDF Experiment Extraction:**
-  - **PDF Extraction Engine (`backend/src/services/pdfExtractionService.js`):**
-    - Parses text-based laboratory PDF manuals using `pdf-parse`.
-    - Magic byte header validation (`%PDF-`), rejection of corrupt, empty, non-PDF, or image-only scanned files.
-    - Pattern recognition for experiment headings (`Experiment N:`, `EXP N`, `N.`, Roman numerals), academic objectives, descriptions, procedures, and programming language whitelist (`C`, `C++`, `Java`, `Python`).
-    - Maximum 12 experiment normalization with sequential fallback numbering.
-  - **Memory-Based File Upload Middleware (`backend/src/middleware/upload.js`):**
-    - Secure `multer` memory storage (no orphaned temporary files on disk), 10MB size limit, MIME/extension filter.
-  - **Experiment Service & Endpoints (`backend/src/services/experimentService.js`, `backend/src/controllers/experiment.controller.js`, `backend/src/routes/experiment.routes.js`):**
-    - `POST /api/experiments/extract-pdf`: Accepts multipart PDF, validates lab write access, extracts candidate experiments into a temporary reviewable structure without database persistence.
-    - `POST /api/experiments/confirm-pdf`: Re-authorizes faculty/admin access, strictly validates batch constraints (unique numbers, 1–12 bounds, active capacity <= 12, non-collision with existing DB experiments), creates `DRAFT` experiment documents.
-  - **Backend Test Suite (`backend/src/tests/pdf.extraction.test.js`):**
-    - 20 unit and RBAC tests covering PDF header validation, corrupt file handling, text extraction, numbering patterns, max 12 limits, no-persist on extract, review confirmation, duplicate number rejection, capacity rejection, teacher RBAC, and IDOR protection. 100% passing.
-  - **Frontend Multi-Step Extraction Suite (`frontend/src/pages/teacher/PdfExperimentExtractionPage.jsx`):**
-    - Built according to Stitch reference (`experiment_authoring_multi_step_pdf_extraction_suite`):
-      - Step 1: Drag & drop PDF upload zone with size/format checks.
-      - Step 2: Extraction progress and status animation.
-      - Step 3: Editable review table (inline title & sequence editing, detailed properties modal, add custom row, remove row, duplicate warnings, and capacity indicators).
-      - Actions: Discard & Return or Confirm & Save to persist into laboratory curriculum.
-    - Integrated with `TeacherExperimentManagementPage.jsx` via "Import from PDF Manual" action button.
-    - Registered routes in `AppRoutes.jsx`: `/admin/labs/:labId/experiments/import-pdf` and `/teacher/labs/:labId/experiments/import-pdf`.
+  - PDF parser (`pdf-parse`) and heuristic recognition engine, multipart upload middleware, transient extraction preview endpoint (`POST /api/experiments/extract-pdf`), atomic confirmation endpoint (`POST /api/experiments/confirm-pdf`), Stitch-based 3-step extraction UI, 20/20 passing tests.
+- **Phase 6 — Code Execution and Submission:**
+  - **Submission Model (`backend/src/models/submission.model.js`):**
+    - Fields: `student` (ref User), `experiment` (ref Experiment), `lab` (ref Lab), `section` (ref Section), `attemptNumber` (1, 2, or 3), `language` (`['C', 'C++', 'Java', 'Python']`), `sourceCode` (max 64KB), `stdin` (max 16KB), `status` (`SUBMITTED`, `SUCCESS`, `COMPILE_ERROR`, `RUNTIME_ERROR`, `TIMEOUT`, `OUTPUT_LIMIT`, `EXECUTION_ERROR`), `executionOutput` (stdout, stderr, exitCode, executionTimeMs), `submittedAt`, `active`, compound indexes for student/experiment attempt lookups and lab submissions ledger.
+  - **Dedicated Execution Runner Image (`docker/runner.Dockerfile`):**
+    - Ubuntu 22.04 base with Python 3, OpenJDK 21, GCC, and G++.
+    - Unprivileged `runner` user (`1000:1000`).
+    - Ephemeral workspace mounted at `/workspace`.
+  - **Docker Container Execution Engine (`backend/src/services/codeExecutionService.js`):**
+    - Ephemeral isolated Docker container spawned for every execution (`docker run --rm --name lab_runner_<id>`).
+    - Security options: `--network none`, `--user 1000:1000`, `--cap-drop ALL`, `--security-opt no-new-privileges`.
+    - Resource controls: `--cpus 1.0`, `--memory 256m`, `--pids-limit 64`.
+    - Host mounts: ONLY the ephemeral temporary directory is mounted at `/workspace:rw`. No backend source code, `.env` secrets, or host filesystem is mounted.
+    - Strict Limits: 5000ms hard timeout (dispatches `SIGKILL` and `docker kill`), 64KB max output buffer (`OUTPUT_LIMIT`), 64KB max source code, 16KB max stdin.
+    - Zero shell string concatenation (all invocations use structured argument arrays).
+    - Teardown: Ephemeral temporary directories are removed in `finally` blocks.
+  - **Submission Business Logic (`backend/src/services/submissionService.js`):**
+    - `validateStudentAccess`: Verifies active student account, enrolled section, active lab assignment to section, and experiment status (`PUBLISHED` or `REOPENED`). Prevents cross-cohort and cross-lab IDOR.
+    - `runCode`: Manual test execution. Runs student code in sandbox with custom stdin, returning execution result without saving to MongoDB or consuming attempts.
+    - `submitCode`: Official submission. Re-validates student access and experiment allowed languages, enforces strict 3-attempt limit (`Submission.countDocuments < 3`), increments `attemptNumber`, executes code, and persists immutable `Submission` record.
+    - `getStudentSubmissions`: Returns chronological list of student's attempts for an experiment.
+    - `getSubmissionById`: Strict authorization allowing student to view own submission, and assigned teacher/admin to view student submissions in assigned lab.
+    - `getTeacherSubmissionsForLab`: Faculty ledger of all submissions for a laboratory with optional experiment filtering.
+  - **Validation & Routing (`backend/src/validators/submission.validator.js`, `backend/src/routes/submission.routes.js`, `backend/src/controllers/submission.controller.js`):**
+    - `POST /api/submissions/run` [STUDENT]
+    - `POST /api/submissions/submit` [STUDENT]
+    - `GET /api/submissions/experiment/:experimentId` [STUDENT]
+    - `GET /api/submissions/lab/:labId` [TEACHER, ADMIN_HOD]
+    - `GET /api/submissions/:id` [STUDENT, TEACHER, ADMIN_HOD]
+  - **Frontend Components & Pages:**
+    - `frontend/src/services/submissionService.js`: API client methods for run, submit, student history, and teacher lab ledger.
+    - `frontend/src/components/code/CodeEditor.jsx`: Modern syntax-styled code editor with line numbers gutter, tab key handling (inserts 2 spaces, avoids focus blur), character & line count gauges, and dark theme matching Stitch.
+    - `frontend/src/pages/student/StudentExperimentDetailPage.jsx`:
+      - Code Studio tab with language selector (filtered to allowed languages), starter template reset, collapsible custom stdin drawer, "Run Code" test run button, "Official Submit" button with confirmation modal & attempt counter, interactive terminal output console with stdout/stderr tabs, execution time badge, and status badges.
+      - Protocol Guide tab with objective, instructions, and procedure details.
+      - Official Submissions History tab with attempt breakdown, status badges, and source code / output inspection modal.
+    - `frontend/src/pages/teacher/TeacherSubmissionsLedgerPage.jsx`:
+      - Faculty Submissions Ledger for labs with search, experiment filters, status filters, table view of student attempts, and code inspection modal.
+    - Registered routes in `AppRoutes.jsx`: `/teacher/labs/:labId/submissions` and `/admin/labs/:labId/submissions`.
+  - **Test Suite (`backend/src/tests/submission.test.js`, `backend/src/tests/sandbox.security.test.js`):**
+    - 39 Phase 6 submission & RBAC tests covering experiment access, allowed languages, execution lifecycle, attempt increments, 3-attempt limits, immutability, and faculty ledger.
+    - 8 Sandbox Security Configuration & Guardrail tests verifying Docker command arguments (`--network none`, `--user 1000:1000`, `--cap-drop ALL`, `--security-opt no-new-privileges`, `--memory 256m`, `--cpus 1.0`, `--pids-limit 64`), direct host execution fallback rejection, payload limits, and ephemeral workspace isolation.
+    - **Regression Suite Result:** **125/125 unit, RBAC, and configuration tests passing (100%)** across Phases 1 through 6.
+    - **Important Runtime Testing Status:**
+      - Phase 6 Docker-based execution isolation has been implemented in `backend/src/services/codeExecutionService.js`.
+      - Direct host execution fallback is strictly disabled (when Docker is unavailable, safe `EXECUTION_ERROR` is returned without host process execution).
+      - Docker configuration and security guardrail tests pass cleanly.
+      - Full Phase 1–6 regression tests pass cleanly.
+      - **Real Docker runtime integration tests have NOT been executed on the current Windows development machine because Docker is unavailable in PATH.**
+      - Real Docker integration testing remains pending for an environment with Docker available.
 
 ---
 
 ## Currently Working On
 
-- Phase 5 complete and verified. Ready for checkpoint review.
+- Phase 6 Docker execution isolation implemented and verified against unit/RBAC/configuration suites. Real Docker runtime integration testing pending an environment with Docker available. Ready for review.
 
 ---
 
 ## Next Tasks
 
-1. **Phase 6 — Code Execution & Compiler Sandbox (Future Phase):**
-   - In-browser code editor (Monaco / CodeMirror).
-   - Backend compiler sandbox execution engine for C, C++, Java, and Python.
+1. **Phase 7 — Automated Grading & Evaluation (Future Phase):**
+   - Test cases (visible + hidden) engine.
+   - Proportional marks calculation.
+   - Attempt scoring logic.
 
 ---
 
 ## Important Decisions
 
-### PDF Extraction & Review Workflow
-- **No Automatic DB Persistence on Extract:**
-  - `POST /api/experiments/extract-pdf` parses and returns transient JSON only.
-  - Experiments are only saved to MongoDB when the teacher explicitly confirms via `POST /api/experiments/confirm-pdf`.
-- **Text-Based PDF Requirement:**
-  - Operates on text-based PDFs. Scanned/image-only PDFs gracefully return an informative error requesting text-based documents.
-- **Strict Capacity & Collision Checks on Confirmation:**
-  - Backend re-validates the entire confirmation payload: `existingActiveCount + batch.length <= 12`, distinct 1–12 numbers, and non-collision with existing active experiments.
+### Manual Run vs. Official Submission
+- **Manual Run (`POST /api/submissions/run`):**
+  - Designed solely for student testing and debugging.
+  - Does NOT persist anything to MongoDB.
+  - Does NOT consume any official attempt.
+  - Does NOT affect evaluation scores.
+- **Official Submit (`POST /api/submissions/submit`):**
+  - Consumes an official attempt (strictly maximum 3 attempts per experiment).
+  - Creates an immutable `Submission` record in MongoDB.
+  - Captures execution status, stdout, stderr, and runtime metrics.
+
+### Security Isolation
+- **Environment Sanitization:** Strips all process environment variables (`MONGO_URI`, `JWT_SECRET`, etc.) before spawning child compilers and runtimes.
+- **Filesystem Isolation:** Every execution occurs in an ephemeral `os.tmpdir()/lab_sandbox_<uuid>` folder, wiped after execution.
+- **Resource Capping:** 5000ms hard timeout, 64KB max output buffer, 64KB max source code, 16KB max stdin.
+- **Path Sanitization:** Replaces internal host filesystem paths from stderr output with `/sandbox`.
 
 ---
 
@@ -86,8 +125,9 @@ Status: Completed & Verified (Ready for Review)
   - `Section` (`backend/src/models/section.model.js`)
   - `Lab` (`backend/src/models/lab.model.js`)
   - `LabAssignment` (`backend/src/models/labAssignment.model.js`)
-  - `Experiment` (`backend/src/models/experiment.model.js`):
-    - `lab` (ref: Lab), `title`, `experimentNumber` (1-12), `description`, `objective`, `instructions`, `programmingLanguages` (`['C', 'C++', 'Java', 'Python']`), `status` (`DRAFT`, `SCHEDULED`, `PUBLISHED`, `CLOSED`, `REOPENED`), `scheduledAt`, `deadline`, `reopenedUntil`, `order` (1-12), `publishedAt`, `active`, `createdBy` (ref: User), timestamps.
+  - `Experiment` (`backend/src/models/experiment.model.js`)
+  - `Submission` (`backend/src/models/submission.model.js`):
+    - `student` (ref User), `experiment` (ref Experiment), `lab` (ref Lab), `section` (ref Section), `attemptNumber` (1-3), `language` (`['C', 'C++', 'Java', 'Python']`), `sourceCode`, `stdin`, `status` (`SUBMITTED`, `SUCCESS`, `COMPILE_ERROR`, `RUNTIME_ERROR`, `TIMEOUT`, `OUTPUT_LIMIT`, `EXECUTION_ERROR`), `executionOutput`, `submittedAt`, `active`, timestamps.
 
 ---
 
@@ -98,171 +138,6 @@ Status: Completed & Verified (Ready for Review)
 - **Users:** `GET /users`, `GET /users/:id`, `POST /users/teacher`, `POST /users/student`, `PUT /users/:id`, `PATCH /users/:id/status`, `POST /users/:id/reset-password` — Working
 - **Sections:** `GET /sections`, `GET /sections/:id`, `POST /sections`, `PUT /sections/:id`, `PATCH /sections/:id/status`, `GET /sections/:id/students`, `POST /sections/:id/assign-student` — Working
 - **Labs:** `GET /labs/assigned`, `GET /labs/:id`, `GET /labs`, `POST /labs`, `PUT /labs/:id`, `PATCH /labs/:id/status` — Working
-- **Lab Assignments:** `GET /lab-assignments`, `POST /lab-assignments`, `PATCH /lab-assignments/:id/status`, `GET /lab-assignments/lab/:labId`, `GET /lab-assignments/section/:sectionId`, `GET /lab-assignments/teacher/:teacherId` — Working
-- **Experiments:**
-  - `GET /api/experiments` — Working (200 OK)
-  - `GET /api/experiments/:id` — Working (200 OK / 403 / 404)
-  - `POST /api/experiments` — Working (201 Created / 400 / 403 / 409)
-  - `PUT /api/experiments/:id` — Working (200 OK / 400 / 403 / 404)
-  - `PATCH /api/experiments/:id/status` — Working (200 OK)
-  - `POST /api/experiments/:id/publish` — Working (200 OK)
-  - `POST /api/experiments/:id/schedule` — Working (200 OK)
-  - `POST /api/experiments/:id/reopen` — Working (200 OK)
-  - `POST /api/experiments/:id/close` — Working (200 OK)
-  - `PUT /api/experiments/order` — Working (200 OK)
-  - `PATCH /api/experiments/:id/deactivate` — Working (200 OK)
-  - `POST /api/experiments/extract-pdf` — Working (200 OK with transient extracted data / 400 / 403)
-  - `POST /api/experiments/confirm-pdf` — Working (201 Created with persisted DRAFT experiments / 400 / 403 / 409)
-
----
-
-## Known Issues
-
-- None.
-
----
-
-## Verification & Limitations
-
-- **Text-Based PDFs vs. Scanned Images:** Extraction uses text-layer parsing (`pdf-parse`). Pure scanned image PDFs without embedded text streams are gracefully rejected with a helpful user-facing error message asking the faculty to provide a text-based document or use manual creation.
-- **Strict Scope Boundaries Maintained:** Code editor, compilation sandbox, code runner, test cases, student submissions, automated evaluations, viva, and notifications were strictly NOT implemented in Phase 5.
-
----
-
-## Important Files
-
-### Phase 5 Files
-- `backend/src/services/pdfExtractionService.js` (PDF Text Extraction and Experiment Regex Parser)
-- `backend/src/middleware/upload.js` (Multer memory upload middleware with PDF validation)
-- `backend/src/services/experimentService.js` (Added `extractExperimentsFromPdf` and `confirmExtractedExperiments`)
-- `backend/src/controllers/experiment.controller.js` (Added `extractPdfExperiments` and `confirmPdfExperiments`)
-- `backend/src/routes/experiment.routes.js` (Mounted `/extract-pdf` and `/confirm-pdf`)
-- `backend/src/validators/experiment.validator.js` (Added `validateConfirmPdfInput`)
-- `backend/src/tests/pdf.extraction.test.js` (Phase 5 Unit and RBAC Test Suite)
-- `frontend/src/services/experimentService.js` (Added `extractFromPdf` and `confirmPdfExperiments`)
-- `frontend/src/pages/teacher/PdfExperimentExtractionPage.jsx` (Stitch-aligned multi-step extraction suite)
-- `frontend/src/pages/teacher/TeacherExperimentManagementPage.jsx` (Linked PDF extraction action button)
-- `frontend/src/routes/AppRoutes.jsx` (Registered PDF extraction routes)
-
----
-
-## Design Status
-
-- Stitch UI multi-step extraction layout, progress stepper, editable review roster, and detail modals applied.
-
----
-
-## Deployment Status
-
-- Foundation, Authentication, Academic Administration, Lab Access, Experiment Management, and PDF Experiment Extraction layers ready for deployment.
-
----
-
-## Current Database Structure
-
-- **Models Registry (`backend/src/models/index.js`):**
-  - `User` (`backend/src/models/user.model.js`):
-    - `name`, `rollNumber` (unique, uppercase, alphanumeric), `passwordHash` (select: false), `role` (`ADMIN_HOD`, `TEACHER`, `STUDENT`), `mustChangePassword`, `section`, `active`, timestamps.
-  - `Section` (`backend/src/models/section.model.js`):
-    - `name`, `sectionCode` (unique, uppercase), `academicYear`, `semester`, `department`, `active`, timestamps.
-  - `Lab` (`backend/src/models/lab.model.js`):
-    - `name`, `code` (unique, uppercase), `subject`, `department`, `academicYear`, `semester`, `description`, `active`, timestamps.
-  - `LabAssignment` (`backend/src/models/labAssignment.model.js`):
-    - `lab` (ref: Lab), `section` (ref: Section), `teacher` (ref: User), `assignmentType` (`MAIN`, `ASSISTANT`), `active`, `assignedAt`, timestamps.
-  - `Experiment` (`backend/src/models/experiment.model.js`):
-    - `lab` (ref: Lab), `title`, `experimentNumber` (1-12), `description`, `objective`, `instructions`, `programmingLanguages` (`['C', 'C++', 'Java', 'Python']`), `status` (`DRAFT`, `SCHEDULED`, `PUBLISHED`, `CLOSED`, `REOPENED`), `scheduledAt`, `deadline`, `reopenedUntil`, `order` (1-12), `publishedAt`, `active`, `createdBy` (ref: User), timestamps.
-
----
-
-## API Status
-
-- `GET /api/health` — Working (200 OK)
-- **Auth:**
-  - `POST /api/auth/login` — Working (200 OK)
-  - `POST /api/auth/change-password` — Working (200 OK)
-  - `GET /api/auth/me` — Working (200 OK)
-  - `POST /api/auth/logout` — Working (200 OK)
-- **Users:**
-  - `GET /api/users` — Working (200 OK)
-  - `GET /api/users/:id` — Working (200 OK)
-  - `POST /api/users/teacher` — Working (201 Created)
-  - `POST /api/users/student` — Working (201 Created)
-  - `PUT /api/users/:id` — Working (200 OK)
-  - `PATCH /api/users/:id/status` — Working (200 OK)
-  - `POST /api/users/:id/reset-password` — Working (200 OK)
-- **Sections:**
-  - `GET /api/sections` — Working (200 OK)
-  - `GET /api/sections/:id` — Working (200 OK)
-  - `POST /api/sections` — Working (201 Created)
-  - `PUT /api/sections/:id` — Working (200 OK)
-  - `PATCH /api/sections/:id/status` — Working (200 OK)
-  - `GET /api/sections/:id/students` — Working (200 OK)
-  - `POST /api/sections/:id/assign-student` — Working (200 OK)
-- **Labs & Assigned Hub:**
-  - `GET /api/labs/assigned` — Working (200 OK with role-filtered assigned labs)
-  - `GET /api/labs/:id` — Working (200 OK with role-authorized lab details)
-  - `GET /api/labs` — Working (200 OK / Admin only)
-  - `POST /api/labs` — Working (201 Created / Admin only)
-  - `PUT /api/labs/:id` — Working (200 OK / Admin only)
-  - `PATCH /api/labs/:id/status` — Working (200 OK / Admin only)
-- **Lab Assignments:**
-  - `GET /api/lab-assignments` — Working (200 OK)
-  - `POST /api/lab-assignments` — Working (201 Created)
-  - `PATCH /api/lab-assignments/:id/status` — Working (200 OK)
-  - `GET /api/lab-assignments/lab/:labId` — Working (200 OK)
-  - `GET /api/lab-assignments/section/:sectionId` — Working (200 OK)
-  - `GET /api/lab-assignments/teacher/:teacherId` — Working (200 OK)
-- **Experiments (Phase 4):**
-  - `GET /api/experiments` — Working (200 OK with role-based experiment listing)
-  - `GET /api/experiments/:id` — Working (200 OK / 403 Forbidden / 404)
-  - `POST /api/experiments` — Working (201 Created / 400 / 403 / 409)
-  - `PUT /api/experiments/:id` — Working (200 OK / 400 / 403 / 404)
-  - `PATCH /api/experiments/:id/status` — Working (200 OK / 400 / 403)
-  - `POST /api/experiments/:id/publish` — Working (200 OK / 400 / 403)
-  - `POST /api/experiments/:id/schedule` — Working (200 OK / 400 / 403)
-  - `POST /api/experiments/:id/reopen` — Working (200 OK / 400 / 403)
-  - `POST /api/experiments/:id/close` — Working (200 OK / 400 / 403)
-  - `PUT /api/experiments/order` — Working (200 OK / 400 / 403)
-  - `PATCH /api/experiments/:id/deactivate` — Working (200 OK / 403)
-
----
-
-## Known Issues
-
-- None.
-
----
-
-## Verification & Limitations
-
-- **Database Connectivity:** Offline unit and integration test suites validate the Mongoose schema constraints, validator logic, assignment rules, status transitions, and RBAC guards. When connected to live MongoDB Atlas via `.env`, production operations run seamlessly.
-- **Strict Scope Boundaries Maintained:** PDF extraction, OCR, AI experiment parsing, code editor, compilers, test case runners, code execution, student submissions, automated grading, viva, notifications, and reports were strictly NOT implemented in Phase 4.
-
----
-
-## Important Files
-
-### Phase 4 Files
-- `backend/src/models/experiment.model.js` (Mongoose Experiment Schema)
-- `backend/src/validators/experiment.validator.js` (Centralized Experiment Input Validation)
-- `backend/src/services/experimentService.js` (Experiment CRUD, Status Lifecycle, & RBAC Guard)
-- `backend/src/controllers/experiment.controller.js` (Experiment REST Controller)
-- `backend/src/routes/experiment.routes.js` (Protected Experiment Routes)
-- `backend/src/tests/experiment.test.js` (Phase 4 Unit and RBAC Test Suite)
-- `frontend/src/services/experimentService.js` (Frontend Experiment API Service)
-- `frontend/src/pages/teacher/TeacherExperimentManagementPage.jsx` (Stitch-aligned Experiment Management Workbench)
-- `frontend/src/pages/student/StudentExperimentDetailPage.jsx` (Student Experiment Protocol View)
-- `frontend/src/pages/common/LabDetailsPage.jsx` (Integrated Experiment Curriculum List)
-- `frontend/src/routes/AppRoutes.jsx` (Registered Experiment Routes)
-
----
-
-## Design Status
-
-- Stitch UI layouts and tokens applied across Teacher Experiment Management Console, Student Experiment Details, and Lab Details screens.
-
----
-
-## Deployment Status
-
-- Foundation, Authentication, Academic Administration, Lab Access, and Experiment Management layers ready for deployment.
+- **Lab Assignments:** `GET /lab-assignments`, `POST /lab-assignments`, `DELETE /lab-assignments/:id` — Working
+- **Experiments:** `GET /experiments`, `GET /experiments/:id`, `POST /experiments`, `PUT /experiments/:id`, `POST /experiments/:id/publish`, `POST /experiments/:id/schedule`, `POST /experiments/:id/reopen`, `POST /experiments/:id/close`, `PUT /experiments/reorder/batch`, `PATCH /experiments/:id/status`, `POST /experiments/extract-pdf`, `POST /experiments/confirm-pdf` — Working
+- **Submissions:** `POST /submissions/run`, `POST /submissions/submit`, `GET /submissions/experiment/:experimentId`, `GET /submissions/lab/:labId`, `GET /submissions/:id` — Working

@@ -7,6 +7,7 @@ const sectionRoutes = require('./section.routes');
 const labRoutes = require('./lab.routes');
 const labAssignmentRoutes = require('./labAssignment.routes');
 const experimentRoutes = require('./experiment.routes');
+const submissionRoutes = require('./submission.routes');
 
 // Mount routes
 router.use('/health', healthRoutes);
@@ -16,6 +17,7 @@ router.use('/sections', sectionRoutes);
 router.use('/labs', labRoutes);
 router.use('/lab-assignments', labAssignmentRoutes);
 router.use('/experiments', experimentRoutes);
+router.use('/submissions', submissionRoutes);
 
 // Additional routes defined in Architecture.md:
 // router.use('/submissions', submissionRoutes);
