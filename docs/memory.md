@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 13 — Security, Validation & Hardening**
+**Phase 14 — Testing & Quality Assurance**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -110,6 +110,27 @@ Status: Completed & Verified (Ready for Review)
     - **Total Regression Suite:** 317/317 PASSED (283 baseline + 34 Phase 13)
     - **Frontend Production Build:** Built cleanly with Vite (0 errors)
     - **Docker Runtime Testing Status:** Docker sandbox configuration and guardrail tests pass; real Docker runtime integration testing remains pending because Docker is unavailable on the current Windows development environment.
+
+- **Phase 14 — Testing & Quality Assurance:**
+  - **Status:** COMPLETE
+  - **Quality Assurance Scope & Verification:**
+    - **Authentication & Token Lifecycle:** Verified token signing, expiration timestamp integrity, inactive user blocking, temporary password access gate, and password complexity/reuse validations.
+    - **Academic Structure & Hierarchy:** Verified section code alphanumeric rules, semester constraints, active assignment validation, single MAIN teacher invariant (409 Conflict), multiple ASSISTANT support, and uppercase section assignment normalization.
+    - **Lab Access Layer & Scope Isolation:** Tested assigned laboratories hub for Student, Teacher, and Admin roles.
+    - **Experiment Lifecycle State Machine:** Tested 12-experiment ceiling, duplicate experiment number rejection (409 Conflict), valid status progression (`DRAFT` $\to$ `SCHEDULED` $\to$ `PUBLISHED` $\to$ `CLOSED` $\to$ `REOPENED`), future deadline validation, and batch reordering.
+    - **PDF Syllabus Extraction:** Verified non-publishing candidate extraction, capacity checks on confirmation, and default `DRAFT` status initialization.
+    - **Code Execution & Submission Rigor:** Verified 3-attempt hard cap, 4th attempt rejection (400), manual run attempt-neutrality, sequential `attemptNumber` tracking, execution timeout (5000ms), and 64KB source size limits.
+    - **Automated Evaluation & Scoring:** Tested proportional `/10` score formula, zero-marks division safety, student hidden test-case output redaction, and `isHighestScore` dynamic recalculation.
+    - **Viva Voce & Re-evaluation:** Verified $0 \le \text{marks} \le 5$, `/10 Automated + /5 Viva = /15 Total` combined score, and version incrementing ($v_1 \to v_2$) with historical record archiving.
+    - **Notifications & Progress:** Verified target matrix validation (`ALL_STUDENTS`, `LAB`, `SECTION`, `INDIVIDUAL`), idempotent read marking, zero-experiment progress safety, and cohort progress aggregation.
+    - **Report Exports:** Verified binary buffer generation with `%PDF` and `PK` zip magic headers, and empty-dataset resilience.
+    - **Admin Dashboard Telemetry:** Verified system aggregate counts, live telemetry stream, and role enforcement (403 Forbidden for non-admin).
+  - **Verification & Test Results:**
+    - **Phase 14 Dedicated QA Test Suite:** 40/40 PASSED (`backend/src/tests/qa_comprehensive.test.js`)
+    - **Total Regression Suite:** 357/357 PASSED across 16 test suites (Phase 1–14: 23 + 20 + 16 + 20 + 20 + 39 + 8 + 34 + 32 + 34 + 25 + 12 + 34 + 40 = 357)
+    - **Frontend Production Build:** Built cleanly with Vite in 5.54s (0 errors, 139 modules)
+    - **Manual QA Status:** PASS across all functional flows
+    - **Docker Runtime Testing Status:** Configuration and guardrail tests pass; real Docker container runtime testing remains pending due to Windows development environment without Docker daemon.
 
 ---
 
