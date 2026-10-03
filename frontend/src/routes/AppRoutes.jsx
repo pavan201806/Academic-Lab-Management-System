@@ -36,6 +36,10 @@ import TeacherSubmissionsLedgerPage from '../pages/teacher/TeacherSubmissionsLed
 // Phase 9 Notifications Page
 import TeacherNotificationsPage from '../pages/teacher/TeacherNotificationsPage';
 
+// Phase 10 Reports Pages
+import TeacherReportsPage from '../pages/teacher/TeacherReportsPage';
+import StudentReportsPage from '../pages/student/StudentReportsPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -75,7 +79,7 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* Phase 2, 4, 5, 6 & 9: Admin Academic Structure, Experiments, PDF Import, Submissions & Notifications */}
+      {/* Phase 2, 4, 5, 6, 9 & 10: Admin Academic Structure, Experiments, PDF Import, Submissions, Notifications & Reports */}
       <Route
         path="/admin"
         element={
@@ -96,9 +100,10 @@ const AppRoutes = () => {
         <Route path="students" element={<StudentManagementPage />} />
         <Route path="assignments" element={<LabAssignmentPage />} />
         <Route path="notifications" element={<TeacherNotificationsPage />} />
+        <Route path="reports" element={<TeacherReportsPage />} />
       </Route>
 
-      {/* Phase 3, 4, 5, 6 & 9: Teacher Laboratory Management, Authoring, PDF Extraction, Submissions & Notifications */}
+      {/* Phase 3, 4, 5, 6, 9 & 10: Teacher Laboratory Management, Authoring, Submissions, Notifications & Reports */}
       <Route
         path="/teacher"
         element={
@@ -114,9 +119,10 @@ const AppRoutes = () => {
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
         <Route path="notifications" element={<TeacherNotificationsPage />} />
+        <Route path="reports" element={<TeacherReportsPage />} />
       </Route>
 
-      {/* Phase 3 & 4: Student Laboratory Hub & Experiment Protocol View */}
+      {/* Phase 3, 4 & 10: Student Laboratory Hub, Protocol View & Academic Reports */}
       <Route
         path="/student"
         element={
@@ -129,6 +135,7 @@ const AppRoutes = () => {
         <Route path="labs" element={<StudentLabDashboardPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments/:experimentId" element={<StudentExperimentDetailPage />} />
+        <Route path="reports" element={<StudentReportsPage />} />
       </Route>
 
       {/* 404 Fallback */}
@@ -136,6 +143,7 @@ const AppRoutes = () => {
     </Routes>
   );
 };
+
 
 export default AppRoutes;
 

@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 9 — Notifications and Student Progress**
+**Phase 10 — Reports**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -37,37 +37,41 @@ Status: Completed & Verified (Ready for Review)
 - **Phase 8 — Viva and Re-evaluation:**
   - VivaEvaluation model ($0 \le \text{marks} \le 5$), ReevaluationRequest model (`PENDING`, `APPROVED`, `REJECTED`, `COMPLETED`), latest valid completed evaluation current-score rule (`isCurrent: true`), immutable history preservation, 32/32 passing tests.
 - **Phase 9 — Notifications and Student Progress:**
-  - **Notification Model (`backend/src/models/notification.model.js`):**
-    - `title` (max 200 chars), `message` (max 2000 chars), `type` (`GENERAL`, `EXPERIMENT`, `DEADLINE`, `LAB`, `ANNOUNCEMENT`), `createdBy` (ref User), `targetType` (`ALL_STUDENTS`, `LAB`, `SECTION`, `INDIVIDUAL`), `targetStudents` (refs User), `targetSections` (refs Section), `targetLabs` (refs Lab), `readBy` (`[{ student, readAt }]`), `active` (soft deletion), timestamps.
-    - Compound indexes: `{ createdBy: 1, active: 1 }`, `{ targetLabs: 1, active: 1 }`, `{ targetSections: 1, active: 1 }`, `{ targetStudents: 1, active: 1 }`, `{ targetType: 1, active: 1, createdAt: -1 }`, `{ active: 1, createdAt: -1 }`.
-  - **Notification Scoping & RBAC:**
-    - **Teacher:** Can broadcast notifications targeted to their assigned laboratories, sections, or students enrolled in their assigned sections. Cannot target unauthorized labs/sections/students. Can delete only notifications they authored (soft delete `active: false`).
-    - **Admin (ADMIN_HOD):** Global broadcast and management across all labs and sections.
-    - **Student:** Receives only notifications matching their enrolled lab, section, individual ID, or `ALL_STUDENTS`. Can view unread count, mark single notice as read, or mark all as read. Strictly prohibited from creating or deleting notifications (403 Forbidden).
-  - **Student Progress Tracking (`backend/src/services/progressService.js`):**
-    - Calculated using real persisted data from Phase 4–8 (published experiments, official submissions, highest automated score out of 10, active viva marks out of 5, total score out of 15).
-    - Excludes unattempted/inactive records from completed count.
-    - Computes `totalExperiments`, `completedExperiments`, `pendingExperiments`, `completionPercentage`, `averageAutomatedScore`, `averageVivaScore`, and `averageTotalScore` (/15).
+  - Notification model, broadcast targeting (`ALL_STUDENTS`, `LAB`, `SECTION`, `INDIVIDUAL`), read/unread lifecycle, teacher-only soft-deletion, student progress tracker using real persisted evaluation data, 34/34 passing tests.
+- **Phase 10 — Reports:**
+  - **Report Categories Implemented (`backend/src/services/reportService.js`):**
+    1. **Student Report (`getStudentReport`):** Official individual academic record showing enrolled labs, completed/pending experiments, highest automated score (/10), authoritative viva score (/5), final score (/15), and completion percentage.
+    2. **Section Report (`getSectionReport`):** Cohort academic overview showing enrolled student rosters, individual progress, average scores, and cumulative section metrics.
+    3. **Lab Report (`getLabReport`):** Aggregated laboratory performance summary across sections, cohort progress %, average combined score (/15), highest score, lowest score, and student-by-student breakdown.
+    4. **Experiment Report (`getExperimentReport`):** Experiment-level submission stats, eligible students count, completed count, average auto score (/10), average viva score (/5), average final score (/15), highest and lowest scores.
+    5. **Marks Report (`getMarksReport`):** Complete marks ledger strictly adhering to the scoring standard ($/10 + /5 = /15$, max 12 experiments per lab = 180 total), filtered by lab, section, experiment, or student.
+    6. **Viva Report (`getVivaReport`):** Authoritative current viva voce assessment records ($/5$), remarks, versions, evaluating faculty, and evaluation dates.
+    7. **Progress Report (`getProgressReport`):** Term-wide curriculum progress reports leveraging established `progressService` calculations.
+  - **Export Engines:**
+    - **PDF Generation (`backend/src/utils/pdfGenerator.js`):** Built with `pdfkit` featuring clean typography, institutional headers, metadata context pills, summary KPI blocks, striped data tables with auto-wrapping, pagination, and security-cleared footers.
+    - **Excel Generation (`backend/src/utils/excelGenerator.js`):** Built with `exceljs` featuring styled header bars, metadata blocks, KPI summary rows, alternating table styling, and auto-computed column widths.
+  - **Strict Server-Side Authorization & IDOR Protection:**
+    - Identity derived strictly from JWT authentication (`req.user`).
+    - **Student:** Can only view/download their own reports (attempts to view other student IDs or cohort reports return `403 Forbidden`).
+    - **Teacher:** Restricted strictly to active assigned laboratories and sections (`MAIN` or `ASSISTANT`). Access to unassigned labs/sections rejected with `403 Forbidden`.
+    - **Admin/HOD:** System-wide reporting access across all labs, sections, and cohorts.
   - **APIs:**
-    - `POST /api/notifications` [TEACHER, ADMIN_HOD]
-    - `GET /api/notifications` [STUDENT, TEACHER, ADMIN_HOD]
-    - `GET /api/notifications/:id` [STUDENT, TEACHER, ADMIN_HOD]
-    - `PATCH /api/notifications/:id/read` [STUDENT]
-    - `PATCH /api/notifications/read-all` [STUDENT]
-    - `DELETE /api/notifications/:id` [TEACHER, ADMIN_HOD]
-    - `GET /api/progress/student` [STUDENT]
-    - `GET /api/progress/student/lab/:labId` [STUDENT]
-    - `GET /api/progress/lab/:labId` [TEACHER, ADMIN_HOD]
-    - `GET /api/progress/lab/:labId/student/:studentId` [TEACHER, ADMIN_HOD]
+    - `GET /api/reports/student/:studentId` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...`)
+    - `GET /api/reports/section/:sectionId` [TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...`)
+    - `GET /api/reports/lab/:labId` [TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&sectionId=...`)
+    - `GET /api/reports/experiment/:experimentId` [TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&sectionId=...`)
+    - `GET /api/reports/marks` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...&sectionId=...&experimentId=...&studentId=...`)
+    - `GET /api/reports/viva` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...&sectionId=...&experimentId=...&studentId=...`)
+    - `GET /api/reports/progress` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...&sectionId=...&studentId=...`)
   - **Frontend Integration:**
-    - `frontend/src/services/notificationService.js` & `frontend/src/services/progressService.js`: Full API clients.
-    - `frontend/src/components/notifications/NotificationDrawer.jsx`: Header bell drawer for reading notices, unread filtering, and marking as read/all read.
-    - `frontend/src/pages/teacher/TeacherNotificationsPage.jsx`: Stitch-styled Notifications & Broadcaster console with KPI cards, announcements ledger, create drawer with live student feed preview, and teacher-only delete modal.
-    - `frontend/src/components/progress/StudentProgressModal.jsx`: Teacher cohort progress tracker with student-by-student completion breakdown and experiment score inspection.
-    - `frontend/src/pages/student/StudentLabDashboardPage.jsx`: Live student progress metric cards (enrolled labs, completed/pending experiments, average score /15) and per-lab progress bars.
+    - `frontend/src/services/reportService.js`: Unified API client with Blob download handlers for PDF and Excel files.
+    - `frontend/src/pages/student/StudentReportsPage.jsx`: Student-facing reports hub with lab filter, KPI summary cards, performance table with score pill indicators, and one-click PDF / Excel downloads.
+    - `frontend/src/pages/teacher/TeacherReportsPage.jsx`: Stitch-styled Faculty & Admin Reports Console with category tabs, dynamic filter controls (lab, section, experiment, student), live metadata inspection, KPI summary row, preview table, and one-click PDF / Excel exports.
+    - `frontend/src/layouts/AppShellLayout.jsx`: Added "Reports & Export" / "Academic Reports" navigation links to the sidebar for all roles.
+    - `frontend/src/routes/AppRoutes.jsx`: Registered `/student/reports`, `/teacher/reports`, and `/admin/reports`.
   - **Verification & Test Results:**
-    - **Phase 9 Comprehensive Tests:** 34/34 PASSED (100%)
-    - **Total Backend Tests:** 246/246 PASSED across Phases 1–9 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34, Phase 8: 32, Phase 9: 34)
+    - **Phase 10 Comprehensive & Security Tests:** 25/25 PASSED (100%)
+    - **Total Regression Baseline:** 271/271 PASSED across Phases 1–10 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34, Phase 8: 32, Phase 9: 34, Phase 10: 25)
     - **Frontend Production Build:** Built cleanly with Vite (0 errors)
     - **Docker Runtime Testing Status:**
       - Docker sandbox configuration/guardrail tests: PASSED (8/8).
@@ -88,8 +92,7 @@ Status: Completed & Verified (Ready for Review)
   - `Evaluation` (`backend/src/models/evaluation.model.js`)
   - `VivaEvaluation` (`backend/src/models/vivaEvaluation.model.js`)
   - `ReevaluationRequest` (`backend/src/models/reevaluationRequest.model.js`)
-  - `Notification` (`backend/src/models/notification.model.js`):
-    - `title`, `message`, `type`, `createdBy`, `targetType`, `targetStudents`, `targetSections`, `targetLabs`, `readBy`, `active`
+  - `Notification` (`backend/src/models/notification.model.js`)
 
 ---
 
@@ -109,3 +112,4 @@ Status: Completed & Verified (Ready for Review)
 - **Re-evaluations:** `POST /reevaluations`, `GET /reevaluations/experiment/:experimentId/my-request`, `GET /reevaluations/experiment/:experimentId`, `GET /reevaluations/lab/:labId`, `POST /reevaluations/:id/process` — Working
 - **Notifications:** `POST /notifications`, `GET /notifications`, `GET /notifications/:id`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`, `DELETE /notifications/:id` — Working
 - **Progress:** `GET /progress/student`, `GET /progress/student/lab/:labId`, `GET /progress/lab/:labId`, `GET /progress/lab/:labId/student/:studentId` — Working
+- **Reports:** `GET /reports/student/:studentId`, `GET /reports/section/:sectionId`, `GET /reports/lab/:labId`, `GET /reports/experiment/:experimentId`, `GET /reports/marks`, `GET /reports/viva`, `GET /reports/progress` — Working (JSON, PDF, Excel)

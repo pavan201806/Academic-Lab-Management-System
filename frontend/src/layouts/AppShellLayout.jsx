@@ -51,21 +51,25 @@ const AppShellLayout = () => {
           { label: 'Faculty / Teachers', path: '/admin/teachers', icon: '👨‍🏫' },
           { label: 'Students Roster', path: '/admin/students', icon: '🎓' },
           { label: 'Lab Assignments', path: '/admin/assignments', icon: '🔗' },
-          { label: 'Announcements', path: '/admin/notifications', icon: '📢' }
+          { label: 'Announcements', path: '/admin/notifications', icon: '📢' },
+          { label: 'Reports & Export', path: '/admin/reports', icon: '📄' }
         ];
       case 'TEACHER':
         return [
           { label: 'My Laboratories', path: '/teacher/labs', icon: '⚗️' },
-          { label: 'Announcements', path: '/teacher/notifications', icon: '📢' }
+          { label: 'Announcements', path: '/teacher/notifications', icon: '📢' },
+          { label: 'Reports & Export', path: '/teacher/reports', icon: '📄' }
         ];
       case 'STUDENT':
         return [
-          { label: 'Assigned Laboratories', path: '/student/labs', icon: '📚' }
+          { label: 'Assigned Laboratories', path: '/student/labs', icon: '📚' },
+          { label: 'Academic Reports', path: '/student/reports', icon: '📄' }
         ];
       default:
         return [];
     }
   };
+
 
   const navItems = getNavItemsForRole(user?.role);
 
