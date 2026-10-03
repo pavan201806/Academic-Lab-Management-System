@@ -12,6 +12,8 @@ const testCaseRoutes = require('./testCase.routes');
 const evaluationRoutes = require('./evaluation.routes');
 const vivaRoutes = require('./viva.routes');
 const reevaluationRoutes = require('./reevaluation.routes');
+const notificationRoutes = require('./notification.routes');
+const progressRoutes = require('./progress.routes');
 
 // Mount routes
 router.use('/health', healthRoutes);
@@ -26,5 +28,7 @@ router.use('/test-cases', testCaseRoutes);
 router.use('/evaluations', evaluationRoutes);
 router.use('/viva', vivaRoutes);
 router.use('/reevaluations', reevaluationRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/progress', progressRoutes);
 
 module.exports = router;

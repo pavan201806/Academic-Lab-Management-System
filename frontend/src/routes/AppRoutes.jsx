@@ -33,6 +33,9 @@ import PdfExperimentExtractionPage from '../pages/teacher/PdfExperimentExtractio
 // Phase 6 Submissions Ledger Page
 import TeacherSubmissionsLedgerPage from '../pages/teacher/TeacherSubmissionsLedgerPage';
 
+// Phase 9 Notifications Page
+import TeacherNotificationsPage from '../pages/teacher/TeacherNotificationsPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -72,7 +75,7 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* Phase 2, 4, 5 & 6: Admin Academic Structure, Experiments, PDF Import & Submissions */}
+      {/* Phase 2, 4, 5, 6 & 9: Admin Academic Structure, Experiments, PDF Import, Submissions & Notifications */}
       <Route
         path="/admin"
         element={
@@ -92,9 +95,10 @@ const AppRoutes = () => {
         <Route path="teachers" element={<TeacherManagementPage />} />
         <Route path="students" element={<StudentManagementPage />} />
         <Route path="assignments" element={<LabAssignmentPage />} />
+        <Route path="notifications" element={<TeacherNotificationsPage />} />
       </Route>
 
-      {/* Phase 3, 4, 5 & 6: Teacher Laboratory Management, Authoring, PDF Extraction & Submissions */}
+      {/* Phase 3, 4, 5, 6 & 9: Teacher Laboratory Management, Authoring, PDF Extraction, Submissions & Notifications */}
       <Route
         path="/teacher"
         element={
@@ -109,6 +113,7 @@ const AppRoutes = () => {
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
+        <Route path="notifications" element={<TeacherNotificationsPage />} />
       </Route>
 
       {/* Phase 3 & 4: Student Laboratory Hub & Experiment Protocol View */}

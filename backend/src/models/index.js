@@ -8,6 +8,7 @@ const TestCase = require('./testCase.model');
 const Evaluation = require('./evaluation.model');
 const VivaEvaluation = require('./vivaEvaluation.model');
 const ReevaluationRequest = require('./reevaluationRequest.model');
+const Notification = require('./notification.model');
 
 module.exports = {
   User,
@@ -19,7 +20,8 @@ module.exports = {
   TestCase,
   Evaluation,
   VivaEvaluation,
-  ReevaluationRequest
+  ReevaluationRequest,
+  Notification
 };
 
 

@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import NotificationDrawer from '../components/notifications/NotificationDrawer';
+import { notificationService } from '../services/notificationService';
 
 const AppShellLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === 'STUDENT') {
+      notificationService.getNotifications()
+        .then((res) => {
+          const data = res.data || res;
+          const count = data.unreadCount !== undefined ? data.unreadCount : (data.notifications || []).filter((n) => !n.isRead).length;
+          setUnreadCount(count);
+        })
+        .catch((err) => console.warn('Notification fetch warning:', err));
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -34,11 +50,13 @@ const AppShellLayout = () => {
           { label: 'Sections & Cohorts', path: '/admin/sections', icon: '👥' },
           { label: 'Faculty / Teachers', path: '/admin/teachers', icon: '👨‍🏫' },
           { label: 'Students Roster', path: '/admin/students', icon: '🎓' },
-          { label: 'Lab Assignments', path: '/admin/assignments', icon: '🔗' }
+          { label: 'Lab Assignments', path: '/admin/assignments', icon: '🔗' },
+          { label: 'Announcements', path: '/admin/notifications', icon: '📢' }
         ];
       case 'TEACHER':
         return [
-          { label: 'My Laboratories', path: '/teacher/labs', icon: '⚗️' }
+          { label: 'My Laboratories', path: '/teacher/labs', icon: '⚗️' },
+          { label: 'Announcements', path: '/teacher/notifications', icon: '📢' }
         ];
       case 'STUDENT':
         return [
@@ -225,6 +243,41 @@ const AppShellLayout = () => {
 
           {/* Right Header Cluster */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* Notification Bell Action */}
+            <button
+              onClick={() => setIsDrawerOpen(true)}
+              style={{
+                position: 'relative',
+                background: 'none',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.375rem 0.625rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                color: 'var(--color-primary)',
+                fontSize: '0.875rem'
+              }}
+              title="View Announcements & Notifications"
+            >
+              <span>🔔</span>
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    backgroundColor: 'var(--color-error)',
+                    color: '#fff',
+                    borderRadius: 'var(--radius-full)',
+                    padding: '0.1rem 0.4rem',
+                    fontSize: '0.6875rem',
+                    fontWeight: 700
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
             <span className="badge badge-info" style={{ fontSize: '0.6875rem' }}>
               ISO 27001 SECURED
             </span>
@@ -242,6 +295,13 @@ const AppShellLayout = () => {
         <main style={{ flex: 1, padding: '1.5rem', maxWidth: '1600px', width: '100%', margin: '0 auto' }}>
           <Outlet />
         </main>
+
+        {/* Notification Drawer Modal */}
+        <NotificationDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          onCountChange={(newCount) => setUnreadCount(newCount)}
+        />
 
         {/* Footer */}
         <footer

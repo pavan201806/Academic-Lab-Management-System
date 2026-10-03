@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 8 — Viva and Re-evaluation**
+**Phase 9 — Notifications and Student Progress**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -35,40 +35,39 @@ Status: Completed & Verified (Ready for Review)
 - **Phase 7 — Evaluation and Scoring:**
   - TestCase model (visible & hidden cases), Evaluation model (proportional score out of 10), deterministic output matcher with CRLF/LF normalization, 3-attempt hard cap, highest score retention, test case authoring modal, student evaluation history, 34/34 passing tests.
 - **Phase 8 — Viva and Re-evaluation:**
-  - **VivaEvaluation Model (`backend/src/models/vivaEvaluation.model.js`):**
-    - `student` (ref User), `experiment` (ref Experiment), `lab` (ref Lab), `section` (ref Section), `evaluatedBy` (ref User), `marks` ($0 \le \text{marks} \le 5$, with max 2 decimal precision), `remarks` (max 1000 chars), `status` (`EVALUATED`, `RE_EVALUATED`), `evaluationVersion` (default 1, increments on re-evaluation), `isCurrent` (Boolean, true for active score), `reevaluationRequest` (ref ReevaluationRequest), `evaluatedAt` (Date), timestamps.
-    - Compound indexes: `{ student: 1, experiment: 1, isCurrent: 1 }`, `{ experiment: 1, section: 1 }`, `{ lab: 1, experiment: 1 }`, `{ evaluatedBy: 1 }`.
-  - **ReevaluationRequest Model (`backend/src/models/reevaluationRequest.model.js`):**
-    - `student` (ref User), `experiment` (ref Experiment), `lab` (ref Lab), `section` (ref Section), `vivaEvaluation` (ref VivaEvaluation), `reason` (string, max 1000 chars), `status` (`PENDING`, `APPROVED`, `REJECTED`, `COMPLETED`), `requestedAt` (Date), `reviewedBy` (ref User), `reviewedAt` (Date), `reviewRemarks` (max 1000 chars), `newVivaEvaluation` (ref VivaEvaluation), timestamps.
-    - Compound indexes: `{ student: 1, experiment: 1, status: 1 }`, `{ experiment: 1, status: 1 }`, `{ lab: 1, status: 1 }`.
-  - **Business Rules & Scoring:**
-    - **Viva Marks:** $0 \le \text{marks} \le 5$. Validated strictly on backend (e.g., 0, 2.5, 5 are valid; >5, <0, or NaN rejected).
-    - **Scoring Boundary:** Automated evaluation score (/10) from Phase 7 + Viva score (/5) = Conceptual academic score (/15).
-    - **Current Score Rule:** Exactly one valid completed Viva evaluation has `isCurrent: true` per student + experiment. When a re-evaluation is completed, the previous evaluation is marked `isCurrent: false` (preserved immutably in history) and the new evaluation is created with `evaluationVersion: previousVersion + 1` and `isCurrent: true`. The latest valid completed evaluation is the active Viva score.
-    - **Re-evaluation Workflow:**
-      - Eligible student can submit a re-evaluation request for their own completed Viva if no pending request exists.
-      - Assigned faculty (`MAIN` or `ASSISTANT`) or `ADMIN_HOD` reviews the request.
-      - Faculty can **Reject** (status `REJECTED`, requires review remarks) or **Approve & Re-evaluate** (status `COMPLETED`, records review remarks, archives old evaluation, creates new `VivaEvaluation` version).
-  - **APIs & Authorization:**
-    - `GET /api/viva/experiment/:experimentId/eligible-students` [TEACHER, ADMIN_HOD]
-    - `POST /api/viva` [TEACHER, ADMIN_HOD]
-    - `GET /api/viva/experiment/:experimentId/student` [STUDENT, TEACHER, ADMIN_HOD]
-    - `GET /api/viva/experiment/:experimentId/history` [STUDENT, TEACHER, ADMIN_HOD]
-    - `GET /api/viva/lab/:labId` [TEACHER, ADMIN_HOD]
-    - `GET /api/viva/:id` [STUDENT, TEACHER, ADMIN_HOD]
-    - `POST /api/reevaluations` [STUDENT]
-    - `GET /api/reevaluations/experiment/:experimentId/my-request` [STUDENT]
-    - `GET /api/reevaluations/experiment/:experimentId` [TEACHER, ADMIN_HOD]
-    - `GET /api/reevaluations/lab/:labId` [TEACHER, ADMIN_HOD]
-    - `POST /api/reevaluations/:id/process` [TEACHER, ADMIN_HOD]
+  - VivaEvaluation model ($0 \le \text{marks} \le 5$), ReevaluationRequest model (`PENDING`, `APPROVED`, `REJECTED`, `COMPLETED`), latest valid completed evaluation current-score rule (`isCurrent: true`), immutable history preservation, 32/32 passing tests.
+- **Phase 9 — Notifications and Student Progress:**
+  - **Notification Model (`backend/src/models/notification.model.js`):**
+    - `title` (max 200 chars), `message` (max 2000 chars), `type` (`GENERAL`, `EXPERIMENT`, `DEADLINE`, `LAB`, `ANNOUNCEMENT`), `createdBy` (ref User), `targetType` (`ALL_STUDENTS`, `LAB`, `SECTION`, `INDIVIDUAL`), `targetStudents` (refs User), `targetSections` (refs Section), `targetLabs` (refs Lab), `readBy` (`[{ student, readAt }]`), `active` (soft deletion), timestamps.
+    - Compound indexes: `{ createdBy: 1, active: 1 }`, `{ targetLabs: 1, active: 1 }`, `{ targetSections: 1, active: 1 }`, `{ targetStudents: 1, active: 1 }`, `{ targetType: 1, active: 1, createdAt: -1 }`, `{ active: 1, createdAt: -1 }`.
+  - **Notification Scoping & RBAC:**
+    - **Teacher:** Can broadcast notifications targeted to their assigned laboratories, sections, or students enrolled in their assigned sections. Cannot target unauthorized labs/sections/students. Can delete only notifications they authored (soft delete `active: false`).
+    - **Admin (ADMIN_HOD):** Global broadcast and management across all labs and sections.
+    - **Student:** Receives only notifications matching their enrolled lab, section, individual ID, or `ALL_STUDENTS`. Can view unread count, mark single notice as read, or mark all as read. Strictly prohibited from creating or deleting notifications (403 Forbidden).
+  - **Student Progress Tracking (`backend/src/services/progressService.js`):**
+    - Calculated using real persisted data from Phase 4–8 (published experiments, official submissions, highest automated score out of 10, active viva marks out of 5, total score out of 15).
+    - Excludes unattempted/inactive records from completed count.
+    - Computes `totalExperiments`, `completedExperiments`, `pendingExperiments`, `completionPercentage`, `averageAutomatedScore`, `averageVivaScore`, and `averageTotalScore` (/15).
+  - **APIs:**
+    - `POST /api/notifications` [TEACHER, ADMIN_HOD]
+    - `GET /api/notifications` [STUDENT, TEACHER, ADMIN_HOD]
+    - `GET /api/notifications/:id` [STUDENT, TEACHER, ADMIN_HOD]
+    - `PATCH /api/notifications/:id/read` [STUDENT]
+    - `PATCH /api/notifications/read-all` [STUDENT]
+    - `DELETE /api/notifications/:id` [TEACHER, ADMIN_HOD]
+    - `GET /api/progress/student` [STUDENT]
+    - `GET /api/progress/student/lab/:labId` [STUDENT]
+    - `GET /api/progress/lab/:labId` [TEACHER, ADMIN_HOD]
+    - `GET /api/progress/lab/:labId/student/:studentId` [TEACHER, ADMIN_HOD]
   - **Frontend Integration:**
-    - `frontend/src/services/vivaService.js` & `frontend/src/services/reevaluationService.js`: Full API clients.
-    - `frontend/src/components/viva/VivaManagementModal.jsx`: Teacher Viva Management modal supporting Student selection, Live grading, Remarks entry, Re-evaluation queue processing with Approve/Reject actions, and Version history inspection.
-    - `frontend/src/pages/student/StudentExperimentDetailPage.jsx`: Score summary card displaying Automated Score (/10), Viva Score (/5), Total Score (/15), Viva status & evaluator remarks, "Request Re-evaluation" action modal, pending request status banner, and historical versions timeline.
-    - `frontend/src/pages/teacher/TeacherExperimentManagementPage.jsx`: Integrated "Viva Assessment" launch button with live badge counter.
+    - `frontend/src/services/notificationService.js` & `frontend/src/services/progressService.js`: Full API clients.
+    - `frontend/src/components/notifications/NotificationDrawer.jsx`: Header bell drawer for reading notices, unread filtering, and marking as read/all read.
+    - `frontend/src/pages/teacher/TeacherNotificationsPage.jsx`: Stitch-styled Notifications & Broadcaster console with KPI cards, announcements ledger, create drawer with live student feed preview, and teacher-only delete modal.
+    - `frontend/src/components/progress/StudentProgressModal.jsx`: Teacher cohort progress tracker with student-by-student completion breakdown and experiment score inspection.
+    - `frontend/src/pages/student/StudentLabDashboardPage.jsx`: Live student progress metric cards (enrolled labs, completed/pending experiments, average score /15) and per-lab progress bars.
   - **Verification & Test Results:**
-    - **Phase 8 Comprehensive Tests:** 32/32 PASSED (100%)
-    - **Total Backend Tests:** 212/212 PASSED across Phases 1–8 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34, Phase 8: 32)
+    - **Phase 9 Comprehensive Tests:** 34/34 PASSED (100%)
+    - **Total Backend Tests:** 246/246 PASSED across Phases 1–9 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34, Phase 8: 32, Phase 9: 34)
     - **Frontend Production Build:** Built cleanly with Vite (0 errors)
     - **Docker Runtime Testing Status:**
       - Docker sandbox configuration/guardrail tests: PASSED (8/8).
@@ -87,10 +86,10 @@ Status: Completed & Verified (Ready for Review)
   - `Submission` (`backend/src/models/submission.model.js`)
   - `TestCase` (`backend/src/models/testCase.model.js`)
   - `Evaluation` (`backend/src/models/evaluation.model.js`)
-  - `VivaEvaluation` (`backend/src/models/vivaEvaluation.model.js`):
-    - `student`, `experiment`, `lab`, `section`, `evaluatedBy`, `marks` ($[0, 5]$), `remarks`, `status`, `evaluationVersion`, `isCurrent`, `reevaluationRequest`, `evaluatedAt`
-  - `ReevaluationRequest` (`backend/src/models/reevaluationRequest.model.js`):
-    - `student`, `experiment`, `lab`, `section`, `vivaEvaluation`, `reason`, `status`, `requestedAt`, `reviewedBy`, `reviewedAt`, `reviewRemarks`, `newVivaEvaluation`
+  - `VivaEvaluation` (`backend/src/models/vivaEvaluation.model.js`)
+  - `ReevaluationRequest` (`backend/src/models/reevaluationRequest.model.js`)
+  - `Notification` (`backend/src/models/notification.model.js`):
+    - `title`, `message`, `type`, `createdBy`, `targetType`, `targetStudents`, `targetSections`, `targetLabs`, `readBy`, `active`
 
 ---
 
@@ -108,3 +107,5 @@ Status: Completed & Verified (Ready for Review)
 - **Evaluations:** `GET /evaluations/experiment/:experimentId/student`, `GET /evaluations/submission/:submissionId`, `GET /evaluations/:id`, `GET /evaluations/lab/:labId` — Working
 - **Viva Evaluations:** `GET /viva/experiment/:experimentId/eligible-students`, `POST /viva`, `GET /viva/experiment/:experimentId/student`, `GET /viva/experiment/:experimentId/history`, `GET /viva/lab/:labId`, `GET /viva/:id` — Working
 - **Re-evaluations:** `POST /reevaluations`, `GET /reevaluations/experiment/:experimentId/my-request`, `GET /reevaluations/experiment/:experimentId`, `GET /reevaluations/lab/:labId`, `POST /reevaluations/:id/process` — Working
+- **Notifications:** `POST /notifications`, `GET /notifications`, `GET /notifications/:id`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`, `DELETE /notifications/:id` — Working
+- **Progress:** `GET /progress/student`, `GET /progress/student/lab/:labId`, `GET /progress/lab/:labId`, `GET /progress/lab/:labId/student/:studentId` — Working

@@ -6,6 +6,7 @@ import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import TestCaseManagementModal from '../../components/testcases/TestCaseManagementModal';
 import VivaManagementModal from '../../components/viva/VivaManagementModal';
+import StudentProgressModal from '../../components/progress/StudentProgressModal';
 
 const PROGRAMMING_LANGUAGES = ['C', 'C++', 'Java', 'Python'];
 
@@ -33,6 +34,7 @@ const TeacherExperimentManagementPage = () => {
   const [selectedTestCasesExp, setSelectedTestCasesExp] = useState(null);
   const [showVivaModal, setShowVivaModal] = useState(false);
   const [selectedVivaExp, setSelectedVivaExp] = useState(null);
+  const [showProgressModal, setShowProgressModal] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -358,6 +360,13 @@ const TeacherExperimentManagementPage = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setShowProgressModal(true)}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+          >
+            <span>📊</span> Cohort Progress Tracker
+          </button>
           <Link
             to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${labId}/experiments/import-pdf` : `/teacher/labs/${labId}/experiments/import-pdf`}
             className="btn btn-secondary"
@@ -1247,6 +1256,17 @@ const TeacherExperimentManagementPage = () => {
         }}
         experiment={selectedVivaExp}
         labId={labId}
+      />
+
+      {/* ========================================================================= */}
+      {/* STUDENT COHORT PROGRESS TRACKER MODAL                                     */}
+      {/* ========================================================================= */}
+      <StudentProgressModal
+        isOpen={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+        labId={labId}
+        labName={lab?.name}
+        labCode={lab?.code}
       />
     </div>
   );
