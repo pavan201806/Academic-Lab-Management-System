@@ -7,102 +7,129 @@
 
 ## Current Phase
 
-**Phase 0 — Foundation**
+**Phase 1 — Authentication**
 
-Status: Completed (Verified)
+Status: Completed & Security Verified (Ready for Checkpoint Commit)
 
 ---
 
 ## Completed
 
-- **Documentation & Rules:**
-  - Project requirements documented in `docs/PRD.md`.
-  - Three-tier architecture documented in `docs/Architecture.md`.
-  - AI coding rules and operational constraints documented in `docs/Rules.md`.
-  - Phased roadmap documented in `docs/Phases.md`.
-  - Design system specifications documented in `docs/Design.md`.
-  - Memory ledger initialized in `docs/memory.md`.
-- **UI Reference Inspection:**
-  - Inspected all 12 Stitch screen/component directories in `Stitch_files/`.
-  - Analyzed design tokens (`DESIGN.md` in `academic_precision`), color palette (`#0F2D6B` primary, `#0D9488` teal secondary, `#0284C7` tertiary, `#F8FAFC` base canvas), typography (`Manrope` headings + `Hanken Grotesk` body + `JetBrains Mono` code), elevation scales, and component specifications.
-- **Frontend Foundation:**
-  - Initialized React 18 + Vite application in `frontend/`.
-  - Installed `react-router-dom` and `axios`.
-  - Created directory structure matching `docs/Architecture.md`: `assets/`, `components/`, `layouts/`, `pages/`, `routes/`, `services/`, `hooks/`, `context/`, `utils/`, `styles/`.
-  - Configured global CSS design system (`designTokens.css`, `index.css`) with Stitch tokens and base reset/utility styles.
-  - Implemented configured Axios API client (`services/api.js`) with request/response interceptors and base URL support.
-  - Implemented React Router root layout shell (`RootLayout.jsx`), `HomePage.jsx` verification view, and `NotFoundPage.jsx`.
-  - Built and verified production bundle (`vite build`) successfully.
-- **Backend Foundation:**
-  - Initialized Node.js + Express application in `backend/`.
-  - Installed `express`, `cors`, `dotenv`, and `mongoose`.
-  - Created directory structure matching `docs/Architecture.md`: `config/`, `controllers/`, `middleware/`, `models/`, `routes/`, `services/`, `validators/`, `utils/`.
-  - Configured environment manager (`config/env.js`) and MongoDB connection layer with graceful offline resilience (`config/db.js`).
-  - Implemented centralized error handling (`middleware/errorHandler.js`, `middleware/notFound.js`, `utils/appError.js`, `utils/apiResponse.js`).
-  - Implemented and verified health check endpoint `GET /api/health`.
-- **Environment & Git Hygiene:**
-  - Configured `.gitignore` across root, frontend, and backend for dependencies, build artifacts, and secret files.
-  - Created `.env.example` in root, `backend/`, and `frontend/` with placeholders.
+- **Phase 0 — Foundation:**
+  - Project documentation (`PRD.md`, `Architecture.md`, `Rules.md`, `Phases.md`, `Design.md`, `memory.md`).
+  - Frontend React 18 + Vite foundation with Stitch tokens in `designTokens.css`.
+  - Backend Node.js + Express + Mongoose connection layer and centralized error handling.
+  - Verification endpoint `GET /api/health`.
+- **Phase 1 — Authentication:**
+  - **User Model (`backend/src/models/user.model.js`):**
+    - Fields: `name`, `rollNumber` (alphanumeric `^[A-Za-z0-9]+$`, uppercase normalization, unique), `passwordHash` (`select: false`), `role` (`ADMIN_HOD`, `TEACHER`, `STUDENT`), `mustChangePassword`, `section`, `active`.
+    - Methods: `comparePassword(candidatePassword)` using `bcryptjs`, safe `toJSON` serialization omitting `passwordHash`.
+  - **Password Security & JWT:**
+    - Integrated `bcryptjs` (salt cost factor 10) for secure password hashing.
+    - Integrated `jsonwebtoken` for stateless token signing with configurable expiration and secret (`backend/src/utils/token.js`).
+  - **Authentication API (`backend/src/controllers/auth.controller.js` & `backend/src/routes/auth.routes.js`):**
+    - `POST /api/auth/login`: Validates credentials, checks active status, returns JWT and user payload with `mustChangePassword` state.
+    - `POST /api/auth/change-password`: Validates current password, enforces complexity rules (min 8 chars, 1 uppercase, 1 digit, 1 special symbol), updates hash, sets `mustChangePassword = false`, issues fresh token.
+    - `GET /api/auth/me`: Authenticated endpoint returning safe profile.
+    - `POST /api/auth/logout`: Stateless acknowledgement endpoint.
+  - **Authorization & Gate Middleware (`backend/src/middleware/auth.js`):**
+    - `authenticate`: Extracts Bearer token, verifies JWT, checks database for active user.
+    - `requirePasswordChangeCompleted`: Blocks access to application resources if `mustChangePassword === true`.
+    - `authorize(...roles)`: Reusable RBAC middleware enforcing `ADMIN_HOD`, `TEACHER`, and `STUDENT` permissions.
+  - **Dev Seeding Utility (`backend/src/utils/seed.js`):**
+    - Seed script creating test accounts for `ADMIN_HOD` (`ADMIN01`), `TEACHER` (`PROFVANCE`), `STUDENT` with temporary password (`202301001`), `STUDENT` (`202301002`), and inactive student (`202301099`).
+  - **Frontend Authentication State (`frontend/src/context/AuthContext.jsx`):**
+    - Provides `user`, `token`, `isAuthenticated`, `mustChangePassword`, `loading`, `login`, `changePassword`, and `logout`.
+    - Syncs with `localStorage` and automatically validates sessions on startup via `GET /api/auth/me`.
+  - **Route Guards (`frontend/src/routes/`):**
+    - `ProtectedRoute.jsx`: Enforces authentication, redirects users with temporary passwords to `/change-password`, and handles role access denial.
+    - `PublicOnlyRoute.jsx`: Redirects already authenticated users to `/dashboard` or `/change-password`.
+  - **Stitch UI Authentication Pages (`frontend/src/pages/auth/`):**
+    - `LoginPage.jsx`: Built directly from `Stitch_files/lms_login_change_temporary_password_flows/code.html`, with role selector tabs, alphanumeric validation, password toggle, loading spinner, and compliance footers.
+    - `ChangePasswordPage.jsx`: First-time temporary password gate with live entropy/strength meter, real-time criteria checklist, match verification, and automatic redirect upon update.
+    - `DashboardPlaceholder.jsx`: Authenticated landing view displaying active user role and profile details.
+  - **Security & Integration Verification Performed:**
+    - Role selector privilege escalation test: Verified that client-supplied `role` is never trusted; role is exclusively loaded from MongoDB and embedded into the JWT payload.
+    - Data sanitization verification: Verified `passwordHash` is never leaked in login, change-password, or `GET /api/auth/me` endpoints.
+    - Temporary password enforcement verification: Verified that `mustChangePassword=true` returns 403 on protected routes, redirects to `/change-password`, updates hash, sets flag to false, and grants access with a fresh token.
+    - All unit, integration, and security verification test suites passing (`backend/src/tests/auth.test.js`, `backend/src/tests/api.auth.test.js`, `backend/src/tests/security.verification.test.js`).
+    - Frontend production bundle build verified with 0 compilation errors.
 
 ---
 
 ## Currently Working On
 
-- Phase 0 foundation is complete and verified. Ready for Phase 1 (Authentication).
+- Ready for Checkpoint Commit for Phase 1.
+- Next phase to begin after confirmation: **Phase 2 — Academic Structure**.
 
 ---
 
 ## Next Tasks
 
-1. **Phase 1 — Authentication:**
-   - Implement `User` model with Mongoose (`name`, `rollNumber`, `passwordHash`, `role`, `mustChangePassword`, `section`, `active`).
-   - Implement password hashing with `bcryptjs`.
-   - Implement JWT token generation and verification middleware.
-   - Implement authentication controllers/routes (`POST /api/auth/login`, `POST /api/auth/change-password`, `GET /api/auth/me`).
-   - Enforce alphanumeric roll number / username validation (`^[A-Za-z0-9]+$`).
-   - Implement frontend Login screen and First-Login Change Temporary Password modal matching Stitch reference `Stitch_files/lms_login_change_temporary_password_flows/`.
-   - Setup React Auth Context, protected routes, and role-based redirect logic.
+1. **Phase 2 — Academic Structure:**
+   - Define data models: `Section`, `Lab`, `LabAssignment` (Main Teacher & Assistant Teacher assignment types).
+   - Implement Admin user management APIs (Create/List/Update Teachers and Students).
+   - Implement Section management (Create sections, assign students to sections).
+   - Implement Lab creation and configuration (Academic Year, Semester, Subject, Sections, Teacher assignments).
+   - Wire backend authorization to allow `ADMIN_HOD` to manage academic entities.
+   - Build UI management consoles based on Stitch references (`manage_laboratories_experiment_management_console`).
 
 ---
 
 ## Important Decisions
 
-### Technology Stack
-- **Frontend:** React 18 + Vite, React Router v6, Axios, Vanilla CSS with Stitch design tokens.
-- **Backend:** Node.js + Express, Mongoose, JWT, CORS.
-- **Database:** MongoDB Atlas (Mongoose connection layer ready).
-- **Deployment Targets:** Vercel (Frontend), Render (Backend), MongoDB Atlas (Database).
-
-### Authentication & Roles
-- Exactly three roles: `ADMIN_HOD`, `TEACHER`, `STUDENT`.
-- `Main Teacher` and `Assistant Teacher` are assignment types under the `TEACHER` role.
-- User identifiers (roll numbers/usernames) are strictly alphanumeric (`^[A-Za-z0-9]+$`).
-
-### Experiment Attempts & Scoring Rules
-- Default official attempts: 3 (manual runs do not consume attempts).
-- Highest official score is preserved.
-- Scoring model: Programming (10 marks) + Viva (5 marks) = 15 marks per experiment (180 marks total for 12 experiments).
-
-### Experiment PDF Extraction Workflow
-- `Upload PDF → Extract → Review → Edit → Confirm → Save`. Extracted drafts are never committed automatically.
-
-### UI & Styling Strategy
-- Stitch files in `Stitch_files/` serve as the visual reference. Design system tokens are codified in `frontend/src/styles/designTokens.css`.
+### Authentication & Authorization
+- **Roles:** Exactly three system roles: `ADMIN_HOD`, `TEACHER`, `STUDENT`. `Main Teacher` and `Assistant Teacher` are designated within lab assignments, never as separate user roles.
+- **Roll Number & Identifier Handling:**
+  - Pattern: `^[A-Za-z0-9]+$` (strictly letters and numbers; no spaces, hyphens, or symbols).
+  - Storage & Query Normalization: Stored in uppercase (`uppercase: true` in schema) and normalized in validators (`cleanRoll.toUpperCase()`). This ensures seamless, case-insensitive login matching across both `23341a4504` and `23341A4504`.
+- **Role Security & Non-Escalation:**
+  - The role tab selector in the frontend login UI exists strictly as a client convenience for pre-filling sample usernames for demonstration.
+  - The frontend `authService.login` strictly sends `{ rollNumber, password }`.
+  - The backend `auth.controller.js` finds the user record by `rollNumber` in MongoDB and assigns `user.role` from the database. Any body-injected role is ignored.
+- **Password Policy:**
+  - Minimum 8 characters.
+  - At least 1 uppercase letter (`[A-Z]`).
+  - At least 1 numerical digit (`[0-9]`).
+  - At least 1 special symbol (`[!@#$%^&*(),.?":{}|<>_~... ]`).
+  - Cannot be identical to current/temporary password.
+  - Hashed using `bcryptjs` with salt rounds = 10.
+- **JWT Storage & Session Management:**
+  - Token signed with `JWT_SECRET` and `JWT_EXPIRES_IN` (default 7 days).
+  - Stored in browser `localStorage` as `auth_token` and sent in HTTP requests via `Authorization: Bearer <token>` header.
+  - On 401 or token expiration, client automatically clears token and redirects to `/login`.
+- **Logout Strategy:**
+  - Client-side token removal and state reset, backed by a stateless acknowledgement endpoint (`POST /api/auth/logout`).
+- **Temporary Password Enforcement:**
+  - Accounts initialized by admin have `mustChangePassword = true`.
+  - Frontend: `ProtectedRoute` intercepts navigation and redirects to `/change-password`.
+  - Backend: `requirePasswordChangeCompleted` middleware blocks protected endpoints with 403 Forbidden (`{ requiresPasswordChange: true }`) if bypassed.
+  - On successful update via `POST /api/auth/change-password`, `mustChangePassword` is set to `false` and a fresh token is issued.
 
 ---
 
 ## Current Database Structure
 
-- **Connection Layer:** `backend/src/config/db.js` configured with Mongoose.
-- **Status:** Connection layer initialized and tested; currently reports disconnected/unconfigured when no live `MONGODB_URI` is provided in `.env`.
-- **Models Registry:** `backend/src/models/index.js` prepared for Phase 1 schemas.
+- **Models Registry (`backend/src/models/index.js`):**
+  - `User` (`backend/src/models/user.model.js`):
+    - `name` (String, required)
+    - `rollNumber` (String, required, unique, uppercase, alphanumeric regex)
+    - `passwordHash` (String, required, select: false)
+    - `role` (String, enum: `ADMIN_HOD`, `TEACHER`, `STUDENT`)
+    - `mustChangePassword` (Boolean, default: true)
+    - `section` (String, default: '')
+    - `active` (Boolean, default: true)
+    - `createdAt`, `updatedAt` (Timestamps)
 
 ---
 
 ## API Status
 
-- `GET /api/health` — Working (Returns 200 with service status, uptime, and database connection state).
-- Other API routes (`/api/auth`, `/api/users`, `/api/labs`, etc.) are structured in route registry for upcoming phases.
+- `GET /api/health` — Working (200 OK)
+- `POST /api/auth/login` — Working (200 OK with JWT & user data / 400 Bad Request / 401 Unauthorized / 403 Deactivated)
+- `POST /api/auth/change-password` — Working (200 OK with fresh JWT / 400 Validation Error / 401 Unauthorized)
+- `GET /api/auth/me` — Working (200 OK with authenticated user profile / 401 Unauthorized)
+- `POST /api/auth/logout` — Working (200 OK)
 
 ---
 
@@ -112,47 +139,39 @@ Status: Completed (Verified)
 
 ---
 
+## Verification & Limitations
+
+- **Database Connectivity:** A live MongoDB Atlas / local MongoDB instance was tested via connection probe. The local daemon is currently offline (`ECONNREFUSED 127.0.0.1:27017`), and production Atlas credentials are not yet configured in local `.env` (kept as placeholder in `.env.example`).
+- **Logic & Security Testing:** All Mongoose schemas, cryptographic hashing (`bcryptjs`), JWT lifecycle, input validators, middleware gates, and HTTP endpoints were verified using isolated unit tests (`auth.test.js`), API HTTP integration tests (`api.auth.test.js`), and a dedicated security verification suite (`security.verification.test.js`).
+
+---
+
 ## Important Files
 
-### Project Documentation
-- `docs/PRD.md`
-- `docs/Architecture.md`
-- `docs/Rules.md`
-- `docs/Phases.md`
-- `docs/Design.md`
-- `docs/memory.md`
-
-### Stitch Design References
-- `Stitch_files/` (12 modules including design tokens, layouts, auth flows, consoles, student/teacher suites)
-
-### Backend Architecture Files
-- `backend/src/server.js` (Server entry point)
-- `backend/src/app.js` (Express configuration & route mounting)
-- `backend/src/config/env.js` & `backend/src/config/db.js` (Config & database)
-- `backend/src/routes/index.js` & `backend/src/routes/health.routes.js` (API routing)
-- `backend/src/controllers/health.controller.js` (Health controller)
-- `backend/src/middleware/errorHandler.js` & `backend/src/middleware/notFound.js` (Error handling)
-- `backend/src/utils/apiResponse.js` & `backend/src/utils/appError.js` (Standard API formatting)
-
-### Frontend Architecture Files
-- `frontend/src/main.jsx` & `frontend/src/App.jsx` (Application root)
-- `frontend/src/routes/AppRoutes.jsx` (Routing foundation)
-- `frontend/src/layouts/RootLayout.jsx` (App shell layout)
-- `frontend/src/styles/designTokens.css` & `frontend/src/styles/index.css` (Stitch tokens & styles)
-- `frontend/src/services/api.js` & `frontend/src/services/healthService.js` (Axios client & services)
+### Authentication Files
+- `backend/src/models/user.model.js` (User schema & password comparison)
+- `backend/src/controllers/auth.controller.js` (Login, change password, get profile, logout)
+- `backend/src/routes/auth.routes.js` (Auth route definitions)
+- `backend/src/middleware/auth.js` (JWT authentication, role authorization, password change gate)
+- `backend/src/validators/auth.validator.js` (Login & change password validation rules)
+- `backend/src/utils/token.js` (JWT token generation & verification)
+- `backend/src/utils/seed.js` (Development test user seeding script)
+- `backend/src/tests/auth.test.js`, `backend/src/tests/api.auth.test.js`, `backend/src/tests/security.verification.test.js` (Auth test suites)
+- `frontend/src/context/AuthContext.jsx` (Global auth context provider)
+- `frontend/src/services/authService.js` (Frontend auth API calls)
+- `frontend/src/routes/ProtectedRoute.jsx` & `frontend/src/routes/PublicOnlyRoute.jsx` (Route guards)
+- `frontend/src/pages/auth/LoginPage.jsx` (Stitch-based Login UI)
+- `frontend/src/pages/auth/ChangePasswordPage.jsx` (Stitch-based Temporary Password UI)
+- `frontend/src/pages/dashboard/DashboardPlaceholder.jsx` (Authenticated verification dashboard)
 
 ---
 
 ## Design Status
 
-- Stitch UI references fully cataloged and mapped.
-- Core design tokens (colors, typography, radii, shadows, spacing) integrated into `frontend/src/styles/designTokens.css`.
+- Stitch UI login and temporary password flows implemented with pixel-level fidelity using design system tokens.
 
 ---
 
 ## Deployment Status
 
-- Foundation prepared for:
-  - Frontend: Vercel
-  - Backend: Render
-  - Database: MongoDB Atlas
+- Foundation and Authentication layers ready for Vercel (Frontend), Render (Backend), and MongoDB Atlas.
