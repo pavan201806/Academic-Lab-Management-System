@@ -1,6 +1,8 @@
 import React from 'react';
 
-const LoadingSpinner = ({ size = 24, text = 'Loading...' }) => {
+const LoadingSpinner = ({ size = 24, text, message }) => {
+  const displayText = text || message || 'Loading...';
+
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
       <svg
@@ -33,9 +35,10 @@ const LoadingSpinner = ({ size = 24, text = 'Loading...' }) => {
           strokeLinecap="round"
         />
       </svg>
-      {text && <span style={{ fontSize: '0.875rem' }}>{text}</span>}
+      {displayText && <span style={{ fontSize: '0.875rem' }}>{displayText}</span>}
     </div>
   );
 };
 
 export default LoadingSpinner;
+

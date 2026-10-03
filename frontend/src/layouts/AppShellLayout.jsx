@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationDrawer from '../components/notifications/NotificationDrawer';
 import { notificationService } from '../services/notificationService';
@@ -7,6 +7,7 @@ import { notificationService } from '../services/notificationService';
 const AppShellLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -21,7 +22,7 @@ const AppShellLayout = () => {
         })
         .catch((err) => console.warn('Notification fetch warning:', err));
     }
-  }, [user]);
+  }, [user, location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -37,7 +38,7 @@ const AppShellLayout = () => {
       case 'STUDENT':
         return 'badge-success';
       default:
-        return 'badge-info';
+        return 'badge-neutral';
     }
   };
 
@@ -45,31 +46,48 @@ const AppShellLayout = () => {
     switch (role) {
       case 'ADMIN_HOD':
         return [
-          { label: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
-          { label: 'Laboratories', path: '/admin/labs', icon: '⚗️' },
-          { label: 'Sections & Cohorts', path: '/admin/sections', icon: '👥' },
-          { label: 'Faculty / Teachers', path: '/admin/teachers', icon: '👨‍🏫' },
-          { label: 'Students Roster', path: '/admin/students', icon: '🎓' },
-          { label: 'Lab Assignments', path: '/admin/assignments', icon: '🔗' },
-          { label: 'Announcements', path: '/admin/notifications', icon: '📢' },
-          { label: 'Reports & Export', path: '/admin/reports', icon: '📄' }
+          { label: 'Dashboard', path: '/admin/dashboard', icon: 'dashboard' },
+          { label: 'Laboratories', path: '/admin/labs', icon: 'biotech' },
+          { label: 'Sections & Cohorts', path: '/admin/sections', icon: 'groups' },
+          { label: 'Faculty / Teachers', path: '/admin/teachers', icon: 'school' },
+          { label: 'Students Roster', path: '/admin/students', icon: 'badge' },
+          { label: 'Lab Assignments', path: '/admin/assignments', icon: 'hub' },
+          { label: 'Announcements', path: '/admin/notifications', icon: 'campaign' },
+          { label: 'Reports & Export', path: '/admin/reports', icon: 'analytics' }
         ];
       case 'TEACHER':
         return [
-          { label: 'My Laboratories', path: '/teacher/labs', icon: '⚗️' },
-          { label: 'Announcements', path: '/teacher/notifications', icon: '📢' },
-          { label: 'Reports & Export', path: '/teacher/reports', icon: '📄' }
+          { label: 'My Laboratories', path: '/teacher/labs', icon: 'biotech' },
+          { label: 'Announcements', path: '/teacher/notifications', icon: 'campaign' },
+          { label: 'Reports & Export', path: '/teacher/reports', icon: 'analytics' }
         ];
       case 'STUDENT':
         return [
-          { label: 'Assigned Laboratories', path: '/student/labs', icon: '📚' },
-          { label: 'Academic Reports', path: '/student/reports', icon: '📄' }
+          { label: 'Assigned Laboratories', path: '/student/labs', icon: 'science' },
+          { label: 'Academic Reports', path: '/student/reports', icon: 'analytics' }
         ];
       default:
         return [];
     }
   };
 
+  const getBreadcrumbTitle = () => {
+    const path = location.pathname;
+    if (path.includes('/dashboard')) return 'Overview & Analytics';
+    if (path.includes('/assignments')) return 'Lab Assignments';
+    if (path.includes('/sections')) return 'Sections & Cohorts';
+    if (path.includes('/teachers')) return 'Faculty Management';
+    if (path.includes('/students')) return 'Student Roster';
+    if (path.includes('/notifications')) return 'Announcements';
+    if (path.includes('/reports')) return 'Academic Reports';
+    if (path.includes('/experiments/')) return 'Experiment Workspace';
+    if (path.includes('/experiments')) return 'Experiment Authoring';
+    if (path.includes('/pdf-extract')) return 'PDF Syllabus Ingestion';
+    if (path.includes('/submissions')) return 'Submissions Ledger';
+    if (path.includes('/labs/')) return 'Lab Curriculum & Details';
+    if (path.includes('/labs')) return 'Assigned Laboratories';
+    return user?.role === 'ADMIN_HOD' ? 'Admin Console' : user?.role === 'TEACHER' ? 'Faculty Hub' : 'Student Hub';
+  };
 
   const navItems = getNavItemsForRole(user?.role);
 
@@ -84,22 +102,23 @@ const AppShellLayout = () => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          transition: 'width 0.25s ease',
+          transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'sticky',
           top: 0,
           height: '100vh',
           zIndex: 40,
-          boxShadow: 'var(--shadow-sm)'
+          boxShadow: 'var(--shadow-sm)',
+          flexShrink: 0
         }}
       >
-        <div style={{ padding: '1rem' }}>
+        <div style={{ padding: '1rem', overflowY: 'auto' }}>
           {/* Logo & Toggle */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: isCollapsed ? 'center' : 'space-between',
-              marginBottom: '1.5rem',
+              marginBottom: '1.25rem',
               paddingBottom: '0.75rem',
               borderBottom: '1px solid var(--color-border)'
             }}
@@ -115,12 +134,10 @@ const AppShellLayout = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
                   flexShrink: 0
                 }}
               >
-                ⚗
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>science</span>
               </div>
               {!isCollapsed && (
                 <div style={{ overflow: 'hidden' }}>
@@ -142,11 +159,16 @@ const AppShellLayout = () => {
                 cursor: 'pointer',
                 color: 'var(--color-text-secondary)',
                 padding: '0.25rem',
-                borderRadius: 'var(--radius-sm)'
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-              title="Toggle Navigation"
+              title={isCollapsed ? 'Expand navigation' : 'Collapse navigation'}
             >
-              {isCollapsed ? '▶' : '◀'}
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                {isCollapsed ? 'chevron_right' : 'chevron_left'}
+              </span>
             </button>
           </div>
 
@@ -156,11 +178,13 @@ const AppShellLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                title={isCollapsed ? item.label : undefined}
                 style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
-                  padding: '0.625rem 0.875rem',
+                  padding: isCollapsed ? '0.625rem 0' : '0.625rem 0.875rem',
+                  justifyContent: isCollapsed ? 'center' : 'flex-start',
                   borderRadius: 'var(--radius-md)',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
@@ -170,7 +194,7 @@ const AppShellLayout = () => {
                   transition: 'all 0.15s ease'
                 })}
               >
-                <span style={{ fontSize: '1.125rem' }}>{item.icon}</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>{item.icon}</span>
                 {!isCollapsed && <span>{item.label}</span>}
               </NavLink>
             ))}
@@ -179,11 +203,11 @@ const AppShellLayout = () => {
 
         {/* User Card in Rail */}
         <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface-hover)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
             <div
               style={{
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: 'var(--radius-full)',
                 backgroundColor: 'var(--color-primary)',
                 color: '#fff',
@@ -233,20 +257,23 @@ const AppShellLayout = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
             <Link
               to={user?.role === 'ADMIN_HOD' ? '/admin/dashboard' : user?.role === 'TEACHER' ? '/teacher/labs' : '/student/labs'}
-              style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}
+              style={{ color: 'var(--color-text-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
-              Portal
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>home</span>
+              <span>Portal</span>
             </Link>
             <span>&rsaquo;</span>
-            <span style={{ color: 'var(--color-text-secondary)' }}>Laboratories</span>
+            <span style={{ color: 'var(--color-text-secondary)' }}>
+              {user?.role === 'ADMIN_HOD' ? 'Admin' : user?.role === 'TEACHER' ? 'Faculty' : 'Student'}
+            </span>
             <span>&rsaquo;</span>
             <strong style={{ color: 'var(--color-primary)' }}>
-              {user?.role === 'ADMIN_HOD' ? 'Administration Console' : user?.role === 'TEACHER' ? 'Faculty Hub' : 'Student Hub'}
+              {getBreadcrumbTitle()}
             </strong>
           </div>
 
           {/* Right Header Cluster */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
             {/* Notification Bell Action */}
             <button
               onClick={() => setIsDrawerOpen(true)}
@@ -265,7 +292,7 @@ const AppShellLayout = () => {
               }}
               title="View Announcements & Notifications"
             >
-              <span>🔔</span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>notifications</span>
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -282,15 +309,17 @@ const AppShellLayout = () => {
               )}
             </button>
 
-            <span className="badge badge-info" style={{ fontSize: '0.6875rem' }}>
+            <span className="badge badge-info" style={{ fontSize: '0.6875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>verified_user</span>
               ISO 27001 SECURED
             </span>
             <button
               onClick={handleLogout}
-              className="btn btn-secondary"
-              style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
-              Sign Out
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </header>
@@ -317,11 +346,16 @@ const AppShellLayout = () => {
             color: 'var(--color-text-secondary)',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem'
           }}
         >
-          <span>Academic Lab Management System &copy; {new Date().getFullYear()} &mdash; Phase 2 Academic Administration</span>
-          <span>Department Matrix Core v2.0</span>
+          <span>Academic Lab Management System &copy; {new Date().getFullYear()} &mdash; Collegiate Laboratory Portal</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-success)', display: 'inline-block' }}></span>
+            <span>Department Matrix Core v2.0 Active</span>
+          </span>
         </footer>
       </div>
     </div>
@@ -329,3 +363,4 @@ const AppShellLayout = () => {
 };
 
 export default AppShellLayout;
+
