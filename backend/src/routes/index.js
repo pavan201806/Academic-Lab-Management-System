@@ -15,6 +15,7 @@ const reevaluationRoutes = require('./reevaluation.routes');
 const notificationRoutes = require('./notification.routes');
 const progressRoutes = require('./progress.routes');
 const reportRoutes = require('./report.routes');
+const adminDashboardRoutes = require('./adminDashboard.routes');
 
 // Mount routes
 router.use('/health', healthRoutes);
@@ -32,6 +33,9 @@ router.use('/reevaluations', reevaluationRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/progress', progressRoutes);
 router.use('/reports', reportRoutes);
+router.use('/admin/dashboard', adminDashboardRoutes);
+router.use('/admin', adminDashboardRoutes);
 
 module.exports = router;
+
 

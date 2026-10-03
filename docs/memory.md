@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 10 — Reports**
+**Phase 11 — Admin/HOD Dashboard**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -39,39 +39,27 @@ Status: Completed & Verified (Ready for Review)
 - **Phase 9 — Notifications and Student Progress:**
   - Notification model, broadcast targeting (`ALL_STUDENTS`, `LAB`, `SECTION`, `INDIVIDUAL`), read/unread lifecycle, teacher-only soft-deletion, student progress tracker using real persisted evaluation data, 34/34 passing tests.
 - **Phase 10 — Reports:**
-  - **Report Categories Implemented (`backend/src/services/reportService.js`):**
-    1. **Student Report (`getStudentReport`):** Official individual academic record showing enrolled labs, completed/pending experiments, highest automated score (/10), authoritative viva score (/5), final score (/15), and completion percentage.
-    2. **Section Report (`getSectionReport`):** Cohort academic overview showing enrolled student rosters, individual progress, average scores, and cumulative section metrics.
-    3. **Lab Report (`getLabReport`):** Aggregated laboratory performance summary across sections, cohort progress %, average combined score (/15), highest score, lowest score, and student-by-student breakdown.
-    4. **Experiment Report (`getExperimentReport`):** Experiment-level submission stats, eligible students count, completed count, average auto score (/10), average viva score (/5), average final score (/15), highest and lowest scores.
-    5. **Marks Report (`getMarksReport`):** Complete marks ledger strictly adhering to the scoring standard ($/10 + /5 = /15$, max 12 experiments per lab = 180 total), filtered by lab, section, experiment, or student.
-    6. **Viva Report (`getVivaReport`):** Authoritative current viva voce assessment records ($/5$), remarks, versions, evaluating faculty, and evaluation dates.
-    7. **Progress Report (`getProgressReport`):** Term-wide curriculum progress reports leveraging established `progressService` calculations.
-  - **Export Engines:**
-    - **PDF Generation (`backend/src/utils/pdfGenerator.js`):** Built with `pdfkit` featuring clean typography, institutional headers, metadata context pills, summary KPI blocks, striped data tables with auto-wrapping, pagination, and security-cleared footers.
-    - **Excel Generation (`backend/src/utils/excelGenerator.js`):** Built with `exceljs` featuring styled header bars, metadata blocks, KPI summary rows, alternating table styling, and auto-computed column widths.
-  - **Strict Server-Side Authorization & IDOR Protection:**
-    - Identity derived strictly from JWT authentication (`req.user`).
-    - **Student:** Can only view/download their own reports (attempts to view other student IDs or cohort reports return `403 Forbidden`).
-    - **Teacher:** Restricted strictly to active assigned laboratories and sections (`MAIN` or `ASSISTANT`). Access to unassigned labs/sections rejected with `403 Forbidden`.
-    - **Admin/HOD:** System-wide reporting access across all labs, sections, and cohorts.
+  - Report categories (Student, Section, Lab, Experiment, Marks, Viva, Progress), vector PDF (`pdfkit`) and Excel (.xlsx `exceljs`) export engines, strict RBAC, 25/25 passing tests.
+- **Phase 11 — Admin/HOD Dashboard:**
+  - **Admin Dashboard Service (`backend/src/services/adminDashboardService.js`):**
+    - Centralized telemetry aggregator computing system statistics (active/inactive counts for students, faculty, labs, sections, and experiment states), student rosters with completion metrics, faculty deployment matrices (MAIN/ASSISTANT assignments), lab curriculum telemetries, section cohort distributions, live timestamped activity stream (submissions, evaluations, vivas, re-evaluations, announcements), and performance benchmarks adhering to the `/10 + /5 = /15` rule.
+  - **Strict Server-Side Authorization (`backend/src/routes/adminDashboard.routes.js`):**
+    - Authenticated via JWT, verified against database `role === 'ADMIN_HOD'`. Unauthenticated or non-admin requests (teachers/students) are strictly rejected with `403 Forbidden`.
   - **APIs:**
-    - `GET /api/reports/student/:studentId` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...`)
-    - `GET /api/reports/section/:sectionId` [TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...`)
-    - `GET /api/reports/lab/:labId` [TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&sectionId=...`)
-    - `GET /api/reports/experiment/:experimentId` [TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&sectionId=...`)
-    - `GET /api/reports/marks` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...&sectionId=...&experimentId=...&studentId=...`)
-    - `GET /api/reports/viva` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...&sectionId=...&experimentId=...&studentId=...`)
-    - `GET /api/reports/progress` [STUDENT, TEACHER, ADMIN_HOD] (supports `?format=pdf|excel|json&labId=...&sectionId=...&studentId=...`)
+    - `GET /api/admin/dashboard` [ADMIN_HOD] (Full aggregated dashboard payload)
+    - `GET /api/admin/dashboard/statistics` [ADMIN_HOD] (System aggregate counts)
+    - `GET /api/admin/dashboard/students` [ADMIN_HOD] (Student performance overview)
+    - `GET /api/admin/dashboard/teachers` [ADMIN_HOD] (Faculty deployment matrix)
+    - `GET /api/admin/dashboard/labs` [ADMIN_HOD] (Laboratory telemetry overview)
+    - `GET /api/admin/dashboard/sections` [ADMIN_HOD] (Section cohort overview)
+    - `GET /api/admin/dashboard/activity` [ADMIN_HOD] (Live administrative activity stream)
+    - `GET /api/admin/dashboard/performance` [ADMIN_HOD] (Scoring & completion telemetry)
   - **Frontend Integration:**
-    - `frontend/src/services/reportService.js`: Unified API client with Blob download handlers for PDF and Excel files.
-    - `frontend/src/pages/student/StudentReportsPage.jsx`: Student-facing reports hub with lab filter, KPI summary cards, performance table with score pill indicators, and one-click PDF / Excel downloads.
-    - `frontend/src/pages/teacher/TeacherReportsPage.jsx`: Stitch-styled Faculty & Admin Reports Console with category tabs, dynamic filter controls (lab, section, experiment, student), live metadata inspection, KPI summary row, preview table, and one-click PDF / Excel exports.
-    - `frontend/src/layouts/AppShellLayout.jsx`: Added "Reports & Export" / "Academic Reports" navigation links to the sidebar for all roles.
-    - `frontend/src/routes/AppRoutes.jsx`: Registered `/student/reports`, `/teacher/reports`, and `/admin/reports`.
+    - `frontend/src/services/adminDashboardService.js`: API client for telemetry endpoints.
+    - `frontend/src/pages/admin/AdminDashboardPage.jsx`: Stitch-styled Administrative Command Center featuring KPI telemetry cards, scoring health banner, global filters (Academic Year, Semester, Department), multi-tab inspection views (Command Center & Activity, Laboratories, Faculty Deployment, Student Cohorts, Section Rosters, Reports & Compliance shortcuts).
   - **Verification & Test Results:**
-    - **Phase 10 Comprehensive & Security Tests:** 25/25 PASSED (100%)
-    - **Total Regression Baseline:** 271/271 PASSED across Phases 1–10 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34, Phase 8: 32, Phase 9: 34, Phase 10: 25)
+    - **Phase 11 Comprehensive & Security Tests:** 12/12 PASSED (100%)
+    - **Total Regression Baseline:** 283/283 PASSED across Phases 1–11 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34, Phase 8: 32, Phase 9: 34, Phase 10: 25, Phase 11: 12)
     - **Frontend Production Build:** Built cleanly with Vite (0 errors)
     - **Docker Runtime Testing Status:**
       - Docker sandbox configuration/guardrail tests: PASSED (8/8).
@@ -113,3 +101,4 @@ Status: Completed & Verified (Ready for Review)
 - **Notifications:** `POST /notifications`, `GET /notifications`, `GET /notifications/:id`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`, `DELETE /notifications/:id` — Working
 - **Progress:** `GET /progress/student`, `GET /progress/student/lab/:labId`, `GET /progress/lab/:labId`, `GET /progress/lab/:labId/student/:studentId` — Working
 - **Reports:** `GET /reports/student/:studentId`, `GET /reports/section/:sectionId`, `GET /reports/lab/:labId`, `GET /reports/experiment/:experimentId`, `GET /reports/marks`, `GET /reports/viva`, `GET /reports/progress` — Working (JSON, PDF, Excel)
+- **Admin Dashboard:** `GET /admin/dashboard`, `GET /admin/dashboard/statistics`, `GET /admin/dashboard/students`, `GET /admin/dashboard/teachers`, `GET /admin/dashboard/labs`, `GET /admin/dashboard/sections`, `GET /admin/dashboard/activity`, `GET /admin/dashboard/performance` — Working
