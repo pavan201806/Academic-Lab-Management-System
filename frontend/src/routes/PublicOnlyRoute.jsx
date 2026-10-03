@@ -18,7 +18,14 @@ const PublicOnlyRoute = ({ children }) => {
     if (mustChangePassword) {
       return <Navigate to="/change-password" replace />;
     }
-    const target = user?.role === 'ADMIN_HOD' ? '/admin/dashboard' : '/dashboard';
+    const target =
+      user?.role === 'ADMIN_HOD'
+        ? '/admin/dashboard'
+        : user?.role === 'TEACHER'
+        ? '/teacher/labs'
+        : user?.role === 'STUDENT'
+        ? '/student/labs'
+        : '/dashboard';
     return <Navigate to={target} replace />;
   }
 

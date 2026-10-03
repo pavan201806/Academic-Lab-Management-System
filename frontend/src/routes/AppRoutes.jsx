@@ -18,6 +18,11 @@ import TeacherManagementPage from '../pages/admin/TeacherManagementPage';
 import StudentManagementPage from '../pages/admin/StudentManagementPage';
 import LabAssignmentPage from '../pages/admin/LabAssignmentPage';
 
+// Phase 3 Teacher & Student Pages
+import TeacherLabDashboardPage from '../pages/teacher/TeacherLabDashboardPage';
+import StudentLabDashboardPage from '../pages/student/StudentLabDashboardPage';
+import LabDetailsPage from '../pages/common/LabDetailsPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -69,10 +74,39 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="labs" element={<LabManagementPage />} />
+        <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="sections" element={<SectionManagementPage />} />
         <Route path="teachers" element={<TeacherManagementPage />} />
         <Route path="students" element={<StudentManagementPage />} />
         <Route path="assignments" element={<LabAssignmentPage />} />
+      </Route>
+
+      {/* Phase 3: Teacher Laboratory Management & Assigned Labs Workspace */}
+      <Route
+        path="/teacher"
+        element={
+          <ProtectedRoute allowedRoles={['TEACHER']}>
+            <AppShellLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/teacher/labs" replace />} />
+        <Route path="labs" element={<TeacherLabDashboardPage />} />
+        <Route path="labs/:id" element={<LabDetailsPage />} />
+      </Route>
+
+      {/* Phase 3: Student Laboratory Hub & Assigned Curriculum Workspace */}
+      <Route
+        path="/student"
+        element={
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <AppShellLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/student/labs" replace />} />
+        <Route path="labs" element={<StudentLabDashboardPage />} />
+        <Route path="labs/:id" element={<LabDetailsPage />} />
       </Route>
 
       {/* 404 Fallback */}

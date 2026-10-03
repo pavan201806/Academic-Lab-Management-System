@@ -7,8 +7,18 @@ const getLabs = asyncHandler(async (req, res) => {
   return successResponse(res, labs, 'Laboratories retrieved successfully');
 });
 
+const getAssignedLabs = asyncHandler(async (req, res) => {
+  const labs = await labService.getAssignedLabs(req.user);
+  return successResponse(res, labs, 'Assigned laboratories retrieved successfully');
+});
+
 const getLabById = asyncHandler(async (req, res) => {
-  const lab = await labService.getLabById(req.params.id);
+  const sectionId = req.params.sectionId || req.query.sectionId;
+  const sectionCode = req.query.sectionCode;
+  const lab = await labService.getLabDetailsForUser(req.params.id, req.user, {
+    sectionId,
+    sectionCode
+  });
   return successResponse(res, lab, 'Laboratory retrieved successfully');
 });
 
@@ -34,8 +44,10 @@ const toggleActive = asyncHandler(async (req, res) => {
 
 module.exports = {
   getLabs,
+  getAssignedLabs,
   getLabById,
   createLab,
   updateLab,
   toggleActive
 };
+

@@ -13,8 +13,14 @@ export const labService = {
     return res.data || res;
   },
 
-  getLabById: async (id) => {
-    const res = await apiClient.get(`/labs/${id}`);
+  getAssignedLabs: async () => {
+    const res = await apiClient.get('/labs/assigned');
+    return res.data || res;
+  },
+
+  getLabById: async (id, sectionId = null) => {
+    const url = sectionId ? `/labs/${id}?sectionId=${sectionId}` : `/labs/${id}`;
+    const res = await apiClient.get(url);
     return res.data || res;
   },
 

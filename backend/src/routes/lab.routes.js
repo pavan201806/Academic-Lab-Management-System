@@ -10,13 +10,24 @@ const {
 router.use(authenticate);
 router.use(requirePasswordChangeCompleted);
 
-// Read endpoints
-router.get('/', authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'), labController.getLabs);
-router.get('/:id', authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'), validateObjectIdParam('id'), labController.getLabById);
+// Role-aware assigned laboratories endpoint (accessible to ADMIN_HOD, TEACHER, STUDENT)
+router.get('/assigned', authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'), labController.getAssignedLabs);
 
-// Admin-only write operations
+// Role-aware laboratory details endpoint (verifies active assignment / cohort enrollment)
+router.get('/:id', authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'), validateObjectIdParam('id'), labController.getLabById);
+router.get(
+  '/:id/section/:sectionId',
+  authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'),
+  validateObjectIdParam('id'),
+  validateObjectIdParam('sectionId'),
+  labController.getLabById
+);
+
+// Admin-only catalogue and management operations
+router.get('/', authorize('ADMIN_HOD'), labController.getLabs);
 router.post('/', authorize('ADMIN_HOD'), validateLabInput, labController.createLab);
 router.put('/:id', authorize('ADMIN_HOD'), validateObjectIdParam('id'), validateLabInput, labController.updateLab);
 router.patch('/:id/status', authorize('ADMIN_HOD'), validateObjectIdParam('id'), labController.toggleActive);
 
 module.exports = router;
+

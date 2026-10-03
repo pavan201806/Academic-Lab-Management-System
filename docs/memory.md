@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 2 — Academic Structure & Administration**
+**Phase 3 — Lab Management**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -98,38 +98,72 @@ Status: Completed & Verified (Ready for Review)
     - Updated `AppRoutes.jsx`, `ProtectedRoute.jsx`, `PublicOnlyRoute.jsx`, and `LoginPage.jsx` to route `ADMIN_HOD` users into `/admin/dashboard`.
   - **Frontend Build:**
     - Verified production bundle compilation via `npm run build` (0 warnings, 0 errors).
+- **Phase 3 — Lab Management & Access Layer:**
+  - **Role-Aware Lab Access Control Layer (`backend/src/services/labService.js`):**
+    - `getAssignedLabs(user)`:
+      - **ADMIN_HOD**: Returns all active labs with comprehensive cohort metadata.
+      - **TEACHER**: Returns only labs where authenticated teacher has an active `LabAssignment` (`MAIN` or `ASSISTANT`) for an active section and active lab.
+      - **STUDENT**: Resolves student's active section (`user.section`), returns only active labs assigned to that section via active `LabAssignment`.
+    - `getLabDetailsForUser(labId, user)`:
+      - **ADMIN_HOD**: Full administrative access to lab details and all cohort assignments.
+      - **TEACHER**: Verifies teacher has an active assignment to this lab. Blocks unassigned teachers with `403 Forbidden` (mitigating IDOR).
+      - **STUDENT**: Verifies student is enrolled in an active section and that this lab is actively assigned to that section. Blocks unauthorized access with `403 Forbidden`.
+      - **Deactivated Labs / Inactive Users**: Strictly denied with `403 Forbidden`.
+  - **Backend Routes & Controllers (`backend/src/routes/lab.routes.js`, `backend/src/controllers/lab.controller.js`):**
+    - `GET /api/labs/assigned`: Role-aware assigned laboratories endpoint for `ADMIN_HOD`, `TEACHER`, `STUDENT`.
+    - `GET /api/labs/:id`: Protected role-aware lab details endpoint.
+    - `GET /api/labs`, `POST /api/labs`, `PUT /api/labs/:id`, `PATCH /api/labs/:id/status`: Restricted to `ADMIN_HOD`.
+  - **Backend Test Suite (`backend/src/tests/lab.access.test.js`):**
+    - Added dedicated test suite covering:
+      - Teacher active `MAIN` and `ASSISTANT` lab retrieval.
+      - IDOR rejection when unassigned teacher requests lab details.
+      - Student cohort-only lab visibility (Section A student gets Lab 1; Section B student gets 0 labs).
+      - IDOR rejection when student attempts to access a lab from another section.
+      - Inactive student and deactivated lab blocking.
+      - Historical preservation verification (deactivating lab updates `active: false` without deleting records or assignments).
+    - Added to `npm test` runner. All tests passing 100%.
+  - **Frontend Workspaces & Stitch-Aligned Pages:**
+    - `TeacherLabDashboardPage.jsx` (`frontend/src/pages/teacher/TeacherLabDashboardPage.jsx`): Teacher console showcasing assigned labs, MAIN/ASSISTANT badges, section cohort tags, metric counters, search/filter, and navigation to Lab Details.
+    - `StudentLabDashboardPage.jsx` (`frontend/src/pages/student/StudentLabDashboardPage.jsx`): Student hub displaying enrolled section laboratories, faculty instructors, active term details, and direct access to Lab Curriculum view.
+    - `LabDetailsPage.jsx` (`frontend/src/pages/common/LabDetailsPage.jsx`): Role-aware laboratory details view displaying academic synopsis, cohort details, faculty instructor matrix, future experiment placeholder container, and strict unauthorized error interceptor.
+  - **Frontend Navigation & Routing (`frontend/src/layouts/AppShellLayout.jsx`, `frontend/src/routes/AppRoutes.jsx`):**
+    - Dynamic sidebar navigation tailored to role (`ADMIN_HOD`, `TEACHER`, `STUDENT`).
+    - Dedicated routes `/teacher/labs`, `/teacher/labs/:id`, `/student/labs`, `/student/labs/:id`, `/admin/labs/:id`.
+    - Role-aware login & public route redirection.
+  - **Frontend Build:**
+    - Production bundle compilation verified via `npm run build` (0 warnings, 0 errors).
 
 ---
 
 ## Currently Working On
 
-- Phase 2 complete. Ready for checkpoint commit.
+- Phase 3 complete. Ready for checkpoint commit.
 
 ---
 
 ## Next Tasks
 
-1. **Phase 3 — Teacher Laboratory Workspace & Experiment Planning:**
-   - Teacher dashboard showing assigned labs and sections.
-   - Lab curriculum planning and experiment structuring.
-   - Experiments and test cases (as scoped in Phase 3).
+1. **Phase 4 — Experiment Management:**
+   - Manual experiment creation & configuration.
+   - Experiment ordering & curriculum organization.
+   - Programming language selection, test cases, and deadlines.
+   - Teacher experiment authoring workbench.
 
 ---
 
 ## Important Decisions
 
-### Academic Structure & Administration
-- **Assignment Types vs Roles:**
-  - `MAIN` and `ASSISTANT` are strictly assignment types recorded within `LabAssignment` documents, **not** authentication roles.
-  - System roles remain strictly `ADMIN_HOD`, `TEACHER`, `STUDENT`.
-- **Assignment Integrity Constraints:**
-  - One active `MAIN` teacher per Lab + Section cohort at any time.
-  - Multiple `ASSISTANT` teachers permitted per Lab + Section.
-  - Inactive teachers, labs, or sections cannot be assigned.
-  - Duplicate assignments of the same teacher to the same Lab + Section are rejected with 409 Conflict.
-- **Deactivation vs Hard Deletion:**
-  - All academic entities (`Lab`, `Section`, `User`, `LabAssignment`) implement `active: Boolean` (defaults to `true`).
-  - Historical identity is preserved by deactivating records instead of destructive deletion.
+### Lab Access & Access Control Matrix
+- **Identity Enforcement:**
+  - `teacherId`, `studentId`, `sectionId`, and `role` provided in client request bodies or query params are **never** trusted for authorization.
+  - The backend strictly uses `req.user` verified from the JWT session.
+- **IDOR Protection:**
+  - Access to `GET /api/labs/:id` verifies that teachers have an active `LabAssignment` for that lab, and students belong to an active `Section` assigned to that lab.
+  - Unauthorized direct URL access returns `403 Forbidden`.
+- **Soft Deactivation & Historical Preservation:**
+  - Deactivating a lab sets `active = false` on the `Lab` document.
+  - Associated `LabAssignment` records are preserved intact to safeguard future audit and reporting integrity.
+  - Deactivated labs are omitted from active assigned lab listings for faculty and students.
 
 ---
 
@@ -171,12 +205,13 @@ Status: Completed & Verified (Ready for Review)
   - `PATCH /api/sections/:id/status` — Working (200 OK)
   - `GET /api/sections/:id/students` — Working (200 OK)
   - `POST /api/sections/:id/assign-student` — Working (200 OK)
-- **Labs:**
-  - `GET /api/labs` — Working (200 OK)
-  - `GET /api/labs/:id` — Working (200 OK / 404)
-  - `POST /api/labs` — Working (201 Created / 400 / 409)
-  - `PUT /api/labs/:id` — Working (200 OK / 400 / 404)
-  - `PATCH /api/labs/:id/status` — Working (200 OK)
+- **Labs & Assigned Hub:**
+  - `GET /api/labs/assigned` — Working (200 OK with role-filtered assigned labs)
+  - `GET /api/labs/:id` — Working (200 OK with role-authorized lab details / 403 Forbidden / 404)
+  - `GET /api/labs` — Working (200 OK / Admin only)
+  - `POST /api/labs` — Working (201 Created / Admin only)
+  - `PUT /api/labs/:id` — Working (200 OK / Admin only)
+  - `PATCH /api/labs/:id/status` — Working (200 OK / Admin only)
 - **Lab Assignments:**
   - `GET /api/lab-assignments` — Working (200 OK)
   - `POST /api/lab-assignments` — Working (201 Created / 400 / 404 / 409)
@@ -196,36 +231,32 @@ Status: Completed & Verified (Ready for Review)
 ## Verification & Limitations
 
 - **Database Connectivity:** Offline unit/integration test suites mock and validate the Mongoose schema constraints, validator logic, assignment rules, and RBAC guards. When running in a live production environment with MongoDB Atlas, configured `.env` values will connect seamlessly.
-- **Strict Scope Boundaries Maintained:** Experiments, submissions, code evaluation, viva, student experiment workspaces, and reports were NOT implemented in Phase 2.
+- **Strict Scope Boundaries Maintained:** Experiments, PDF extractions, test cases, code runners, submissions, evaluations, and reports were NOT implemented in Phase 3.
 
 ---
 
 ## Important Files
 
-### Phase 2 Files
-- `backend/src/models/section.model.js` (Section Mongoose Schema)
-- `backend/src/models/lab.model.js` (Lab Mongoose Schema)
-- `backend/src/models/labAssignment.model.js` (LabAssignment Schema with MAIN/ASSISTANT types)
-- `backend/src/validators/academic.validator.js` (Centralized academic input validation)
-- `backend/src/services/userService.js` (User management service)
-- `backend/src/services/sectionService.js` (Section service)
-- `backend/src/services/labService.js` (Lab service)
-- `backend/src/services/labAssignmentService.js` (Lab assignment service & business rules)
-- `backend/src/controllers/` (`user.controller.js`, `section.controller.js`, `lab.controller.js`, `labAssignment.controller.js`)
-- `backend/src/routes/` (`user.routes.js`, `section.routes.js`, `lab.routes.js`, `labAssignment.routes.js`)
-- `backend/src/tests/academic.test.js` (Academic testing suite)
-- `frontend/src/services/` (`userService.js`, `sectionService.js`, `labService.js`, `labAssignmentService.js`)
-- `frontend/src/layouts/AppShellLayout.jsx` (Stitch App Shell layout with sidebar rail)
-- `frontend/src/pages/admin/` (`AdminDashboardPage.jsx`, `LabManagementPage.jsx`, `SectionManagementPage.jsx`, `TeacherManagementPage.jsx`, `StudentManagementPage.jsx`, `LabAssignmentPage.jsx`)
+### Phase 3 Files
+- `backend/src/services/labService.js` (Role-aware lab access and assigned labs retrieval)
+- `backend/src/controllers/lab.controller.js` (Lab controller with `getAssignedLabs` and role-aware `getLabById`)
+- `backend/src/routes/lab.routes.js` (Lab routes with `GET /assigned` and RBAC guards)
+- `backend/src/tests/lab.access.test.js` (Phase 3 unit and access control test suite)
+- `frontend/src/services/labService.js` (Frontend lab service with `getAssignedLabs`)
+- `frontend/src/pages/teacher/TeacherLabDashboardPage.jsx` (Stitch-aligned Teacher Lab Console)
+- `frontend/src/pages/student/StudentLabDashboardPage.jsx` (Stitch-aligned Student Assigned Labs Hub)
+- `frontend/src/pages/common/LabDetailsPage.jsx` (Role-aware Lab Details view with IDOR protection)
+- `frontend/src/layouts/AppShellLayout.jsx` (Role-dynamic sidebar navigation)
+- `frontend/src/routes/AppRoutes.jsx` (Protected routes for Teacher and Student workspaces)
 
 ---
 
 ## Design Status
 
-- Stitch UI layouts and tokens applied across all Admin/HOD academic management screens.
+- Stitch UI layouts and tokens applied across Teacher Console, Student Hub, and Lab Details screens.
 
 ---
 
 ## Deployment Status
 
-- Foundation, Authentication, and Academic Administration layers ready for deployment.
+- Foundation, Authentication, Academic Administration, and Lab Access layers ready for deployment.

@@ -25,14 +25,31 @@ const AppShellLayout = () => {
     }
   };
 
-  const navItems = [
-    { label: 'Dashboard', path: '/admin/dashboard', icon: '📊', roles: ['ADMIN_HOD'] },
-    { label: 'Laboratories', path: '/admin/labs', icon: '⚗️', roles: ['ADMIN_HOD'] },
-    { label: 'Sections & Cohorts', path: '/admin/sections', icon: '👥', roles: ['ADMIN_HOD'] },
-    { label: 'Faculty / Teachers', path: '/admin/teachers', icon: '👨‍🏫', roles: ['ADMIN_HOD'] },
-    { label: 'Students Roster', path: '/admin/students', icon: '🎓', roles: ['ADMIN_HOD'] },
-    { label: 'Lab Assignments', path: '/admin/assignments', icon: '🔗', roles: ['ADMIN_HOD'] }
-  ];
+  const getNavItemsForRole = (role) => {
+    switch (role) {
+      case 'ADMIN_HOD':
+        return [
+          { label: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
+          { label: 'Laboratories', path: '/admin/labs', icon: '⚗️' },
+          { label: 'Sections & Cohorts', path: '/admin/sections', icon: '👥' },
+          { label: 'Faculty / Teachers', path: '/admin/teachers', icon: '👨‍🏫' },
+          { label: 'Students Roster', path: '/admin/students', icon: '🎓' },
+          { label: 'Lab Assignments', path: '/admin/assignments', icon: '🔗' }
+        ];
+      case 'TEACHER':
+        return [
+          { label: 'My Laboratories', path: '/teacher/labs', icon: '⚗️' }
+        ];
+      case 'STUDENT':
+        return [
+          { label: 'Assigned Laboratories', path: '/student/labs', icon: '📚' }
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const navItems = getNavItemsForRole(user?.role);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-canvas)' }}>
@@ -192,13 +209,18 @@ const AppShellLayout = () => {
         >
           {/* Breadcrumb / Section context */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
-            <Link to="/admin/dashboard" style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>
+            <Link
+              to={user?.role === 'ADMIN_HOD' ? '/admin/dashboard' : user?.role === 'TEACHER' ? '/teacher/labs' : '/student/labs'}
+              style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}
+            >
               Portal
             </Link>
             <span>&rsaquo;</span>
-            <span style={{ color: 'var(--color-text-secondary)' }}>Academics</span>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Laboratories</span>
             <span>&rsaquo;</span>
-            <strong style={{ color: 'var(--color-primary)' }}>Administration Console</strong>
+            <strong style={{ color: 'var(--color-primary)' }}>
+              {user?.role === 'ADMIN_HOD' ? 'Administration Console' : user?.role === 'TEACHER' ? 'Faculty Hub' : 'Student Hub'}
+            </strong>
           </div>
 
           {/* Right Header Cluster */}
