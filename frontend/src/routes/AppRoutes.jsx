@@ -23,6 +23,10 @@ import TeacherLabDashboardPage from '../pages/teacher/TeacherLabDashboardPage';
 import StudentLabDashboardPage from '../pages/student/StudentLabDashboardPage';
 import LabDetailsPage from '../pages/common/LabDetailsPage';
 
+// Phase 4 Experiment Management Pages
+import TeacherExperimentManagementPage from '../pages/teacher/TeacherExperimentManagementPage';
+import StudentExperimentDetailPage from '../pages/student/StudentExperimentDetailPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -62,7 +66,7 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* Phase 2: Admin Academic Structure Management Workspace */}
+      {/* Phase 2 & 4: Admin Academic Structure & Experiment Management */}
       <Route
         path="/admin"
         element={
@@ -75,13 +79,14 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="labs" element={<LabManagementPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
+        <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
         <Route path="sections" element={<SectionManagementPage />} />
         <Route path="teachers" element={<TeacherManagementPage />} />
         <Route path="students" element={<StudentManagementPage />} />
         <Route path="assignments" element={<LabAssignmentPage />} />
       </Route>
 
-      {/* Phase 3: Teacher Laboratory Management & Assigned Labs Workspace */}
+      {/* Phase 3 & 4: Teacher Laboratory Management & Experiment Authoring Console */}
       <Route
         path="/teacher"
         element={
@@ -93,9 +98,10 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="/teacher/labs" replace />} />
         <Route path="labs" element={<TeacherLabDashboardPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
+        <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
       </Route>
 
-      {/* Phase 3: Student Laboratory Hub & Assigned Curriculum Workspace */}
+      {/* Phase 3 & 4: Student Laboratory Hub & Experiment Protocol View */}
       <Route
         path="/student"
         element={
@@ -107,6 +113,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="/student/labs" replace />} />
         <Route path="labs" element={<StudentLabDashboardPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
+        <Route path="labs/:labId/experiments/:experimentId" element={<StudentExperimentDetailPage />} />
       </Route>
 
       {/* 404 Fallback */}

@@ -7,7 +7,7 @@
 
 ## Current Phase
 
-**Phase 3 — Lab Management**
+**Phase 4 — Experiment Management**
 
 Status: Completed & Verified (Ready for Review)
 
@@ -130,40 +130,69 @@ Status: Completed & Verified (Ready for Review)
     - Dynamic sidebar navigation tailored to role (`ADMIN_HOD`, `TEACHER`, `STUDENT`).
     - Dedicated routes `/teacher/labs`, `/teacher/labs/:id`, `/student/labs`, `/student/labs/:id`, `/admin/labs/:id`.
     - Role-aware login & public route redirection.
-  - **Frontend Build:**
-    - Production bundle compilation verified via `npm run build` (0 warnings, 0 errors).
+- **Phase 4 — Experiment Management:**
+  - **Data Model (`backend/src/models/experiment.model.js`):**
+    - `lab` (ref: Lab, required), `title` (required, trimmed), `experimentNumber` (1-12, required), `description`, `objective`, `instructions`, `programmingLanguages` (enum: `['C', 'C++', 'Java', 'Python']`), `status` (enum: `['DRAFT', 'SCHEDULED', 'PUBLISHED', 'CLOSED', 'REOPENED']`), `scheduledAt`, `deadline`, `reopenedUntil`, `order` (1-12), `publishedAt`, `active` (boolean, default true), `createdBy` (ref: User), timestamps.
+    - Compound indexes for efficient unique queries and ordering: `{ lab: 1, experimentNumber: 1, active: 1 }` and `{ lab: 1, order: 1 }`.
+  - **Validation Layer (`backend/src/validators/experiment.validator.js`):**
+    - Validates experiment title, description, objective, instructions, language array against allowed enum, 1-12 numeric bounds for experiment number and order, ISO dates, deadline > scheduledAt, reopenedUntil > now.
+  - **Service Layer & Authorization (`backend/src/services/experimentService.js`):**
+    - `checkLabAccess(labId, user, requiredRole)`:
+      - `ADMIN_HOD`: Unrestricted management access across all laboratories.
+      - `TEACHER`: Verifies active `LabAssignment` (`MAIN` or `ASSISTANT`) for the target lab. Blocks unassigned teachers with `403 Forbidden`.
+      - `STUDENT`: Verifies student is in an active section assigned to the lab. Students have read-only access and can only see `PUBLISHED`, `CLOSED`, or `REOPENED` experiments (`DRAFT` and `SCHEDULED` remain strictly hidden).
+    - Enforces max 12 experiments per lab.
+    - Enforces duplicate experiment number rejection (409 Conflict).
+    - Status lifecycle transitions: `createExperiment`, `updateExperiment`, `publishExperiment`, `scheduleExperiment`, `reopenExperiment`, `closeExperiment`, `updateExperimentOrder`, and soft deactivation (`active = false`).
+  - **Controllers & REST Endpoints (`backend/src/controllers/experiment.controller.js`, `backend/src/routes/experiment.routes.js`):**
+    - `GET /api/experiments`: List experiments for a lab (role-filtered).
+    - `GET /api/experiments/:id`: Get experiment details by ID (role-authorized).
+    - `POST /api/experiments`: Create experiment (draft/scheduled/published).
+    - `PUT /api/experiments/:id`: Update experiment metadata and settings.
+    - `PATCH /api/experiments/:id/status`: Update status directly with transition checks.
+    - `POST /api/experiments/:id/publish`: Publish draft/scheduled experiment.
+    - `POST /api/experiments/:id/schedule`: Schedule future publication and deadline.
+    - `POST /api/experiments/:id/reopen`: Reopen closed experiment with optional extension.
+    - `POST /api/experiments/:id/close`: Manually close experiment.
+    - `PUT /api/experiments/order`: Reorder experiments within a lab.
+    - `PATCH /api/experiments/:id/deactivate`: Soft-deactivate experiment preserving historical records.
+  - **Automated Tests (`backend/src/tests/experiment.test.js`):**
+    - 20 unit and RBAC integration tests covering experiment creation, editing, max 12 limit, duplicate rejection, language validation, scheduling, deadlines, reopening, student visibility restrictions, and IDOR prevention. 100% passing.
+  - **Frontend Client API (`frontend/src/services/experimentService.js`):**
+    - Full wrapper for all experiment REST operations.
+  - **Frontend UI & Stitch Screens (`frontend/src/pages/`):**
+    - `TeacherExperimentManagementPage.jsx`: Full authoring workbench inspired by Stitch experiment management console. Includes curriculum ordering table, status pills, language badges, creation/edit modals, scheduling modal with date-time pickers, and reopening extension modal.
+    - `StudentExperimentDetailPage.jsx`: Protocol viewer showing experiment synopsis, objectives, instructions, allowed languages, deadline countdowns, and clean Phase 5+ scope boundary placeholder for code submission.
+    - Updated `LabDetailsPage.jsx`: Live experiment curriculum listing with role-based action buttons to launch the authoring workbench or view experiment details.
+    - Updated `AppRoutes.jsx` to register `/admin/labs/:labId/experiments`, `/teacher/labs/:labId/experiments`, and `/student/labs/:labId/experiments/:experimentId`.
 
 ---
 
 ## Currently Working On
 
-- Phase 3 complete. Ready for checkpoint commit.
+- Phase 4 complete and verified. Ready for checkpoint review.
 
 ---
 
 ## Next Tasks
 
-1. **Phase 4 — Experiment Management:**
-   - Manual experiment creation & configuration.
-   - Experiment ordering & curriculum organization.
-   - Programming language selection, test cases, and deadlines.
-   - Teacher experiment authoring workbench.
+1. **Phase 5 — Experiment Authoring & Content Ingestion (Future Phase):**
+   - Multi-step PDF extraction suite.
+   - Parsing, OCR, and AI-assisted experiment ingestion.
 
 ---
 
 ## Important Decisions
 
-### Lab Access & Access Control Matrix
+### Experiment Lifecycle & Authorization Matrix
 - **Identity Enforcement:**
-  - `teacherId`, `studentId`, `sectionId`, and `role` provided in client request bodies or query params are **never** trusted for authorization.
-  - The backend strictly uses `req.user` verified from the JWT session.
-- **IDOR Protection:**
-  - Access to `GET /api/labs/:id` verifies that teachers have an active `LabAssignment` for that lab, and students belong to an active `Section` assigned to that lab.
-  - Unauthorized direct URL access returns `403 Forbidden`.
-- **Soft Deactivation & Historical Preservation:**
-  - Deactivating a lab sets `active = false` on the `Lab` document.
-  - Associated `LabAssignment` records are preserved intact to safeguard future audit and reporting integrity.
-  - Deactivated labs are omitted from active assigned lab listings for faculty and students.
+  - Authorization derived exclusively from JWT `req.user` and active DB assignments. Client-supplied parameters cannot escalate privileges.
+- **Max Experiments & Numbering:**
+  - Exactly 1 to 12 experiments allowed per laboratory. Duplicate experiment numbers within active lab records are rejected with HTTP 409.
+- **Student Scope Isolation:**
+  - Students can only view experiments if they belong to an enrolled section actively assigned to that lab, and only for `PUBLISHED`, `CLOSED`, or `REOPENED` statuses. `DRAFT` and `SCHEDULED` experiments are strictly hidden.
+- **Historical Preservation:**
+  - Experiments are never hard-deleted. Soft deactivation (`active = false`) preserves document IDs, configuration, and future submission associations.
 
 ---
 
@@ -178,6 +207,8 @@ Status: Completed & Verified (Ready for Review)
     - `name`, `code` (unique, uppercase), `subject`, `department`, `academicYear`, `semester`, `description`, `active`, timestamps.
   - `LabAssignment` (`backend/src/models/labAssignment.model.js`):
     - `lab` (ref: Lab), `section` (ref: Section), `teacher` (ref: User), `assignmentType` (`MAIN`, `ASSISTANT`), `active`, `assignedAt`, timestamps.
+  - `Experiment` (`backend/src/models/experiment.model.js`):
+    - `lab` (ref: Lab), `title`, `experimentNumber` (1-12), `description`, `objective`, `instructions`, `programmingLanguages` (`['C', 'C++', 'Java', 'Python']`), `status` (`DRAFT`, `SCHEDULED`, `PUBLISHED`, `CLOSED`, `REOPENED`), `scheduledAt`, `deadline`, `reopenedUntil`, `order` (1-12), `publishedAt`, `active`, `createdBy` (ref: User), timestamps.
 
 ---
 
@@ -190,35 +221,47 @@ Status: Completed & Verified (Ready for Review)
   - `GET /api/auth/me` — Working (200 OK)
   - `POST /api/auth/logout` — Working (200 OK)
 - **Users:**
-  - `GET /api/users` — Working (200 OK / 401 / 403)
-  - `GET /api/users/:id` — Working (200 OK / 404)
-  - `POST /api/users/teacher` — Working (201 Created / 400 / 409)
-  - `POST /api/users/student` — Working (201 Created / 400 / 409)
-  - `PUT /api/users/:id` — Working (200 OK / 400 / 404)
+  - `GET /api/users` — Working (200 OK)
+  - `GET /api/users/:id` — Working (200 OK)
+  - `POST /api/users/teacher` — Working (201 Created)
+  - `POST /api/users/student` — Working (201 Created)
+  - `PUT /api/users/:id` — Working (200 OK)
   - `PATCH /api/users/:id/status` — Working (200 OK)
   - `POST /api/users/:id/reset-password` — Working (200 OK)
 - **Sections:**
   - `GET /api/sections` — Working (200 OK)
-  - `GET /api/sections/:id` — Working (200 OK / 404)
-  - `POST /api/sections` — Working (201 Created / 400 / 409)
-  - `PUT /api/sections/:id` — Working (200 OK / 400 / 404)
+  - `GET /api/sections/:id` — Working (200 OK)
+  - `POST /api/sections` — Working (201 Created)
+  - `PUT /api/sections/:id` — Working (200 OK)
   - `PATCH /api/sections/:id/status` — Working (200 OK)
   - `GET /api/sections/:id/students` — Working (200 OK)
   - `POST /api/sections/:id/assign-student` — Working (200 OK)
 - **Labs & Assigned Hub:**
   - `GET /api/labs/assigned` — Working (200 OK with role-filtered assigned labs)
-  - `GET /api/labs/:id` — Working (200 OK with role-authorized lab details / 403 Forbidden / 404)
+  - `GET /api/labs/:id` — Working (200 OK with role-authorized lab details)
   - `GET /api/labs` — Working (200 OK / Admin only)
   - `POST /api/labs` — Working (201 Created / Admin only)
   - `PUT /api/labs/:id` — Working (200 OK / Admin only)
   - `PATCH /api/labs/:id/status` — Working (200 OK / Admin only)
 - **Lab Assignments:**
   - `GET /api/lab-assignments` — Working (200 OK)
-  - `POST /api/lab-assignments` — Working (201 Created / 400 / 404 / 409)
+  - `POST /api/lab-assignments` — Working (201 Created)
   - `PATCH /api/lab-assignments/:id/status` — Working (200 OK)
   - `GET /api/lab-assignments/lab/:labId` — Working (200 OK)
   - `GET /api/lab-assignments/section/:sectionId` — Working (200 OK)
   - `GET /api/lab-assignments/teacher/:teacherId` — Working (200 OK)
+- **Experiments (Phase 4):**
+  - `GET /api/experiments` — Working (200 OK with role-based experiment listing)
+  - `GET /api/experiments/:id` — Working (200 OK / 403 Forbidden / 404)
+  - `POST /api/experiments` — Working (201 Created / 400 / 403 / 409)
+  - `PUT /api/experiments/:id` — Working (200 OK / 400 / 403 / 404)
+  - `PATCH /api/experiments/:id/status` — Working (200 OK / 400 / 403)
+  - `POST /api/experiments/:id/publish` — Working (200 OK / 400 / 403)
+  - `POST /api/experiments/:id/schedule` — Working (200 OK / 400 / 403)
+  - `POST /api/experiments/:id/reopen` — Working (200 OK / 400 / 403)
+  - `POST /api/experiments/:id/close` — Working (200 OK / 400 / 403)
+  - `PUT /api/experiments/order` — Working (200 OK / 400 / 403)
+  - `PATCH /api/experiments/:id/deactivate` — Working (200 OK / 403)
 
 ---
 
@@ -230,33 +273,34 @@ Status: Completed & Verified (Ready for Review)
 
 ## Verification & Limitations
 
-- **Database Connectivity:** Offline unit/integration test suites mock and validate the Mongoose schema constraints, validator logic, assignment rules, and RBAC guards. When running in a live production environment with MongoDB Atlas, configured `.env` values will connect seamlessly.
-- **Strict Scope Boundaries Maintained:** Experiments, PDF extractions, test cases, code runners, submissions, evaluations, and reports were NOT implemented in Phase 3.
+- **Database Connectivity:** Offline unit and integration test suites validate the Mongoose schema constraints, validator logic, assignment rules, status transitions, and RBAC guards. When connected to live MongoDB Atlas via `.env`, production operations run seamlessly.
+- **Strict Scope Boundaries Maintained:** PDF extraction, OCR, AI experiment parsing, code editor, compilers, test case runners, code execution, student submissions, automated grading, viva, notifications, and reports were strictly NOT implemented in Phase 4.
 
 ---
 
 ## Important Files
 
-### Phase 3 Files
-- `backend/src/services/labService.js` (Role-aware lab access and assigned labs retrieval)
-- `backend/src/controllers/lab.controller.js` (Lab controller with `getAssignedLabs` and role-aware `getLabById`)
-- `backend/src/routes/lab.routes.js` (Lab routes with `GET /assigned` and RBAC guards)
-- `backend/src/tests/lab.access.test.js` (Phase 3 unit and access control test suite)
-- `frontend/src/services/labService.js` (Frontend lab service with `getAssignedLabs`)
-- `frontend/src/pages/teacher/TeacherLabDashboardPage.jsx` (Stitch-aligned Teacher Lab Console)
-- `frontend/src/pages/student/StudentLabDashboardPage.jsx` (Stitch-aligned Student Assigned Labs Hub)
-- `frontend/src/pages/common/LabDetailsPage.jsx` (Role-aware Lab Details view with IDOR protection)
-- `frontend/src/layouts/AppShellLayout.jsx` (Role-dynamic sidebar navigation)
-- `frontend/src/routes/AppRoutes.jsx` (Protected routes for Teacher and Student workspaces)
+### Phase 4 Files
+- `backend/src/models/experiment.model.js` (Mongoose Experiment Schema)
+- `backend/src/validators/experiment.validator.js` (Centralized Experiment Input Validation)
+- `backend/src/services/experimentService.js` (Experiment CRUD, Status Lifecycle, & RBAC Guard)
+- `backend/src/controllers/experiment.controller.js` (Experiment REST Controller)
+- `backend/src/routes/experiment.routes.js` (Protected Experiment Routes)
+- `backend/src/tests/experiment.test.js` (Phase 4 Unit and RBAC Test Suite)
+- `frontend/src/services/experimentService.js` (Frontend Experiment API Service)
+- `frontend/src/pages/teacher/TeacherExperimentManagementPage.jsx` (Stitch-aligned Experiment Management Workbench)
+- `frontend/src/pages/student/StudentExperimentDetailPage.jsx` (Student Experiment Protocol View)
+- `frontend/src/pages/common/LabDetailsPage.jsx` (Integrated Experiment Curriculum List)
+- `frontend/src/routes/AppRoutes.jsx` (Registered Experiment Routes)
 
 ---
 
 ## Design Status
 
-- Stitch UI layouts and tokens applied across Teacher Console, Student Hub, and Lab Details screens.
+- Stitch UI layouts and tokens applied across Teacher Experiment Management Console, Student Experiment Details, and Lab Details screens.
 
 ---
 
 ## Deployment Status
 
-- Foundation, Authentication, Academic Administration, and Lab Access layers ready for deployment.
+- Foundation, Authentication, Academic Administration, Lab Access, and Experiment Management layers ready for deployment.

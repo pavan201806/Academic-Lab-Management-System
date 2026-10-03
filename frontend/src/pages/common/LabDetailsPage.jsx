@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { labService } from '../../services/labService';
+import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const LabDetailsPage = () => {
@@ -12,6 +13,7 @@ const LabDetailsPage = () => {
   const navigate = useNavigate();
 
   const [lab, setLab] = useState(null);
+  const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isUnauthorized, setIsUnauthorized] = useState(false);
@@ -25,9 +27,13 @@ const LabDetailsPage = () => {
     setError('');
     setIsUnauthorized(false);
     try {
-      const res = await labService.getLabById(id, sectionId);
-      const data = res.data || res;
-      setLab(data);
+      const [labRes, expRes] = await Promise.all([
+        labService.getLabById(id, sectionId),
+        experimentService.getExperiments(id).catch(() => ({ data: [] }))
+      ]);
+      setLab(labRes.data || labRes);
+      const exps = expRes.data || expRes || [];
+      setExperiments(Array.isArray(exps) ? exps : []);
     } catch (err) {
       console.error('Failed to fetch laboratory details:', err);
       if (err.response?.status === 403 || err.response?.status === 404) {
@@ -48,6 +54,33 @@ const LabDetailsPage = () => {
     if (user?.role === 'ADMIN_HOD') return '/admin/labs';
     if (user?.role === 'TEACHER') return '/teacher/labs';
     return '/student/labs';
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'PUBLISHED':
+        return <span className="badge badge-success">● PUBLISHED</span>;
+      case 'SCHEDULED':
+        return <span className="badge badge-info">⏳ SCHEDULED</span>;
+      case 'REOPENED':
+        return <span className="badge badge-primary">🔓 REOPENED</span>;
+      case 'CLOSED':
+        return <span className="badge badge-error">🔒 CLOSED</span>;
+      case 'DRAFT':
+      default:
+        return (
+          <span
+            className="badge"
+            style={{
+              backgroundColor: 'var(--color-surface-hover)',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)'
+            }}
+          >
+            📝 DRAFT
+          </span>
+        );
+    }
   };
 
   if (loading) {
@@ -80,8 +113,18 @@ const LabDetailsPage = () => {
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9375rem', margin: 0, lineHeight: 1.5 }}>
           {error}
         </p>
-        <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface-hover)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', width: '100%' }}>
-          <strong>Institutional Security Policy:</strong> Access to STEM laboratories is strictly governed by verified section enrollments and active faculty assignments.
+        <div
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--color-text-secondary)',
+            backgroundColor: 'var(--color-surface-hover)',
+            padding: '0.75rem 1rem',
+            borderRadius: 'var(--radius-md)',
+            width: '100%'
+          }}
+        >
+          <strong>Institutional Security Policy:</strong> Access to STEM laboratories is strictly governed by verified
+          section enrollments and active faculty assignments.
         </div>
         <button onClick={() => navigate(getDashboardPath())} className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
           &larr; Return to Assigned Laboratories
@@ -93,6 +136,8 @@ const LabDetailsPage = () => {
   if (!lab) {
     return null;
   }
+
+  const isTeacherOrAdmin = user?.role === 'TEACHER' || user?.role === 'ADMIN_HOD';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -210,7 +255,9 @@ const LabDetailsPage = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--color-text-secondary)' }}>Term:</span>
-              <span>Semester {lab.semester} ({lab.academicYear})</span>
+              <span>
+                Semester {lab.semester} ({lab.academicYear})
+              </span>
             </div>
           </div>
         </div>
@@ -222,7 +269,6 @@ const LabDetailsPage = () => {
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-            {/* If student view */}
             {lab.instructors && lab.instructors.length > 0 ? (
               lab.instructors.map((ins, idx) => (
                 <div
@@ -251,7 +297,6 @@ const LabDetailsPage = () => {
                 </div>
               ))
             ) : lab.cohortAssignments && lab.cohortAssignments.length > 0 ? (
-              /* If teacher view */
               lab.cohortAssignments.map((a, idx) => (
                 <div
                   key={a._id || idx}
@@ -279,7 +324,6 @@ const LabDetailsPage = () => {
                 </div>
               ))
             ) : lab.assignments && lab.assignments.length > 0 ? (
-              /* Admin view */
               lab.assignments.map((a, idx) => (
                 <div
                   key={a._id || idx}
@@ -315,39 +359,141 @@ const LabDetailsPage = () => {
         </div>
       </div>
 
-      {/* Curriculum & Future Workbench Container */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.75rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.125rem', color: 'var(--color-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>🧪</span> Laboratory Curriculum &amp; Experiments Workbench
-          </h2>
-          <span className="badge badge-info">PHASE 4 UPCOMING</span>
+      {/* ========================================================================= */}
+      {/* EXPERIMENT CURRICULUM SECTION                                             */}
+      {/* ========================================================================= */}
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.125rem', color: 'var(--color-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>🧪</span> Laboratory Experiments Curriculum
+            </h2>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+              {isTeacherOrAdmin
+                ? `${experiments.length} of 12 experiment protocols configured.`
+                : `${experiments.length} published experiment protocols available for execution.`}
+            </span>
+          </div>
+
+          {isTeacherOrAdmin && (
+            <Link
+              to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments` : `/teacher/labs/${lab._id}/experiments`}
+              className="btn btn-primary"
+              style={{ fontSize: '0.8125rem' }}
+            >
+              ⚙️ Manage &amp; Author Protocols &rarr;
+            </Link>
+          )}
         </div>
 
-        <div
-          style={{
-            border: '2px dashed var(--color-border)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '2.5rem 1.5rem',
-            textAlign: 'center',
-            backgroundColor: 'var(--color-canvas)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '0.75rem'
-          }}
-        >
-          <div style={{ fontSize: '2.5rem' }}>🔬</div>
-          <h3 style={{ fontSize: '1.125rem', color: 'var(--color-primary)', margin: 0 }}>
-            Curriculum Initialization Ready
-          </h3>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', maxWidth: '520px', margin: 0, lineHeight: 1.5 }}>
-            Academic permissions and section assignments for <strong>{lab.name} ({lab.code})</strong> have been verified. Laboratory experiment authoring, multi-step PDF protocol extractions, and automated execution test cases will be enabled in Phase 4.
-          </p>
-        </div>
+        {experiments.length === 0 ? (
+          <div
+            style={{
+              border: '2px dashed var(--color-border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '2.5rem 1.5rem',
+              textAlign: 'center',
+              backgroundColor: 'var(--color-canvas)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}
+          >
+            <div style={{ fontSize: '2.5rem' }}>🔬</div>
+            <h3 style={{ fontSize: '1.0625rem', color: 'var(--color-primary)', margin: 0 }}>
+              No Published Experiments Yet
+            </h3>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem', maxWidth: '480px', margin: 0 }}>
+              {isTeacherOrAdmin
+                ? 'Click the button above to begin authoring and publishing practical experiments for this laboratory cohort.'
+                : 'Your faculty instructors have not yet published experiments for this academic term. Check back soon.'}
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+            {experiments.map((exp) => (
+              <div
+                key={exp._id}
+                className="card"
+                style={{
+                  padding: '1.125rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  border: '1px solid var(--color-border)'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-family-mono)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: 'var(--color-primary-subtle)',
+                        color: 'var(--color-primary)',
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: 'var(--radius-sm)'
+                      }}
+                    >
+                      EXP {exp.experimentNumber < 10 ? `0${exp.experimentNumber}` : exp.experimentNumber}
+                    </span>
+                    {getStatusBadge(exp.status)}
+                  </div>
+
+                  <h3 style={{ fontSize: '0.9375rem', color: 'var(--color-text-primary)', margin: '0.25rem 0' }}>
+                    {exp.title}
+                  </h3>
+
+                  {exp.objective && (
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', margin: '0.25rem 0 0 0', lineHeight: 1.4 }}>
+                      {exp.objective}
+                    </p>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '0.625rem',
+                    borderTop: '1px solid var(--color-border)',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  <span style={{ color: 'var(--color-text-secondary)' }}>
+                    Languages: <strong>{exp.programmingLanguages?.join(', ')}</strong>
+                  </span>
+
+                  {user?.role === 'STUDENT' ? (
+                    <button
+                      onClick={() => navigate(`/student/labs/${lab._id}/experiments/${exp._id}`)}
+                      className="btn btn-primary"
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.625rem' }}
+                    >
+                      View Protocol &rarr;
+                    </button>
+                  ) : (
+                    <Link
+                      to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments` : `/teacher/labs/${lab._id}/experiments`}
+                      className="btn btn-secondary"
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.625rem', textDecoration: 'none' }}
+                    >
+                      Edit Protocol &rarr;
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default LabDetailsPage;
+
