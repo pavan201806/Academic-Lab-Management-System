@@ -2,7 +2,7 @@ const assert = require('assert');
 const mongoose = require('mongoose');
 const submissionService = require('../services/submissionService');
 const codeExecutionService = require('../services/codeExecutionService');
-const { Submission, Experiment, Lab, Section, LabAssignment, User } = require('../models');
+const { Submission, Experiment, Lab, Section, LabAssignment, User, TestCase, Evaluation } = require('../models');
 const { validateRunInput, validateSubmitInput } = require('../validators/submission.validator');
 
 console.log('=== Running Phase 6 Code Execution & Submission Comprehensive Tests ===\n');
@@ -277,6 +277,39 @@ async function runPhase6Tests() {
           })
         })
       };
+    };
+
+    let mockEvaluations = [];
+    TestCase.find = () => ({
+      sort: () => Promise.resolve([])
+    });
+
+    Evaluation.create = (doc) => {
+      const created = {
+        _id: new mongoose.Types.ObjectId(),
+        ...doc,
+        save: () => Promise.resolve(created)
+      };
+      mockEvaluations.push(created);
+      return Promise.resolve(created);
+    };
+
+    Evaluation.find = (query) => {
+      let filtered = mockEvaluations.filter((ev) => {
+        let match = true;
+        if (query.student && ev.student.toString() !== query.student.toString()) match = false;
+        if (query.experiment && ev.experiment.toString() !== query.experiment.toString()) match = false;
+        if (query.active !== undefined && ev.active !== query.active) match = false;
+        return match;
+      });
+      return {
+        sort: () => Promise.resolve(filtered)
+      };
+    };
+
+    Evaluation.findById = (id) => {
+      const found = mockEvaluations.find((e) => e._id.toString() === id?.toString());
+      return Promise.resolve(found || null);
     };
   }
 

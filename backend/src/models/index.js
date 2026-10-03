@@ -4,6 +4,8 @@ const Lab = require('./lab.model');
 const LabAssignment = require('./labAssignment.model');
 const Experiment = require('./experiment.model');
 const Submission = require('./submission.model');
+const TestCase = require('./testCase.model');
+const Evaluation = require('./evaluation.model');
 
 module.exports = {
   User,
@@ -11,7 +13,9 @@ module.exports = {
   Lab,
   LabAssignment,
   Experiment,
-  Submission
+  Submission,
+  TestCase,
+  Evaluation
 };
 
 

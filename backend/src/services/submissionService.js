@@ -147,7 +147,14 @@ class SubmissionService {
       active: true
     });
 
-    return submission;
+    // Phase 7: Automatically evaluate submission against active test cases
+    const evaluationService = require('./evaluationService');
+    const evaluation = await evaluationService.evaluateSubmission(submission);
+
+    return {
+      ...submission.toObject ? submission.toObject() : submission,
+      evaluation
+    };
   }
 
   /**

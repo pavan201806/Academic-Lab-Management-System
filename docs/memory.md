@@ -141,3 +141,61 @@ Status: Completed & Verified (Ready for Review)
 - **Lab Assignments:** `GET /lab-assignments`, `POST /lab-assignments`, `DELETE /lab-assignments/:id` — Working
 - **Experiments:** `GET /experiments`, `GET /experiments/:id`, `POST /experiments`, `PUT /experiments/:id`, `POST /experiments/:id/publish`, `POST /experiments/:id/schedule`, `POST /experiments/:id/reopen`, `POST /experiments/:id/close`, `PUT /experiments/reorder/batch`, `PATCH /experiments/:id/status`, `POST /experiments/extract-pdf`, `POST /experiments/confirm-pdf` — Working
 - **Submissions:** `POST /submissions/run`, `POST /submissions/submit`, `GET /submissions/experiment/:experimentId`, `GET /submissions/lab/:labId`, `GET /submissions/:id` — Working
+- **Test Cases:** `GET /test-cases/experiment/:experimentId`, `GET /test-cases/:id`, `POST /test-cases`, `PUT /test-cases/:id`, `PATCH /test-cases/:id/status`, `PUT /test-cases/order` — Working
+- **Evaluations:** `GET /evaluations/experiment/:experimentId/student`, `GET /evaluations/submission/:submissionId`, `GET /evaluations/:id`, `GET /evaluations/lab/:labId` — Working
+
+---
+
+# Phase 7 — Evaluation and Scoring
+
+## Objective
+Implement automated evaluation, deterministic test-case output scoring out of 10, 3-attempt lifecycle cap, highest score retention, and hidden test-case security for programming experiments.
+
+## Key Features & Architecture
+1. **TestCase Model (`backend/src/models/testCase.model.js`):**
+   - `experiment`: ref Experiment
+   - `input`: String (stdin)
+   - `expectedOutput`: String (stdout)
+   - `marks`: Positive number ($> 0$)
+   - `isHidden`: Boolean (private vs public case)
+   - `order`: Deterministic sequence index
+   - `active`: Boolean (soft deactivation)
+   - Compound index on `{ experiment: 1, active: 1, order: 1 }`
+
+2. **Evaluation Model (`backend/src/models/evaluation.model.js`):**
+   - `submission`: ref Submission
+   - `experiment`: ref Experiment
+   - `student`: ref User
+   - `lab`: ref Lab
+   - `section`: ref Section
+   - `attemptNumber`: Number (1, 2, or 3)
+   - `testCaseResults`: Array of `{ testCaseId, order, isHidden, passed, earnedMarks, availableMarks, executionStatus, executionTimeMs, actualOutput, errorSummary }`
+   - `earnedMarks`: Number
+   - `totalAvailableMarks`: Number
+   - `score`: Proportional score out of 10 ($[0, 10]$)
+   - `isHighestScore`: Boolean
+   - `evaluatedAt`: Date
+
+3. **Deterministic Evaluation Engine (`backend/src/services/evaluationService.js`):**
+   - Normalizes Windows `\r\n` to `\n` and trims line-end trailing whitespace while preserving internal structure.
+   - Dispatches student code against each active test case using the Phase 6 Docker sandbox container configuration.
+   - Calculates score: $\text{score} = \text{round}((\text{earnedMarks} / \text{totalAvailableMarks}) \times 10, 2)$, strictly clamped to $[0, 10]$.
+   - Updates `isHighestScore` across all official attempts for that student and experiment.
+
+4. **Attempt Rules & Security:**
+   - Maximum 3 official submissions strictly enforced. Attempt 4 is rejected with 400 Bad Request.
+   - Manual "Run Code" does NOT consume attempts or generate official evaluation records.
+   - Hidden test case inputs and expected outputs are NEVER returned in student API responses (sanitized on retrieval).
+   - Identity derived strictly from authenticated JWT + database. Client-side score or role tampering is impossible.
+
+5. **Frontend Suite:**
+   - **Student Workbench:** Real-time score display (/10), highest score indicator, test-case pass/fail badges, attempt tracker, visible test cases in protocol guide, and full evaluation history inspection.
+   - **Teacher Console:** Test case authoring modal (create, edit, soft-delete, reorder, marks weight, hidden toggle) and lab-wide submissions/evaluations ledger with per-test case breakdown.
+
+## Verification & Test Results
+- **Phase 7 Comprehensive Tests:** 34/34 PASSED (100%)
+- **Total Backend Tests:** 180/180 PASSED across Phases 1–7 (Phase 1: 23, Phase 2: 20, Phase 3: 16, Phase 4: 20, Phase 5: 20, Phase 6: 39 + 8 config, Phase 7: 34)
+- **Frontend Production Build:** Built cleanly with Vite (0 errors)
+- **Docker Runtime Testing Status:**
+  - Docker sandbox configuration/guardrail tests: PASSED (8/8).
+  - Real Docker runtime integration testing remains pending because Docker is not currently available in the Windows development environment.

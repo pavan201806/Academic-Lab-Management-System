@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { submissionService } from '../../services/submissionService';
+import { evaluationService } from '../../services/evaluationService';
 import { labService } from '../../services/labService';
 import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -16,19 +17,21 @@ const TeacherSubmissionsLedgerPage = () => {
   const [experiments, setExperiments] = useState([]);
   const [selectedExperimentId, setSelectedExperimentId] = useState('');
   const [submissions, setSubmissions] = useState([]);
+  const [evaluations, setEvaluations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [inspectingSubmission, setInspectingSubmission] = useState(null);
+  const [inspectingEvaluation, setInspectingEvaluation] = useState(null);
 
   useEffect(() => {
     fetchInitialData();
   }, [labId]);
 
   useEffect(() => {
-    fetchSubmissions();
+    fetchSubmissionsAndEvaluations();
   }, [labId, selectedExperimentId]);
 
   const fetchInitialData = async () => {
@@ -45,14 +48,19 @@ const TeacherSubmissionsLedgerPage = () => {
     }
   };
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissionsAndEvaluations = async () => {
     setLoading(true);
     try {
-      const res = await submissionService.getTeacherSubmissionsForLab(labId, selectedExperimentId);
-      const data = res.data || res;
-      setSubmissions(Array.isArray(data) ? data : []);
+      const [subRes, evalRes] = await Promise.all([
+        submissionService.getTeacherSubmissionsForLab(labId, selectedExperimentId),
+        evaluationService.getLabEvaluations(labId, selectedExperimentId)
+      ]);
+      const subData = subRes.data || subRes;
+      const evalData = evalRes.data || evalRes;
+      setSubmissions(Array.isArray(subData) ? subData : []);
+      setEvaluations(Array.isArray(evalData) ? evalData : []);
     } catch (err) {
-      console.error('Failed to load lab submissions ledger:', err);
+      console.error('Failed to load lab submissions and evaluations ledger:', err);
       setError(err.response?.data?.message || 'Access Denied to lab submissions');
     } finally {
       setLoading(false);
@@ -102,7 +110,7 @@ const TeacherSubmissionsLedgerPage = () => {
   if (loading && !lab) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center' }}>
-        <LoadingSpinner size={40} text="Loading laboratory submissions ledger..." />
+        <LoadingSpinner size={40} text="Loading laboratory submissions & evaluation ledger..." />
       </div>
     );
   }
@@ -148,54 +156,44 @@ const TeacherSubmissionsLedgerPage = () => {
               fontWeight: 700,
               color: 'var(--color-primary)',
               backgroundColor: 'var(--color-primary-subtle)',
-              padding: '0.15rem 0.45rem',
+              padding: '0.15rem 0.5rem',
               borderRadius: 'var(--radius-sm)'
             }}
           >
-            FACULTY LEDGER
+            {lab?.code} &bull; {lab?.department}
           </span>
-          <h1 style={{ fontSize: '1.5rem', color: 'var(--color-primary)', margin: '0.35rem 0 0.15rem 0' }}>
-            Student Submissions Ledger
+          <h1 style={{ fontSize: '1.5rem', margin: '0.375rem 0 0.125rem 0', color: 'var(--color-text-primary)' }}>
+            Evaluation Ledger &amp; Submissions
           </h1>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
-            {lab?.name} ({lab?.code}) &bull; Phase 6 Execution &amp; Ingestion Console
-          </div>
+          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+            {lab?.name} &bull; Automated test case results, scores out of 10, and code submissions
+          </p>
         </div>
       </div>
 
       {error && (
-        <div
-          style={{
-            padding: '0.75rem 1rem',
-            backgroundColor: '#FEE2E2',
-            border: '1px solid #FCA5A5',
-            color: '#991B1B',
-            borderRadius: 'var(--radius-md)',
-            fontSize: '0.875rem'
-          }}
-        >
+        <div className="alert alert-error" style={{ fontSize: '0.875rem' }}>
           {error}
         </div>
       )}
 
-      {/* Filters Bar: Search, Experiment Filter, Status Filter */}
+      {/* Filter Bar */}
       <div
+        className="card"
         style={{
-          backgroundColor: 'var(--color-surface)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1rem 1.25rem',
+          padding: '1rem',
           display: 'flex',
           gap: '1rem',
+          alignItems: 'center',
           flexWrap: 'wrap',
-          alignItems: 'center'
+          backgroundColor: 'var(--color-surface)'
         }}
       >
         {/* Search */}
-        <div style={{ flex: 1, minWidth: '220px' }}>
+        <div style={{ flex: '1 1 240px' }}>
           <input
             type="text"
-            placeholder="Search by student name, roll number, or experiment..."
+            placeholder="Search student name, roll number, or experiment..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -260,7 +258,7 @@ const TeacherSubmissionsLedgerPage = () => {
 
         <button
           type="button"
-          onClick={fetchSubmissions}
+          onClick={fetchSubmissionsAndEvaluations}
           className="btn btn-secondary"
           style={{ fontSize: '0.8125rem' }}
         >
@@ -268,11 +266,11 @@ const TeacherSubmissionsLedgerPage = () => {
         </button>
       </div>
 
-      {/* Submissions Table */}
+      {/* Submissions & Evaluations Table */}
       <div className="card" style={{ padding: '1.25rem' }}>
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <LoadingSpinner size={32} text="Loading submissions..." />
+            <LoadingSpinner size={32} text="Loading submissions & evaluations..." />
           </div>
         ) : filteredSubmissions.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
@@ -289,57 +287,79 @@ const TeacherSubmissionsLedgerPage = () => {
                   <th style={{ padding: '0.75rem 0.5rem' }}>Experiment</th>
                   <th style={{ padding: '0.75rem 0.5rem' }}>Attempt</th>
                   <th style={{ padding: '0.75rem 0.5rem' }}>Language</th>
-                  <th style={{ padding: '0.75rem 0.5rem' }}>Submitted At</th>
+                  <th style={{ padding: '0.75rem 0.5rem' }}>Score / 10</th>
                   <th style={{ padding: '0.75rem 0.5rem' }}>Status</th>
                   <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredSubmissions.map((sub) => (
-                  <tr key={sub._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {sub.student?.name || 'Unknown Student'}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'var(--font-family-mono)' }}>
-                      {sub.student?.rollNumber || '-'}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem' }}>
-                      <span className="badge badge-info">{sub.section?.sectionCode || sub.student?.section || '-'}</span>
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem' }}>
-                      Exp {sub.experiment?.experimentNumber}: {sub.experiment?.title}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>
-                      #{sub.attemptNumber}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem' }}>
-                      <span className="badge badge-primary">{sub.language}</span>
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem', color: 'var(--color-text-secondary)' }}>
-                      {new Date(sub.submittedAt || sub.createdAt).toLocaleString()}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem' }}>
-                      {getStatusBadge(sub.status)}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
-                      <button
-                        type="button"
-                        onClick={() => setInspectingSubmission(sub)}
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                      >
-                        👁 View Code
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredSubmissions.map((sub) => {
+                  const matchedEval = evaluations.find(
+                    (ev) => ev.submission?._id === sub._id || ev.submission === sub._id
+                  );
+
+                  return (
+                    <tr key={sub._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                      <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                        {sub.student?.name || 'Unknown Student'}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'var(--font-family-mono)' }}>
+                        {sub.student?.rollNumber || '-'}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        <span className="badge badge-info">{sub.section?.sectionCode || sub.student?.section || '-'}</span>
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        Exp {sub.experiment?.experimentNumber}: {sub.experiment?.title}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>
+                        #{sub.attemptNumber}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        <span className="badge badge-primary">{sub.language}</span>
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        {matchedEval ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <strong style={{ color: 'var(--color-primary)', fontSize: '0.875rem' }}>
+                              {matchedEval.score} / 10
+                            </strong>
+                            {matchedEval.isHighestScore && (
+                              <span className="badge badge-success" style={{ fontSize: '0.625rem', padding: '0.1rem 0.35rem' }}>
+                                ★ High
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        {getStatusBadge(sub.status)}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInspectingSubmission(sub);
+                            setInspectingEvaluation(matchedEval || null);
+                          }}
+                          className="btn btn-secondary"
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                        >
+                          👁 Inspect Evaluation
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* INSPECT SUBMISSION MODAL */}
+      {/* INSPECT SUBMISSION & EVALUATION MODAL */}
       {inspectingSubmission && (
         <div
           style={{
@@ -356,20 +376,20 @@ const TeacherSubmissionsLedgerPage = () => {
           <div
             className="card"
             style={{
-              maxWidth: '840px',
+              maxWidth: '880px',
               width: '100%',
-              maxHeight: '90vh',
+              maxHeight: '92vh',
               overflowY: 'auto',
               padding: '1.75rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1rem'
+              gap: '1.25rem'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-primary)' }}>
-                  Submission by {inspectingSubmission.student?.name} ({inspectingSubmission.student?.rollNumber})
+                  Evaluation Snapshot: {inspectingSubmission.student?.name} ({inspectingSubmission.student?.rollNumber})
                 </h3>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                   Exp {inspectingSubmission.experiment?.experimentNumber}: {inspectingSubmission.experiment?.title} &bull; Attempt #{inspectingSubmission.attemptNumber} &bull; Language: {inspectingSubmission.language}
@@ -377,7 +397,10 @@ const TeacherSubmissionsLedgerPage = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setInspectingSubmission(null)}
+                onClick={() => {
+                  setInspectingSubmission(null);
+                  setInspectingEvaluation(null);
+                }}
                 className="btn btn-secondary"
                 style={{ padding: '0.25rem 0.5rem' }}
               >
@@ -385,13 +408,105 @@ const TeacherSubmissionsLedgerPage = () => {
               </button>
             </div>
 
-            {/* Status info */}
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              {getStatusBadge(inspectingSubmission.status)}
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                Submitted on {new Date(inspectingSubmission.submittedAt || inspectingSubmission.createdAt).toLocaleString()}
-              </span>
-            </div>
+            {/* Score & Evaluation Overview */}
+            {inspectingEvaluation && (
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem 1.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem'
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
+                    Automated Score
+                  </div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+                    {inspectingEvaluation.score} / 10
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    {inspectingEvaluation.earnedMarks} of {inspectingEvaluation.totalAvailableMarks} marks earned
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {inspectingEvaluation.isHighestScore && (
+                    <span className="badge badge-success">★ Highest Attempt Score</span>
+                  )}
+                  {getStatusBadge(inspectingSubmission.status)}
+                </div>
+              </div>
+            )}
+
+            {/* Test Case Evaluation Results Table for Teacher */}
+            {inspectingEvaluation?.testCaseResults && inspectingEvaluation.testCaseResults.length > 0 && (
+              <div>
+                <strong style={{ fontSize: '0.875rem', color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                  Detailed Test Case Results ({inspectingEvaluation.testCaseResults.length} cases):
+                </strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {inspectingEvaluation.testCaseResults.map((tc, idx) => (
+                    <div
+                      key={tc.testCaseId || idx}
+                      style={{
+                        backgroundColor: tc.passed ? 'rgba(22, 163, 74, 0.06)' : 'rgba(220, 38, 38, 0.06)',
+                        border: tc.passed ? '1px solid rgba(22, 163, 74, 0.3)' : '1px solid rgba(220, 38, 38, 0.3)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: '0.75rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.375rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, fontSize: '0.8125rem' }}>
+                            Test Case #{tc.order || idx + 1}
+                          </span>
+                          {tc.isHidden ? (
+                            <span className="badge badge-warning" style={{ fontSize: '0.6875rem' }}>🔒 Hidden</span>
+                          ) : (
+                            <span className="badge badge-info" style={{ fontSize: '0.6875rem' }}>👁 Public</span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: tc.passed ? '#16a34a' : '#dc2626' }}>
+                            {tc.earnedMarks} / {tc.availableMarks} marks
+                          </span>
+                          {tc.passed ? (
+                            <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>✓ PASS</span>
+                          ) : (
+                            <span className="badge badge-error" style={{ fontSize: '0.6875rem' }}>✗ FAIL</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {tc.actualOutput && (
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                          <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>Actual Output:</span>
+                          <pre style={{ backgroundColor: '#0F172A', color: '#E2E8F0', padding: '0.4rem', borderRadius: '4px', margin: '0.2rem 0 0 0', maxHeight: '60px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+                            {tc.actualOutput}
+                          </pre>
+                        </div>
+                      )}
+
+                      {tc.errorSummary && !tc.passed && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-error)' }}>
+                          <strong>Failure Reason:</strong> {tc.errorSummary}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Submitted Source Code */}
             <div>
@@ -402,7 +517,7 @@ const TeacherSubmissionsLedgerPage = () => {
                 value={inspectingSubmission.sourceCode || '// No code stored'}
                 language={inspectingSubmission.language}
                 readOnly={true}
-                height="300px"
+                height="280px"
               />
             </div>
 

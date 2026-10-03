@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { labService } from '../../services/labService';
 import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import TestCaseManagementModal from '../../components/testcases/TestCaseManagementModal';
 
 const PROGRAMMING_LANGUAGES = ['C', 'C++', 'Java', 'Python'];
 
@@ -27,6 +28,8 @@ const TeacherExperimentManagementPage = () => {
   const [schedulingExp, setSchedulingExp] = useState(null);
   const [showReopenModal, setShowReopenModal] = useState(false);
   const [reopeningExp, setReopeningExp] = useState(null);
+  const [showTestCasesModal, setShowTestCasesModal] = useState(false);
+  const [selectedTestCasesExp, setSelectedTestCasesExp] = useState(null);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -596,6 +599,23 @@ const TeacherExperimentManagementPage = () => {
                     style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
                   >
                     ✏️ Edit
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedTestCasesExp(exp);
+                      setShowTestCasesModal(true);
+                    }}
+                    className="btn btn-secondary"
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '0.35rem 0.75rem',
+                      borderColor: 'var(--color-primary)',
+                      color: 'var(--color-primary)',
+                      fontWeight: 600
+                    }}
+                  >
+                    🧪 Test Cases & Scoring
                   </button>
 
                   {exp.status === 'DRAFT' && (
@@ -1183,6 +1203,18 @@ const TeacherExperimentManagementPage = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* TEST CASES & SCORING MODAL                                                */}
+      {/* ========================================================================= */}
+      <TestCaseManagementModal
+        isOpen={showTestCasesModal}
+        onClose={() => {
+          setShowTestCasesModal(false);
+          setSelectedTestCasesExp(null);
+        }}
+        experiment={selectedTestCasesExp}
+      />
     </div>
   );
 };

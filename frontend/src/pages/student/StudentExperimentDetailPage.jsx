@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { experimentService } from '../../services/experimentService';
 import { submissionService } from '../../services/submissionService';
+import { evaluationService } from '../../services/evaluationService';
+import { testCaseService } from '../../services/testCaseService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CodeEditor from '../../components/code/CodeEditor';
 
@@ -74,11 +76,19 @@ const StudentExperimentDetailPage = () => {
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState('');
   const [submitErrorMsg, setSubmitErrorMsg] = useState('');
 
-  // Submission History
+  // Submissions & Evaluations State
   const [submissions, setSubmissions] = useState([]);
+  const [evaluationsData, setEvaluationsData] = useState({
+    evaluations: [],
+    highestScore: 0,
+    totalAttempts: 0,
+    attemptsRemaining: 3
+  });
+  const [publicTestCases, setPublicTestCases] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [selectedEvaluation, setSelectedEvaluation] = useState(null);
 
   // Active tab on page: 'workbench' | 'guide' | 'history'
   const [activeViewTab, setActiveViewTab] = useState('workbench');
@@ -102,13 +112,27 @@ const StudentExperimentDetailPage = () => {
         setSourceCode(STARTER_TEMPLATES[defaultLang] || '// Write your code here');
       }
 
-      // Fetch student submissions history
-      fetchSubmissionHistory();
+      // Fetch public test cases, submissions and evaluations
+      await Promise.all([
+        fetchSubmissionHistory(),
+        fetchEvaluations(),
+        fetchPublicTestCases()
+      ]);
     } catch (err) {
       console.error('Failed to load experiment:', err);
       setError(err.response?.data?.message || 'Access Denied or Experiment not found.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPublicTestCases = async () => {
+    try {
+      const res = await testCaseService.getTestCasesForExperiment(experimentId);
+      const data = res.data || res;
+      setPublicTestCases(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load public test cases:', err);
     }
   };
 
@@ -122,6 +146,21 @@ const StudentExperimentDetailPage = () => {
       console.error('Failed to load submissions history:', err);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const fetchEvaluations = async () => {
+    try {
+      const res = await evaluationService.getStudentEvaluations(experimentId);
+      const data = res.data || res;
+      setEvaluationsData({
+        evaluations: data.evaluations || [],
+        highestScore: data.highestScore || 0,
+        totalAttempts: data.totalAttempts || 0,
+        attemptsRemaining: data.attemptsRemaining !== undefined ? data.attemptsRemaining : 3
+      });
+    } catch (err) {
+      console.error('Failed to load student evaluations:', err);
     }
   };
 
@@ -179,7 +218,7 @@ const StudentExperimentDetailPage = () => {
     }
   };
 
-  // Official Submission (consumes attempt & stores submission)
+  // Official Submission (consumes attempt & triggers automated evaluation)
   const handleConfirmSubmit = async () => {
     setShowSubmitModal(false);
     setSubmitting(true);
@@ -194,15 +233,15 @@ const StudentExperimentDetailPage = () => {
         stdin
       });
       const data = res.data || res;
-      setSubmitSuccessMsg(`Attempt ${data.attemptNumber} submitted successfully with status: ${data.status}`);
+      setSubmitSuccessMsg(`Attempt #${data.attemptNumber} submitted & evaluated successfully!`);
       setExecutionResult(data.executionOutput);
       if (data.executionOutput?.status === 'COMPILE_ERROR' || data.executionOutput?.status === 'RUNTIME_ERROR') {
         setActiveOutputTab('stderr');
       } else {
         setActiveOutputTab('stdout');
       }
-      // Refresh submission history
-      fetchSubmissionHistory();
+      // Refresh history & evaluations
+      await Promise.all([fetchSubmissionHistory(), fetchEvaluations()]);
     } catch (err) {
       console.error('Submission failed:', err);
       setSubmitErrorMsg(err.response?.data?.message || 'Failed to submit code.');
@@ -230,13 +269,18 @@ const StudentExperimentDetailPage = () => {
     }
   };
 
-  const attemptsUsed = submissions.length;
+  const latestEvaluation =
+    evaluationsData.evaluations && evaluationsData.evaluations.length > 0
+      ? evaluationsData.evaluations[evaluationsData.evaluations.length - 1]
+      : null;
+
+  const attemptsUsed = evaluationsData.totalAttempts || submissions.length;
   const attemptsRemaining = Math.max(0, 3 - attemptsUsed);
 
   if (loading) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center' }}>
-        <LoadingSpinner size={40} text="Loading experiment workbench..." />
+        <LoadingSpinner size={40} text="Loading experiment workbench & evaluation suite..." />
       </div>
     );
   }
@@ -284,13 +328,13 @@ const StudentExperimentDetailPage = () => {
 
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span className={`badge ${attemptsRemaining > 0 ? 'badge-primary' : 'badge-error'}`}>
-            Attempts: {attemptsUsed} / 3 ({attemptsRemaining} remaining)
+            Official Attempts: {attemptsUsed} / 3 ({attemptsRemaining} remaining)
           </span>
           <span className="badge badge-info">{experiment.lab?.code}</span>
         </div>
       </div>
 
-      {/* Experiment Banner */}
+      {/* Experiment Banner & Scoring Metric Bar */}
       <div
         style={{
           backgroundColor: 'var(--color-surface)',
@@ -302,7 +346,7 @@ const StudentExperimentDetailPage = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '1rem'
+          gap: '1.25rem'
         }}
       >
         <div>
@@ -329,29 +373,66 @@ const StudentExperimentDetailPage = () => {
           </h1>
         </div>
 
-        {/* View Toggle Tabs */}
-        <div style={{ display: 'flex', gap: '0.25rem', backgroundColor: 'var(--color-canvas)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-          <button
-            onClick={() => setActiveViewTab('workbench')}
-            className={`btn ${activeViewTab === 'workbench' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.8125rem', padding: '0.35rem 0.85rem' }}
+        {/* Phase 7 Evaluation Summary Metrics */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: 'var(--color-canvas)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-border)',
+              textAlign: 'center'
+            }}
           >
-            ⚡ Code Studio
-          </button>
-          <button
-            onClick={() => setActiveViewTab('guide')}
-            className={`btn ${activeViewTab === 'guide' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.8125rem', padding: '0.35rem 0.85rem' }}
+            <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Highest Score
+            </span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+              {evaluationsData.highestScore} <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 10</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: 'var(--color-canvas)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--color-border)',
+              textAlign: 'center'
+            }}
           >
-            📋 Protocol Guide
-          </button>
-          <button
-            onClick={() => setActiveViewTab('history')}
-            className={`btn ${activeViewTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ fontSize: '0.8125rem', padding: '0.35rem 0.85rem' }}
-          >
-            📜 Submissions ({submissions.length})
-          </button>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Latest Attempt
+            </span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: latestEvaluation ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}>
+              {latestEvaluation ? `${latestEvaluation.score} / 10` : '— / 10'}
+            </div>
+          </div>
+
+          {/* View Toggle Tabs */}
+          <div style={{ display: 'flex', gap: '0.25rem', backgroundColor: 'var(--color-canvas)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <button
+              onClick={() => setActiveViewTab('workbench')}
+              className={`btn ${activeViewTab === 'workbench' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.8125rem', padding: '0.35rem 0.85rem' }}
+            >
+              ⚡ Code Studio
+            </button>
+            <button
+              onClick={() => setActiveViewTab('guide')}
+              className={`btn ${activeViewTab === 'guide' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.8125rem', padding: '0.35rem 0.85rem' }}
+            >
+              📋 Protocol Guide
+            </button>
+            <button
+              onClick={() => setActiveViewTab('history')}
+              className={`btn ${activeViewTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.8125rem', padding: '0.35rem 0.85rem' }}
+            >
+              📜 Attempts ({submissions.length})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -454,99 +535,67 @@ const StudentExperimentDetailPage = () => {
                 className={`btn ${showStdin ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ fontSize: '0.75rem', padding: '0.35rem 0.6rem' }}
               >
-                ⌨️ Custom Input (stdin) {showStdin ? '▲' : '▼'}
+                ⌨ Standard Input {stdin ? '●' : ''}
               </button>
             </div>
 
-            {/* Right Controls: Run & Submit Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* RUN BUTTON (Manual, 0 attempts) */}
+            {/* Right Controls: Run Code & Official Submit */}
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={handleRunCode}
                 disabled={running || submitting}
                 className="btn btn-secondary"
                 style={{
+                  fontSize: '0.8125rem',
+                  padding: '0.45rem 1.1rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: 600,
-                  border: '1px solid var(--color-border)'
+                  gap: '0.375rem',
+                  fontWeight: 600
                 }}
-                title="Test and preview code execution without consuming an official attempt"
               >
-                {running ? (
-                  <>
-                    <LoadingSpinner size={16} />
-                    <span>Executing Sandbox...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>⚡</span>
-                    <span>Run Code</span>
-                    <span style={{ fontSize: '0.6875rem', opacity: 0.8, color: 'var(--color-text-secondary)' }}>
-                      (Test Run)
-                    </span>
-                  </>
-                )}
+                {running ? <LoadingSpinner size={14} /> : <span>▶</span>}
+                <span>Run Code (Preview)</span>
               </button>
 
-              {/* OFFICIAL SUBMIT BUTTON */}
               <button
                 type="button"
                 onClick={() => setShowSubmitModal(true)}
                 disabled={running || submitting || attemptsRemaining <= 0}
                 className="btn btn-primary"
                 style={{
+                  fontSize: '0.8125rem',
+                  padding: '0.45rem 1.25rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: 600
+                  gap: '0.375rem',
+                  fontWeight: 700,
+                  backgroundColor: attemptsRemaining > 0 ? 'var(--color-primary)' : 'var(--color-text-muted)'
                 }}
               >
-                {submitting ? (
-                  <>
-                    <LoadingSpinner size={16} />
-                    <span>Submitting Attempt...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>🚀</span>
-                    <span>Official Submit</span>
-                    <span
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        padding: '0.1rem 0.4rem',
-                        borderRadius: '10px',
-                        fontSize: '0.6875rem'
-                      }}
-                    >
-                      {attemptsRemaining} left
-                    </span>
-                  </>
-                )}
+                {submitting ? <LoadingSpinner size={14} /> : <span>🚀</span>}
+                <span>Official Submit ({attemptsRemaining} left)</span>
               </button>
             </div>
           </div>
 
-          {/* Standard Input (stdin) Collapsible Drawer */}
+          {/* Stdin Area (Collapsible) */}
           {showStdin && (
             <div
               style={{
                 backgroundColor: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '0.75rem 1rem'
+                borderRadius: 'var(--radius-md)',
+                padding: '0.75rem 1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.375rem'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-primary)' }}>
-                  Standard Input (stdin)
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                  Piped into program standard input during execution (Max 16KB)
-                </span>
-              </div>
+              <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                Standard Input (Custom stdin data for manual execution)
+              </label>
               <textarea
                 value={stdin}
                 onChange={(e) => setStdin(e.target.value)}
@@ -573,6 +622,96 @@ const StudentExperimentDetailPage = () => {
             language={language}
             height="460px"
           />
+
+          {/* Phase 7 Test Case Evaluation Results Card (If latest evaluation exists) */}
+          {latestEvaluation && (
+            <div
+              className="card"
+              style={{
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                backgroundColor: 'var(--color-surface)',
+                border: '1px solid var(--color-border)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>🧪</span>
+                  <h3 style={{ fontSize: '1rem', margin: 0, color: 'var(--color-text-primary)' }}>
+                    Evaluation Results: Attempt #{latestEvaluation.attemptNumber}
+                  </h3>
+                  {latestEvaluation.isHighestScore && (
+                    <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>
+                      ★ HIGHEST SCORE
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                    Earned: <strong>{latestEvaluation.earnedMarks}</strong> / {latestEvaluation.totalAvailableMarks} marks
+                  </span>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-family-mono)',
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      color: 'var(--color-primary)',
+                      backgroundColor: 'var(--color-primary-subtle)',
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: 'var(--radius-sm)'
+                    }}
+                  >
+                    {latestEvaluation.score} / 10
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Case Badges Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
+                {latestEvaluation.testCaseResults?.map((tc, idx) => (
+                  <div
+                    key={tc.testCaseId || idx}
+                    style={{
+                      backgroundColor: tc.passed ? 'rgba(22, 163, 74, 0.08)' : 'rgba(220, 38, 38, 0.08)',
+                      border: tc.passed ? '1px solid rgba(22, 163, 74, 0.3)' : '1px solid rgba(220, 38, 38, 0.3)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '0.75rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.375rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, fontSize: '0.8125rem' }}>
+                        Test Case #{tc.order || idx + 1}
+                      </span>
+                      {tc.passed ? (
+                        <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>✓ Passed</span>
+                      ) : (
+                        <span className="badge badge-error" style={{ fontSize: '0.6875rem' }}>✗ Failed</span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                      <span>{tc.isHidden ? '🔒 Hidden Case' : '👁 Public Case'}</span>
+                      <span style={{ fontWeight: 600, color: tc.passed ? '#16a34a' : '#dc2626' }}>
+                        {tc.earnedMarks} / {tc.availableMarks} pts
+                      </span>
+                    </div>
+
+                    {tc.executionTimeMs !== undefined && (
+                      <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
+                        ⏱ {tc.executionTimeMs} ms &bull; {tc.executionStatus}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Execution Output Console */}
           <div
@@ -661,11 +800,11 @@ const StudentExperimentDetailPage = () => {
               {running ? (
                 <div style={{ color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <LoadingSpinner size={16} />
-                  <span>Compiling and executing in isolated sandbox...</span>
+                  <span>Compiling and executing in isolated Docker sandbox...</span>
                 </div>
               ) : !executionResult ? (
                 <div style={{ color: '#64748B' }}>
-                  No execution output. Click <strong>Run Code</strong> (Test Run) or <strong>Official Submit</strong> to test your program.
+                  No execution output. Click <strong>Run Code</strong> (Preview) or <strong>Official Submit</strong> to evaluate your program.
                 </div>
               ) : activeOutputTab === 'stdout' ? (
                 executionResult.stdout || <span style={{ color: '#64748B' }}>[No standard output generated]</span>
@@ -718,23 +857,74 @@ const StudentExperimentDetailPage = () => {
               </p>
             )}
           </div>
+
+          {/* Sample Visible Test Cases Card */}
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h2 style={{ fontSize: '1.0625rem', color: 'var(--color-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>🧪</span> Sample Test Cases
+            </h2>
+
+            {publicTestCases.length === 0 ? (
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+                No public sample test cases configured for this experiment.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {publicTestCases.map((tc, idx) => (
+                  <div
+                    key={tc._id || idx}
+                    style={{
+                      backgroundColor: 'var(--color-surface-hover)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--color-border)',
+                      padding: '0.875rem 1rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, fontSize: '0.8125rem' }}>
+                        Sample Test Case #{tc.order || idx + 1}
+                      </span>
+                      <span className="badge badge-info" style={{ fontSize: '0.6875rem' }}>
+                        {tc.marks} marks
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.75rem' }}>
+                      <div>
+                        <strong style={{ color: 'var(--color-text-secondary)' }}>Standard Input (stdin):</strong>
+                        <pre style={{ backgroundColor: 'var(--color-canvas)', padding: '0.5rem', borderRadius: '4px', margin: '0.25rem 0 0 0', whiteSpace: 'pre-wrap' }}>
+                          {tc.input || '<empty input>'}
+                        </pre>
+                      </div>
+                      <div>
+                        <strong style={{ color: 'var(--color-text-secondary)' }}>Expected Output:</strong>
+                        <pre style={{ backgroundColor: 'var(--color-canvas)', padding: '0.5rem', borderRadius: '4px', margin: '0.25rem 0 0 0', whiteSpace: 'pre-wrap' }}>
+                          {tc.expectedOutput}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* TAB 3: SUBMISSION HISTORY */}
+      {/* TAB 3: SUBMISSION HISTORY & EVALUATION LEDGER */}
       {activeViewTab === 'history' && (
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: '1.125rem', color: 'var(--color-primary)', margin: 0 }}>
-                Official Submission History
+                Official Attempts &amp; Evaluation Ledger
               </h2>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem', margin: '0.25rem 0 0 0' }}>
-                All recorded attempts for this experiment. Each attempt is immutable and time-stamped.
+                All recorded attempts for this experiment. Each attempt is immutable, scored out of 10, and preserved.
               </p>
             </div>
             <span className="badge badge-info">
-              {submissions.length} / 3 Attempts Recorded
+              {evaluationsData.totalAttempts || submissions.length} / 3 Attempts Recorded
             </span>
           </div>
 
@@ -748,47 +938,66 @@ const StudentExperimentDetailPage = () => {
             </div>
           ) : (
             <div className="table-container" style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+              <table className="table" style={{ width: '100%', fontSize: '0.8125rem' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text-secondary)' }}>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Attempt #</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Language</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Submitted At</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Execution Status</th>
-                    <th style={{ padding: '0.75rem 0.5rem' }}>Runtime</th>
-                    <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Action</th>
+                  <tr>
+                    <th>Attempt</th>
+                    <th>Submitted At</th>
+                    <th>Language</th>
+                    <th>Status</th>
+                    <th>Score / 10</th>
+                    <th>Execution Time</th>
+                    <th>Details</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {submissions.map((sub) => (
-                    <tr key={sub._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <td style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>
-                        Attempt {sub.attemptNumber}
-                      </td>
-                      <td style={{ padding: '0.75rem 0.5rem' }}>
-                        <span className="badge badge-info">{sub.language}</span>
-                      </td>
-                      <td style={{ padding: '0.75rem 0.5rem', color: 'var(--color-text-secondary)' }}>
-                        {new Date(sub.submittedAt || sub.createdAt).toLocaleString()}
-                      </td>
-                      <td style={{ padding: '0.75rem 0.5rem' }}>
-                        {getStatusBadge(sub.status)}
-                      </td>
-                      <td style={{ padding: '0.75rem 0.5rem', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-family-mono)' }}>
-                        {sub.executionOutput?.executionTimeMs !== undefined ? `${sub.executionOutput.executionTimeMs} ms` : '-'}
-                      </td>
-                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedSubmission(sub)}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                        >
-                          👁 Inspect Code
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {submissions.map((sub) => {
+                    const matchedEval = evaluationsData.evaluations?.find(
+                      (ev) => ev.attemptNumber === sub.attemptNumber || ev.submission === sub._id
+                    );
+
+                    return (
+                      <tr key={sub._id}>
+                        <td style={{ fontWeight: 700, fontFamily: 'var(--font-family-mono)' }}>
+                          #{sub.attemptNumber}
+                        </td>
+                        <td>{new Date(sub.submittedAt || sub.createdAt).toLocaleString()}</td>
+                        <td>
+                          <span className="badge badge-info">{sub.language}</span>
+                        </td>
+                        <td>{getStatusBadge(sub.status)}</td>
+                        <td>
+                          {matchedEval ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <strong style={{ color: 'var(--color-primary)', fontSize: '0.875rem' }}>
+                                {matchedEval.score} / 10
+                              </strong>
+                              {matchedEval.isHighestScore && (
+                                <span className="badge badge-success" style={{ fontSize: '0.625rem', padding: '0.1rem 0.35rem' }}>
+                                  ★ High
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                          )}
+                        </td>
+                        <td>{sub.executionOutput?.executionTimeMs ? `${sub.executionOutput.executionTimeMs} ms` : '—'}</td>
+                        <td>
+                          <button
+                            onClick={() => {
+                              setSelectedSubmission(sub);
+                              setSelectedEvaluation(matchedEval || null);
+                            }}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                          >
+                            Inspect 🔍
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -796,7 +1005,7 @@ const StudentExperimentDetailPage = () => {
         </div>
       )}
 
-      {/* CONFIRM OFFICIAL SUBMISSION MODAL */}
+      {/* CONFIRM SUBMISSION MODAL */}
       {showSubmitModal && (
         <div
           style={{
@@ -865,7 +1074,7 @@ const StudentExperimentDetailPage = () => {
         </div>
       )}
 
-      {/* INSPECT SUBMISSION DETAILS MODAL */}
+      {/* INSPECT SUBMISSION & EVALUATION DETAILS MODAL */}
       {selectedSubmission && (
         <div
           style={{
@@ -889,13 +1098,13 @@ const StudentExperimentDetailPage = () => {
               padding: '1.75rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1rem'
+              gap: '1.25rem'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-primary)' }}>
-                  Submission Record: Attempt {selectedSubmission.attemptNumber}
+                  Submission Record: Attempt #{selectedSubmission.attemptNumber}
                 </h3>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
                   Submitted on {new Date(selectedSubmission.submittedAt || selectedSubmission.createdAt).toLocaleString()} &bull; Language: {selectedSubmission.language}
@@ -903,7 +1112,10 @@ const StudentExperimentDetailPage = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedSubmission(null)}
+                onClick={() => {
+                  setSelectedSubmission(null);
+                  setSelectedEvaluation(null);
+                }}
                 className="btn btn-secondary"
                 style={{ padding: '0.25rem 0.5rem' }}
               >
@@ -911,14 +1123,95 @@ const StudentExperimentDetailPage = () => {
               </button>
             </div>
 
-            {/* Status & Runtime */}
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              {getStatusBadge(selectedSubmission.status)}
-              {selectedSubmission.executionOutput?.executionTimeMs !== undefined && (
-                <span className="badge badge-info">
-                  ⏱ {selectedSubmission.executionOutput.executionTimeMs} ms
-                </span>
-              )}
+            {/* Evaluation Score Card */}
+            {selectedEvaluation && (
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
+                    Automated Evaluation Score
+                  </div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+                    {selectedEvaluation.score} / 10
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    {selectedEvaluation.earnedMarks} of {selectedEvaluation.totalAvailableMarks} marks earned
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {selectedEvaluation.isHighestScore && (
+                    <span className="badge badge-success">★ Highest Attempt Score</span>
+                  )}
+                  {getStatusBadge(selectedSubmission.status)}
+                </div>
+              </div>
+            )}
+
+            {/* Test Case Breakdown */}
+            {selectedEvaluation?.testCaseResults && selectedEvaluation.testCaseResults.length > 0 && (
+              <div>
+                <strong style={{ fontSize: '0.875rem', color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.5rem' }}>
+                  Test Case Results:
+                </strong>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  {selectedEvaluation.testCaseResults.map((tc, idx) => (
+                    <div
+                      key={tc.testCaseId || idx}
+                      style={{
+                        backgroundColor: tc.passed ? 'rgba(22, 163, 74, 0.08)' : 'rgba(220, 38, 38, 0.08)',
+                        border: tc.passed ? '1px solid rgba(22, 163, 74, 0.3)' : '1px solid rgba(220, 38, 38, 0.3)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                        <span>Case #{tc.order || idx + 1}</span>
+                        <span style={{ color: tc.passed ? '#16a34a' : '#dc2626' }}>
+                          {tc.passed ? '✓ Pass' : '✗ Fail'}
+                        </span>
+                      </div>
+                      <div style={{ color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
+                        {tc.isHidden ? '🔒 Hidden' : '👁 Public'} &bull; {tc.earnedMarks}/{tc.availableMarks} pts
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Source Code */}
+            <div>
+              <strong style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+                Submitted Source Code:
+              </strong>
+              <pre
+                style={{
+                  backgroundColor: '#0F172A',
+                  color: '#E2E8F0',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.8125rem',
+                  margin: 0,
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {selectedSubmission.sourceCode}
+              </pre>
             </div>
 
             {/* Output Logs */}

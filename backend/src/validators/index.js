@@ -8,6 +8,7 @@ const authValidators = require('./auth.validator');
 const academicValidators = require('./academic.validator');
 const experimentValidators = require('./experiment.validator');
 const submissionValidators = require('./submission.validator');
+const testCaseValidators = require('./testCase.validator');
 
 module.exports = {
   ALPHANUMERIC_REGEX,
@@ -15,6 +16,7 @@ module.exports = {
   ...authValidators,
   ...academicValidators,
   ...experimentValidators,
-  ...submissionValidators
+  ...submissionValidators,
+  ...testCaseValidators
 };
 
