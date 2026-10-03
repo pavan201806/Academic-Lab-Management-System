@@ -138,11 +138,66 @@ const validateOrderUpdateInput = (req, res, next) => {
   next();
 };
 
+const validateConfirmPdfInput = (req, res, next) => {
+  const { labId, experiments } = req.body;
+
+  if (!labId || !mongoose.Types.ObjectId.isValid(labId)) {
+    return next(new AppError('A valid laboratory ID (labId) is required', 400));
+  }
+
+  if (!experiments || !Array.isArray(experiments) || experiments.length === 0) {
+    return next(new AppError('An array of confirmed experiments is required', 400));
+  }
+
+  if (experiments.length > 12) {
+    return next(new AppError('Cannot confirm more than 12 experiments for a laboratory', 400));
+  }
+
+  const seenNumbers = new Set();
+
+  for (let i = 0; i < experiments.length; i++) {
+    const item = experiments[i];
+
+    if (!item.title || typeof item.title !== 'string' || !item.title.trim()) {
+      return next(new AppError(`Experiment at position ${i + 1} is missing a title`, 400));
+    }
+
+    if (item.title.trim().length > 200) {
+      return next(new AppError(`Experiment title at position ${i + 1} cannot exceed 200 characters`, 400));
+    }
+
+    const expNum = parseInt(item.experimentNumber, 10);
+    if (isNaN(expNum) || expNum < 1 || expNum > 12) {
+      return next(new AppError(`Experiment at position ${i + 1} has an invalid experiment number (must be 1-12)`, 400));
+    }
+
+    if (seenNumbers.has(expNum)) {
+      return next(new AppError(`Duplicate experiment number ${expNum} found in confirmed experiments list`, 400));
+    }
+    seenNumbers.add(expNum);
+
+    if (item.programmingLanguages) {
+      if (!Array.isArray(item.programmingLanguages) || item.programmingLanguages.length === 0) {
+        return next(new AppError(`Experiment ${expNum} must have at least one programming language selected`, 400));
+      }
+      for (const lang of item.programmingLanguages) {
+        if (!VALID_LANGUAGES.includes(lang)) {
+          return next(new AppError(`Invalid programming language '${lang}' in experiment ${expNum}`, 400));
+        }
+      }
+    }
+  }
+
+  next();
+};
+
 module.exports = {
   VALID_LANGUAGES,
   VALID_STATUSES,
   validateExperimentInput,
   validateReopenInput,
   validateStatusUpdateInput,
-  validateOrderUpdateInput
+  validateOrderUpdateInput,
+  validateConfirmPdfInput
 };
+

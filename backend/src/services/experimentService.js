@@ -1,4 +1,5 @@
 const { Experiment, Lab, LabAssignment, Section, User } = require('../models');
+const pdfExtractionService = require('./pdfExtractionService');
 const AppError = require('../utils/appError');
 
 class ExperimentService {
@@ -413,6 +414,136 @@ class ExperimentService {
     experiment.active = active;
     await experiment.save();
     return experiment;
+  }
+
+  /**
+   * Extract experiments from uploaded PDF buffer without persisting
+   * @param {string} labId
+   * @param {Buffer} fileBuffer
+   * @param {string} fileName
+   * @param {number} fileSize
+   * @param {object} user
+   * @returns {Promise<object>}
+   */
+  async extractExperimentsFromPdf(labId, fileBuffer, fileName, fileSize, user) {
+    const lab = await this.checkLabAccess(labId, user, 'WRITE');
+
+    if (!fileBuffer) {
+      throw new AppError('No PDF file provided for extraction', 400);
+    }
+
+    const { text, numPages } = await pdfExtractionService.extractTextFromPdf(fileBuffer);
+    const extractedExperiments = pdfExtractionService.parseExperimentsFromText(text);
+
+    // Get current active experiment count in lab
+    const currentActiveCount = await Experiment.countDocuments({
+      lab: labId,
+      active: true
+    });
+
+    const existingExperiments = await Experiment.find({
+      lab: labId,
+      active: true
+    }).select('experimentNumber title');
+
+    return {
+      fileName: fileName || 'uploaded_manual.pdf',
+      fileSize: fileSize || fileBuffer.length,
+      numPages,
+      totalExtracted: extractedExperiments.length,
+      currentActiveCount,
+      remainingCapacity: Math.max(0, 12 - currentActiveCount),
+      existingExperiments,
+      experiments: extractedExperiments
+    };
+  }
+
+  /**
+   * Batch confirm and persist reviewed experiments from PDF extraction
+   * @param {string} labId
+   * @param {Array<object>} experimentsData
+   * @param {object} user
+   * @returns {Promise<Array<object>>}
+   */
+  async confirmExtractedExperiments(labId, experimentsData, user) {
+    const lab = await this.checkLabAccess(labId, user, 'WRITE');
+
+    if (!Array.isArray(experimentsData) || experimentsData.length === 0) {
+      throw new AppError('No experiments provided for confirmation', 400);
+    }
+
+    if (experimentsData.length > 12) {
+      throw new AppError('Cannot create more than 12 experiments', 400);
+    }
+
+    // Check active experiment count limit
+    const currentActiveCount = await Experiment.countDocuments({
+      lab: labId,
+      active: true
+    });
+
+    if (currentActiveCount + experimentsData.length > 12) {
+      throw new AppError(
+        `Adding ${experimentsData.length} experiments would exceed the laboratory maximum limit of 12 (Current active: ${currentActiveCount})`,
+        400
+      );
+    }
+
+    // Check duplicate numbers inside incoming batch
+    const incomingNumbers = new Set();
+    for (const item of experimentsData) {
+      const num = parseInt(item.experimentNumber, 10);
+      if (isNaN(num) || num < 1 || num > 12) {
+        throw new AppError(`Invalid experiment number ${item.experimentNumber}. Must be between 1 and 12`, 400);
+      }
+      if (incomingNumbers.has(num)) {
+        throw new AppError(`Duplicate experiment number ${num} found in confirmation list`, 400);
+      }
+      incomingNumbers.add(num);
+    }
+
+    // Check against existing active experiment numbers in DB
+    const existingActiveExperiments = await Experiment.find({
+      lab: labId,
+      active: true,
+      experimentNumber: { $in: Array.from(incomingNumbers) }
+    });
+
+    if (existingActiveExperiments.length > 0) {
+      const conflicting = existingActiveExperiments.map((e) => e.experimentNumber).join(', ');
+      throw new AppError(
+        `Experiment number(s) ${conflicting} already exist in this laboratory. Please edit the numbers before confirming.`,
+        409
+      );
+    }
+
+    // Pre-validate all experiment items before creation
+    const docsToCreate = experimentsData.map((item) => {
+      const expNum = parseInt(item.experimentNumber, 10);
+      const orderNum = item.order ? parseInt(item.order, 10) : expNum;
+
+      return {
+        lab: labId,
+        title: item.title.trim(),
+        experimentNumber: expNum,
+        description: item.description ? item.description.trim() : '',
+        objective: item.objective ? item.objective.trim() : '',
+        instructions: item.instructions ? item.instructions.trim() : '',
+        programmingLanguages:
+          item.programmingLanguages && Array.isArray(item.programmingLanguages) && item.programmingLanguages.length > 0
+            ? item.programmingLanguages
+            : ['C', 'C++', 'Java', 'Python'],
+        status: 'DRAFT',
+        order: orderNum,
+        active: true,
+        createdBy: user._id
+      };
+    });
+
+    // Create all experiment documents
+    const createdDocs = await Experiment.insertMany(docsToCreate);
+
+    return createdDocs;
   }
 }
 

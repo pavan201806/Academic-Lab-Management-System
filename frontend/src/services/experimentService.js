@@ -54,5 +54,23 @@ export const experimentService = {
   toggleActive: async (id, active) => {
     const res = await apiClient.patch(`/experiments/${id}/status`, { active });
     return res.data || res;
+  },
+
+  extractFromPdf: async (labId, pdfFile) => {
+    const formData = new FormData();
+    formData.append('labId', labId);
+    formData.append('pdf', pdfFile);
+
+    const res = await apiClient.post('/experiments/extract-pdf', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return res.data || res;
+  },
+
+  confirmPdfExperiments: async (labId, experiments) => {
+    const res = await apiClient.post('/experiments/confirm-pdf', { labId, experiments });
+    return res.data || res;
   }
 };

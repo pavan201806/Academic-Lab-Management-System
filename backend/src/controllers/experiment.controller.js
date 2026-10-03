@@ -73,6 +73,44 @@ const toggleActive = asyncHandler(async (req, res) => {
   );
 });
 
+const extractPdfExperiments = asyncHandler(async (req, res) => {
+  const labId = req.body.labId || req.query.labId || req.query.lab;
+  if (!labId) {
+    throw new AppError('Laboratory ID (labId) is required for PDF extraction', 400);
+  }
+
+  if (!req.file) {
+    throw new AppError('A PDF file is required for experiment extraction', 400);
+  }
+
+  const result = await experimentService.extractExperimentsFromPdf(
+    labId,
+    req.file.buffer,
+    req.file.originalname,
+    req.file.size,
+    req.user
+  );
+
+  return successResponse(res, result, 'Experiments extracted successfully from PDF');
+});
+
+const confirmPdfExperiments = asyncHandler(async (req, res) => {
+  const { labId, experiments } = req.body;
+
+  const createdExperiments = await experimentService.confirmExtractedExperiments(
+    labId,
+    experiments,
+    req.user
+  );
+
+  return successResponse(
+    res,
+    createdExperiments,
+    `Successfully created ${createdExperiments.length} experiments from PDF extraction`,
+    201
+  );
+});
+
 module.exports = {
   getExperiments,
   getExperimentById,
@@ -83,5 +121,8 @@ module.exports = {
   reopenExperiment,
   closeExperiment,
   reorderExperiments,
-  toggleActive
+  toggleActive,
+  extractPdfExperiments,
+  confirmPdfExperiments
 };
+

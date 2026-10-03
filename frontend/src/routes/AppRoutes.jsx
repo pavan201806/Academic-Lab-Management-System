@@ -27,6 +27,9 @@ import LabDetailsPage from '../pages/common/LabDetailsPage';
 import TeacherExperimentManagementPage from '../pages/teacher/TeacherExperimentManagementPage';
 import StudentExperimentDetailPage from '../pages/student/StudentExperimentDetailPage';
 
+// Phase 5 PDF Extraction Suite Page
+import PdfExperimentExtractionPage from '../pages/teacher/PdfExperimentExtractionPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -66,7 +69,7 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* Phase 2 & 4: Admin Academic Structure & Experiment Management */}
+      {/* Phase 2, 4 & 5: Admin Academic Structure, Experiments & PDF Import */}
       <Route
         path="/admin"
         element={
@@ -80,13 +83,14 @@ const AppRoutes = () => {
         <Route path="labs" element={<LabManagementPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
+        <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="sections" element={<SectionManagementPage />} />
         <Route path="teachers" element={<TeacherManagementPage />} />
         <Route path="students" element={<StudentManagementPage />} />
         <Route path="assignments" element={<LabAssignmentPage />} />
       </Route>
 
-      {/* Phase 3 & 4: Teacher Laboratory Management & Experiment Authoring Console */}
+      {/* Phase 3, 4 & 5: Teacher Laboratory Management, Authoring & PDF Extraction Console */}
       <Route
         path="/teacher"
         element={
@@ -99,6 +103,7 @@ const AppRoutes = () => {
         <Route path="labs" element={<TeacherLabDashboardPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
+        <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
       </Route>
 
       {/* Phase 3 & 4: Student Laboratory Hub & Experiment Protocol View */}

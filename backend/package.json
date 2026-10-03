@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node src/utils/seed.js",
-    "test": "node src/tests/auth.test.js && node src/tests/api.auth.test.js && node src/tests/security.verification.test.js && node src/tests/academic.test.js && node src/tests/lab.access.test.js && node src/tests/experiment.test.js"
+    "test": "node src/tests/auth.test.js && node src/tests/api.auth.test.js && node src/tests/security.verification.test.js && node src/tests/academic.test.js && node src/tests/lab.access.test.js && node src/tests/experiment.test.js && node src/tests/pdf.extraction.test.js"
   },
   "keywords": [
     "academic",
@@ -24,6 +24,8 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.12.1",
+    "multer": "^2.4.0",
+    "pdf-parse": "^2.4.5"
   }
 }

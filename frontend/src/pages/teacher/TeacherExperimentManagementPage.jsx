@@ -351,7 +351,14 @@ const TeacherExperimentManagementPage = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <Link
+            to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${labId}/experiments/import-pdf` : `/teacher/labs/${labId}/experiments/import-pdf`}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.375rem', textDecoration: 'none' }}
+          >
+            <span>📄</span> Import from PDF Manual
+          </Link>
           <button
             onClick={openCreateModal}
             disabled={experiments.length >= 12}

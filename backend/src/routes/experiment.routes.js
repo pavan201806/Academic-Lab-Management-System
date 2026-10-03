@@ -2,12 +2,14 @@ const express = require('express');
 const router = express.Router();
 const experimentController = require('../controllers/experiment.controller');
 const { authenticate, authorize, requirePasswordChangeCompleted } = require('../middleware/auth');
+const { upload, handleUploadError } = require('../middleware/upload');
 const {
   validateObjectIdParam,
   validateExperimentInput,
   validateReopenInput,
   validateStatusUpdateInput,
-  validateOrderUpdateInput
+  validateOrderUpdateInput,
+  validateConfirmPdfInput
 } = require('../validators');
 
 router.use(authenticate);
@@ -26,5 +28,21 @@ router.post('/:id/reopen', authorize('ADMIN_HOD', 'TEACHER'), validateObjectIdPa
 router.post('/:id/close', authorize('ADMIN_HOD', 'TEACHER'), validateObjectIdParam('id'), experimentController.closeExperiment);
 router.put('/reorder/batch', authorize('ADMIN_HOD', 'TEACHER'), experimentController.reorderExperiments);
 router.patch('/:id/status', authorize('ADMIN_HOD', 'TEACHER'), validateObjectIdParam('id'), experimentController.toggleActive);
+
+// Phase 5 PDF Extraction & Confirmation Operations
+router.post(
+  '/extract-pdf',
+  authorize('ADMIN_HOD', 'TEACHER'),
+  upload.single('pdf'),
+  handleUploadError,
+  experimentController.extractPdfExperiments
+);
+
+router.post(
+  '/confirm-pdf',
+  authorize('ADMIN_HOD', 'TEACHER'),
+  validateConfirmPdfInput,
+  experimentController.confirmPdfExperiments
+);
 
 module.exports = router;
