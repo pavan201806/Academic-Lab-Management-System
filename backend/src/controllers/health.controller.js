@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const config = require('../config/env');
 const { successResponse } = require('../utils/apiResponse');
 
 const getHealthStatus = (req, res) => {
@@ -11,6 +12,7 @@ const getHealthStatus = (req, res) => {
 
   const dbState = mongoose.connection.readyState;
   const dbStatus = dbStatusMap[dbState] || 'unknown';
+  const isConnected = dbState === 1;
 
   const healthData = {
     service: 'Academic Lab Management System API',
@@ -19,7 +21,7 @@ const getHealthStatus = (req, res) => {
     uptime: process.uptime(),
     database: {
       status: dbStatus,
-      connected: dbState === 1
+      connected: isConnected
     }
   };
 

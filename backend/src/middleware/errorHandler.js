@@ -20,7 +20,16 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Handle Mongoose / MongoDB specific errors
-  if (err.name === 'CastError') {
+  if (
+    err.name === 'MongoServerSelectionError' ||
+    err.name === 'MongoNetworkError' ||
+    err.name === 'MongoPoolClearedError' ||
+    err.name === 'MongoTimeoutError' ||
+    (err.name === 'MongooseError' && (err.message.includes('buffering timed out') || err.message.includes('before initial connection')))
+  ) {
+    statusCode = 503;
+    message = 'Database service is temporarily unavailable. Please try again shortly.';
+  } else if (err.name === 'CastError') {
     statusCode = 400;
     message = `Invalid format for resource identifier: ${err.value}`;
   } else if (err.code === 11000) {

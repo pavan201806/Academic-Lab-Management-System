@@ -5,7 +5,15 @@ const logger = require('./utils/logger');
 
 const startServer = async () => {
   // Connect to MongoDB
-  await connectDB();
+  const dbStatus = await connectDB();
+  if (config.mongoUri && !dbStatus.connected) {
+    if (config.env === 'production') {
+      logger.error('[Fatal] Unable to connect to MongoDB in production mode. Process exiting.');
+      process.exit(1);
+    } else {
+      logger.warn('[Database] Initial MongoDB connection failed. Express server will run with degraded database status.');
+    }
+  }
 
   // Start Express server
   const server = app.listen(config.port, () => {
