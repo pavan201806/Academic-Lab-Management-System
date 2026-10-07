@@ -21,6 +21,7 @@ router.post('/', authorize('ADMIN_HOD'), validateSectionInput, sectionController
 router.put('/:id', authorize('ADMIN_HOD'), validateObjectIdParam('id'), validateSectionInput, sectionController.updateSection);
 router.patch('/:id/status', authorize('ADMIN_HOD'), validateObjectIdParam('id'), sectionController.toggleActive);
 router.post('/assign-student', authorize('ADMIN_HOD'), validateAssignStudentInput, sectionController.assignStudent);
+router.delete('/:id', authorize('ADMIN_HOD'), validateObjectIdParam('id'), sectionController.deleteSection);
 
 module.exports = router;
 

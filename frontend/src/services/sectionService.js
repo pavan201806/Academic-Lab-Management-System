@@ -41,5 +41,10 @@ export const sectionService = {
   assignStudent: async (studentId, sectionCode) => {
     const res = await apiClient.post('/sections/assign-student', { studentId, sectionCode });
     return res.data || res;
+  },
+
+  deleteSection: async (id) => {
+    const res = await apiClient.delete(`/sections/${id}`);
+    return res.data || res;
   }
 };

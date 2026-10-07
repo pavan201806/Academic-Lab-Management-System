@@ -37,5 +37,15 @@ export const labService = {
   toggleActive: async (id, active) => {
     const res = await apiClient.patch(`/labs/${id}/status`, { active });
     return res.data || res;
+  },
+
+  getLabDeletionStatus: async (id) => {
+    const res = await apiClient.get(`/labs/${id}/deletion-status`);
+    return res.data || res;
+  },
+
+  deleteLab: async (id) => {
+    const res = await apiClient.delete(`/labs/${id}`);
+    return res.data || res;
   }
 };

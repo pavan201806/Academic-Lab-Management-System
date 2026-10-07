@@ -21,6 +21,7 @@ const adminDashboardRoutes = require('./adminDashboard.routes');
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
+router.use('/students', userRoutes);
 router.use('/sections', sectionRoutes);
 router.use('/labs', labRoutes);
 router.use('/lab-assignments', labAssignmentRoutes);

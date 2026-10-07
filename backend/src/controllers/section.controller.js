@@ -43,6 +43,11 @@ const assignStudent = asyncHandler(async (req, res) => {
   return successResponse(res, student, 'Student assigned to section successfully');
 });
 
+const deleteSection = asyncHandler(async (req, res) => {
+  const result = await sectionService.deleteSection(req.params.id);
+  return successResponse(res, result, result.message || 'Section deleted successfully');
+});
+
 module.exports = {
   getSections,
   getSectionById,
@@ -50,5 +55,6 @@ module.exports = {
   updateSection,
   toggleActive,
   getSectionStudents,
-  assignStudent
+  assignStudent,
+  deleteSection
 };

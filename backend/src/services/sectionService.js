@@ -1,4 +1,5 @@
-const { Section, User } = require('../models');
+const { Section, User, LabAssignment, Notification } = require('../models');
+const mongoose = require('mongoose');
 const AppError = require('../utils/appError');
 
 class SectionService {
@@ -28,13 +29,12 @@ class SectionService {
 
     const sections = await Section.find(query).sort({ sectionCode: 1 });
 
-    // Attach student count dynamically
+    // Attach student count dynamically (all students assigned to this section)
     const sectionsWithCount = await Promise.all(
       sections.map(async (sec) => {
         const studentCount = await User.countDocuments({
-          section: sec.sectionCode,
-          role: 'STUDENT',
-          active: true
+          section: { $regex: new RegExp(`^${sec.sectionCode}$`, 'i') },
+          role: 'STUDENT'
         });
         const secObj = sec.toJSON();
         secObj.studentCount = studentCount;
@@ -51,9 +51,8 @@ class SectionService {
       throw new AppError('Section not found', 404);
     }
     const studentCount = await User.countDocuments({
-      section: section.sectionCode,
-      role: 'STUDENT',
-      active: true
+      section: { $regex: new RegExp(`^${section.sectionCode}$`, 'i') },
+      role: 'STUDENT'
     });
     const secObj = section.toJSON();
     secObj.studentCount = studentCount;
@@ -140,6 +139,89 @@ class SectionService {
 
     await student.save();
     return student;
+  }
+
+  async deleteSection(id) {
+    const section = await Section.findById(id);
+    if (!section) {
+      throw new AppError('Section not found', 404);
+    }
+
+    // 1. Critical safety check: Count all assigned students (active and inactive)
+    const studentCount = await User.countDocuments({
+      section: { $regex: new RegExp(`^${section.sectionCode}$`, 'i') },
+      role: 'STUDENT'
+    });
+
+    if (studentCount > 0) {
+      throw new AppError(
+        `Cannot delete section '${section.sectionCode}' because ${studentCount} student${studentCount === 1 ? ' is' : 's are'} currently assigned to it. Please reassign or remove all students from this section before deleting the section.`,
+        400
+      );
+    }
+
+    let session = null;
+    let useTransaction = false;
+
+    // Attempt MongoDB transaction if supported in current environment
+    try {
+      if (mongoose.connection && mongoose.connection.readyState === 1) {
+        session = await mongoose.startSession();
+        session.startTransaction();
+        useTransaction = true;
+      }
+    } catch (_) {
+      session = null;
+      useTransaction = false;
+    }
+
+    try {
+      const opts = useTransaction && session ? { session } : {};
+
+      // 2. Cascade cleanup of section-specific lab assignments
+      if (LabAssignment) {
+        await LabAssignment.deleteMany({ section: section._id }, opts);
+      }
+
+      // 3. Clean up notification targeting references to this section
+      if (Notification) {
+        await Notification.updateMany(
+          { targetSections: section._id },
+          { $pull: { targetSections: section._id } },
+          opts
+        );
+      }
+
+      // 4. Delete the Section document itself
+      await Section.deleteOne({ _id: section._id }, opts);
+
+      if (useTransaction && session) {
+        await session.commitTransaction();
+      }
+
+      return {
+        success: true,
+        message: `Section '${section.sectionCode}' and section-specific assignments have been permanently deleted. Shared academic resources and student records were preserved.`,
+        deletedSection: {
+          id: section._id,
+          name: section.name,
+          sectionCode: section.sectionCode
+        }
+      };
+    } catch (err) {
+      if (useTransaction && session) {
+        try {
+          await session.abortTransaction();
+        } catch (_) {}
+      }
+      throw err;
+    } finally {
+      if (session) {
+        try {
+          await session.endSession();
+        } catch (_) {}
+      }
+    }
   }
 }
 

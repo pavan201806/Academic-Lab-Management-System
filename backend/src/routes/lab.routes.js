@@ -25,9 +25,11 @@ router.get(
 
 // Admin-only catalogue and management operations
 router.get('/', authorize('ADMIN_HOD'), labController.getLabs);
+router.get('/:id/deletion-status', authorize('ADMIN_HOD'), validateObjectIdParam('id'), labController.getLabDeletionStatus);
 router.post('/', authorize('ADMIN_HOD'), validateLabInput, labController.createLab);
 router.put('/:id', authorize('ADMIN_HOD'), validateObjectIdParam('id'), validateLabInput, labController.updateLab);
 router.patch('/:id/status', authorize('ADMIN_HOD'), validateObjectIdParam('id'), labController.toggleActive);
+router.delete('/:id', authorize('ADMIN_HOD'), validateObjectIdParam('id'), labController.deleteLab);
 
 module.exports = router;
 

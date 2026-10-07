@@ -108,6 +108,61 @@ const validateLabAssignmentInput = (req, res, next) => {
   next();
 };
 
+const validateCreateTeacherInput = (req, res, next) => {
+  const { name, rollNumber, temporaryPassword } = req.body;
+
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return next(new AppError('Name is required', 400));
+  }
+
+  if (!rollNumber || typeof rollNumber !== 'string' || !rollNumber.trim()) {
+    return next(new AppError('Roll number / username is required', 400));
+  }
+
+  const cleanRoll = rollNumber.trim();
+  if (!ALPHANUMERIC_REGEX.test(cleanRoll)) {
+    return next(new AppError('Roll number / username must contain only letters and numbers', 400));
+  }
+
+  if (!temporaryPassword || typeof temporaryPassword !== 'string' || temporaryPassword.length < 6) {
+    return next(new AppError('Temporary password is required (minimum 6 characters)', 400));
+  }
+
+  req.body.name = name.trim();
+  req.body.rollNumber = cleanRoll.toUpperCase();
+  req.body.role = 'TEACHER';
+
+  next();
+};
+
+const validateCreateStudentInput = (req, res, next) => {
+  const { name, rollNumber, temporaryPassword, section } = req.body;
+
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return next(new AppError('Name is required', 400));
+  }
+
+  if (!rollNumber || typeof rollNumber !== 'string' || !rollNumber.trim()) {
+    return next(new AppError('Roll number / username is required', 400));
+  }
+
+  const cleanRoll = rollNumber.trim();
+  if (!ALPHANUMERIC_REGEX.test(cleanRoll)) {
+    return next(new AppError('Roll number / username must contain only letters and numbers', 400));
+  }
+
+  if (!temporaryPassword || typeof temporaryPassword !== 'string' || temporaryPassword.length < 6) {
+    return next(new AppError('Temporary password is required (minimum 6 characters)', 400));
+  }
+
+  req.body.name = name.trim();
+  req.body.rollNumber = cleanRoll.toUpperCase();
+  req.body.role = 'STUDENT';
+  if (section && typeof section === 'string') req.body.section = section.trim();
+
+  next();
+};
+
 const validateCreateUserInput = (req, res, next) => {
   const { name, rollNumber, role, temporaryPassword, section } = req.body;
 
@@ -124,7 +179,7 @@ const validateCreateUserInput = (req, res, next) => {
     return next(new AppError('Roll number / username must contain only letters and numbers', 400));
   }
 
-  if (!role || !['TEACHER', 'STUDENT'].includes(role)) {
+  if (role && !['TEACHER', 'STUDENT'].includes(role)) {
     return next(new AppError('Role must be either TEACHER or STUDENT', 400));
   }
 
@@ -159,6 +214,8 @@ module.exports = {
   validateSectionInput,
   validateLabInput,
   validateLabAssignmentInput,
+  validateCreateTeacherInput,
+  validateCreateStudentInput,
   validateCreateUserInput,
   validateAssignStudentInput
 };

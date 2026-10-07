@@ -23,7 +23,7 @@ class CodeExecutionService {
    */
   isDockerAvailable() {
     try {
-      execSync('docker --version', { stdio: 'pipe' });
+      execSync('docker info', { stdio: 'pipe', timeout: 2000 });
       return true;
     } catch (_) {
       return false;

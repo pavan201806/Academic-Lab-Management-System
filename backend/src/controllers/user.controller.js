@@ -62,6 +62,81 @@ const toggleActive = asyncHandler(async (req, res) => {
   );
 });
 
+const bulkStudentService = require('../services/bulkStudentService');
+const AppError = require('../utils/appError');
+
+const previewBulkImport = asyncHandler(async (req, res) => {
+  if (!req.file || !req.file.buffer) {
+    throw new AppError('Excel file (.xlsx, .xls) is required for previewing bulk student enrollment', 400);
+  }
+  const preview = await bulkStudentService.previewEnrollment(req.file.buffer, req.file.originalname);
+  return successResponse(res, preview, 'Bulk student enrollment preview generated successfully');
+});
+
+const executeBulkImport = asyncHandler(async (req, res) => {
+  const { records, defaultPassword } = req.body;
+  const fileBuffer = req.file ? req.file.buffer : null;
+  const fileName = req.file ? req.file.originalname : null;
+
+  if (!fileBuffer && (!records || !Array.isArray(records) || records.length === 0)) {
+    throw new AppError('Either an Excel file or confirmed student records array is required for bulk import', 400);
+  }
+
+  const result = await bulkStudentService.importStudents({
+    records,
+    defaultPassword,
+    fileBuffer,
+    fileName
+  });
+
+  return successResponse(res, result, 'Bulk student enrollment completed successfully', 201);
+});
+
+const deleteStudent = asyncHandler(async (req, res) => {
+  const result = await userService.deleteStudent(req.params.id);
+  return successResponse(
+    res,
+    result,
+    `Student ${result.deletedStudent.rollNumber} — ${result.deletedStudent.name} and all related records deleted permanently`
+  );
+});
+
+const deleteTeacher = asyncHandler(async (req, res) => {
+  const result = await userService.deleteTeacher(req.params.id);
+  return successResponse(
+    res,
+    result,
+    `Teacher ${result.deletedTeacher.name} (${result.deletedTeacher.rollNumber}) and assignments permanently deleted successfully`
+  );
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+  const result = await userService.deleteUser(req.params.id);
+  const name = result.deletedStudent?.name || result.deletedTeacher?.name || 'User';
+  const id = result.deletedStudent?.rollNumber || result.deletedTeacher?.rollNumber || req.params.id;
+  return successResponse(
+    res,
+    result,
+    `Account ${name} (${id}) permanently deleted successfully`
+  );
+});
+
+const previewBulkDeleteStudents = asyncHandler(async (req, res) => {
+  const { studentIds } = req.body;
+  const result = await userService.previewBulkDeleteStudents(studentIds);
+  return successResponse(res, result, 'Bulk student deletion preview generated successfully');
+});
+
+const bulkDeleteStudents = asyncHandler(async (req, res) => {
+  const { studentIds } = req.body;
+  const result = await userService.bulkDeleteStudents(studentIds);
+  return successResponse(
+    res,
+    result,
+    `Bulk student deletion completed successfully: ${result.deletedCount} students permanently deleted.`
+  );
+});
+
 module.exports = {
   getUsers,
   getUserById,
@@ -69,5 +144,16 @@ module.exports = {
   createStudent,
   updateUser,
   resetPassword,
-  toggleActive
+  toggleActive,
+  previewBulkImport,
+  executeBulkImport,
+  previewBulkDeleteStudents,
+  bulkDeleteStudents,
+  deleteStudent,
+  deleteTeacher,
+  deleteUser
 };
+
+
+
+

@@ -28,6 +28,13 @@ const SectionManagementPage = () => {
   const [sectionStudents, setSectionStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
 
+  // Permanent Delete Section Modal State
+  const [deletingSection, setDeletingSection] = useState(null);
+  const [confirmSectionNameInput, setConfirmSectionNameInput] = useState('');
+  const [deletingInProgress, setDeletingInProgress] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [successBanner, setSuccessBanner] = useState('');
+
   const fetchSections = async () => {
     setLoading(true);
     setError(null);
@@ -129,6 +136,38 @@ const SectionManagementPage = () => {
     }
   };
 
+  const handleDeleteSection = async (e) => {
+    e.preventDefault();
+    if (!deletingSection) return;
+
+    if (
+      confirmSectionNameInput.trim().toUpperCase() !== (deletingSection.sectionCode || '').toUpperCase() &&
+      confirmSectionNameInput.trim().toUpperCase() !== (deletingSection.name || '').toUpperCase()
+    ) {
+      setDeleteError(`Please type the exact section code '${deletingSection.sectionCode}' to confirm deletion.`);
+      return;
+    }
+
+    setDeletingInProgress(true);
+    setDeleteError('');
+
+    try {
+      const res = await sectionService.deleteSection(deletingSection._id);
+      const deletedCode = deletingSection.sectionCode;
+      setDeletingSection(null);
+      setConfirmSectionNameInput('');
+      setSuccessBanner(
+        res?.message ||
+          `Section '${deletedCode}' and section-specific assignments have been permanently deleted. Shared academic resources and student records were preserved.`
+      );
+      await fetchSections();
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || err.message || 'Failed to permanently delete section.');
+    } finally {
+      setDeletingInProgress(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header and Actions */}
@@ -149,6 +188,34 @@ const SectionManagementPage = () => {
           + Create Section
         </button>
       </div>
+
+      {/* Success Notification Banner */}
+      {successBanner && (
+        <div
+          style={{
+            padding: '0.875rem 1.25rem',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            color: '#15803d',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.875rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            border: '1px solid rgba(34, 197, 94, 0.3)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>✓</span>
+            <span>{successBanner}</span>
+          </div>
+          <button
+            onClick={() => setSuccessBanner('')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803d', fontSize: '1rem' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="card" style={{ padding: '1rem' }}>
@@ -256,6 +323,24 @@ const SectionManagementPage = () => {
                           style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                         >
                           {sec.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDeletingSection(sec);
+                            setConfirmSectionNameInput('');
+                            setDeleteError('');
+                          }}
+                          className="btn btn-danger"
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            fontSize: '0.75rem',
+                            backgroundColor: 'var(--color-error-bg, #fee2e2)',
+                            color: 'var(--color-error, #b91c1c)',
+                            borderColor: 'rgba(239, 68, 68, 0.4)'
+                          }}
+                          title="Permanently delete section/cohort"
+                        >
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -502,6 +587,321 @@ const SectionManagementPage = () => {
           </div>
         </div>
       )}
+
+      {/* Permanent Delete Section Modal (Blocked if students > 0, Confirm if students === 0) */}
+      {deletingSection && (deletingSection.studentCount || 0) > 0 ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 60,
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '480px',
+              width: '100%',
+              padding: 0,
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(239, 68, 68, 0.3)'
+            }}
+          >
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-error-bg, #fee2e2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>🚫</span>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-error, #b91c1c)', margin: 0 }}>
+                  Cannot Delete Section
+                </h3>
+              </div>
+              <button
+                onClick={() => setDeletingSection(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.125rem', color: 'var(--color-error, #b91c1c)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.375rem'
+                }}
+              >
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Section:</span>
+                  <div style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.05rem' }}>
+                    {deletingSection.sectionCode} &mdash; {deletingSection.name}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Enrolled Students:</span>
+                  <div style={{ fontWeight: 700, color: 'var(--color-error, #b91c1c)', fontSize: '1.05rem' }}>
+                    {deletingSection.studentCount} Assigned Student{deletingSection.studentCount === 1 ? '' : 's'}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--color-text-secondary)',
+                  lineHeight: 1.5,
+                  padding: '0.75rem 0.875rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                  borderLeft: '3px solid var(--color-error, #b91c1c)',
+                  borderRadius: '0 var(--radius-sm) var(--radius-sm) 0'
+                }}
+              >
+                <strong>{deletingSection.sectionCode}</strong> currently has <strong>{deletingSection.studentCount}</strong> student{deletingSection.studentCount === 1 ? '' : 's'} assigned.
+                <div style={{ marginTop: '0.5rem', color: 'var(--color-text-primary)' }}>
+                  Please reassign or remove all students from this section before deleting the section.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sec = deletingSection;
+                    setDeletingSection(null);
+                    handleViewStudents(sec);
+                  }}
+                  className="btn btn-secondary"
+                >
+                  View Students
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeletingSection(null)}
+                  className="btn btn-primary"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : deletingSection ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 60,
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              padding: 0,
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(239, 68, 68, 0.3)'
+            }}
+          >
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-error-bg, #fee2e2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-error, #b91c1c)', margin: 0 }}>
+                  Delete Section?
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setDeletingSection(null);
+                  setConfirmSectionNameInput('');
+                  setDeleteError('');
+                }}
+                disabled={deletingInProgress}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.125rem', color: 'var(--color-error, #b91c1c)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleDeleteSection} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {deleteError && (
+                <div
+                  style={{
+                    padding: '0.75rem 1rem',
+                    backgroundColor: 'var(--color-error-bg, #fee2e2)',
+                    color: 'var(--color-error, #b91c1c)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.8125rem',
+                    border: '1px solid rgba(239, 68, 68, 0.2)'
+                  }}
+                >
+                  {deleteError}
+                </div>
+              )}
+
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.375rem'
+                }}
+              >
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Section:</span>
+                  <div style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: '1.05rem' }}>
+                    {deletingSection.sectionCode} &mdash; {deletingSection.name}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Department:</span>
+                  <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                    {deletingSection.department}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Year &amp; Semester:</span>
+                  <div>
+                    {deletingSection.academicYear} &bull; {deletingSection.semester}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Students Assigned:</span>
+                  <div style={{ fontWeight: 600, color: 'var(--color-success, #15803d)' }}>
+                    0 Students
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  fontSize: '0.8125rem',
+                  color: 'var(--color-text-secondary)',
+                  lineHeight: 1.5,
+                  padding: '0.75rem 0.875rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                  borderLeft: '3px solid var(--color-error, #b91c1c)',
+                  borderRadius: '0 var(--radius-sm) var(--radius-sm) 0'
+                }}
+              >
+                <div>
+                  This action will permanently remove this <strong>section</strong> and its <strong>section-specific assignment records</strong>.
+                </div>
+                <div style={{ marginTop: '0.5rem', fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                  Shared labs, experiments, test cases, student records, teacher accounts, and academic history will <strong>NOT</strong> be deleted.
+                </div>
+                <div style={{ color: 'var(--color-error, #b91c1c)', fontWeight: 600, marginTop: '0.5rem' }}>
+                  This action cannot be undone.
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.375rem' }}>
+                  To confirm, type the exact section code <code style={{ fontFamily: 'var(--font-family-mono)', color: 'var(--color-primary)', backgroundColor: 'var(--color-surface-hover)', padding: '0.125rem 0.375rem', borderRadius: '4px' }}>{deletingSection.sectionCode}</code>:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={confirmSectionNameInput}
+                  onChange={(e) => {
+                    setConfirmSectionNameInput(e.target.value);
+                    setDeleteError('');
+                  }}
+                  placeholder={`Type ${deletingSection.sectionCode} to confirm`}
+                  style={{
+                    width: '100%',
+                    padding: '0.625rem 0.75rem',
+                    fontSize: '0.875rem',
+                    border: '1px solid var(--color-border-input)',
+                    borderRadius: 'var(--radius-md)',
+                    fontFamily: 'var(--font-family-mono)',
+                    textTransform: 'uppercase'
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeletingSection(null);
+                    setConfirmSectionNameInput('');
+                    setDeleteError('');
+                  }}
+                  disabled={deletingInProgress}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    (confirmSectionNameInput.trim().toUpperCase() !== (deletingSection.sectionCode || '').toUpperCase() &&
+                      confirmSectionNameInput.trim().toUpperCase() !== (deletingSection.name || '').toUpperCase()) ||
+                    deletingInProgress
+                  }
+                  className="btn btn-danger"
+                  style={{
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    borderColor: '#b91c1c',
+                    fontWeight: 600,
+                    opacity:
+                      (confirmSectionNameInput.trim().toUpperCase() === (deletingSection.sectionCode || '').toUpperCase() ||
+                        confirmSectionNameInput.trim().toUpperCase() === (deletingSection.name || '').toUpperCase()) &&
+                      !deletingInProgress
+                        ? 1
+                        : 0.5
+                  }}
+                >
+                  {deletingInProgress ? 'Deleting Permanently...' : 'Delete Permanently'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

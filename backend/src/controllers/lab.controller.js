@@ -42,12 +42,24 @@ const toggleActive = asyncHandler(async (req, res) => {
   );
 });
 
+const getLabDeletionStatus = asyncHandler(async (req, res) => {
+  const status = await labService.getLabDeletionStatus(req.params.id);
+  return successResponse(res, status, 'Laboratory deletion status retrieved successfully');
+});
+
+const deleteLab = asyncHandler(async (req, res) => {
+  const result = await labService.deleteLab(req.params.id);
+  return successResponse(res, result, result.message || 'Laboratory deleted successfully');
+});
+
 module.exports = {
   getLabs,
   getAssignedLabs,
   getLabById,
   createLab,
   updateLab,
-  toggleActive
+  toggleActive,
+  getLabDeletionStatus,
+  deleteLab
 };
 

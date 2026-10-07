@@ -132,6 +132,151 @@ Status: Completed & Verified (Ready for Review)
     - **Manual QA Status:** PASS across all functional flows
     - **Docker Runtime Testing Status:** Configuration and guardrail tests pass; real Docker container runtime testing remains pending due to Windows development environment without Docker daemon.
 
+- **Phase 15 — Bulk Student Enrollment from Excel:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Multi-Sheet Workbook Extraction:** Uses `exceljs` to parse multi-sheet Excel files (`.xlsx`, `.xls`), automatically matching each worksheet name to existing section cohorts (e.g. `AIDS-A`, `AIDS-B`).
+    - **Header Flexibility & Blank Row Resilience:** Supports column variants (`Roll No.`, `Roll No`, `ROLL NUMBER`, `Name of the student`, `Student Name`, `Name`), ignores blank rows and completely empty sheets.
+    - **Student Validation & Uniqueness:**
+      - Verifies alphanumeric roll numbers.
+      - Detects and flags duplicate roll numbers inside the uploaded workbook.
+      - Checks existing database users: differentiates between same-section enrolled (`ALREADY_EXISTS_SAME_SECTION`) and cross-section enrolled (`ALREADY_EXISTS_DIFFERENT_SECTION`) without destructive mutations.
+      - Identifies missing or inactive sections in the database.
+    - **Preview & Confirmation Architecture:**
+      - `POST /api/users/bulk-import/preview` (or `/api/students/bulk-import/preview`): Generates pre-flight validation telemetry with section breakdown and status filter chips.
+      - `POST /api/users/bulk-import` (or `/api/students/bulk-import`): Executes batch account provisioning strictly for validated records.
+    - **Account Security & Temporary Password Gate:**
+      - Sets `role = 'STUDENT'`, `username = rollNumber`, `section = detectedSection`, `mustChangePassword = true`, `active = true`.
+      - Hashes temporary passwords (`User.hashPassword`); preserves the mandatory first-login password change gate.
+    - **Stitch UI Console:** Multi-step `BulkStudentEnrollmentModal` with file drag-and-drop, preview metrics banner, filterable records table, section chips, and celebratory import results summary.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 13/13 PASSED (`backend/src/tests/bulk_student_enrollment.test.js`)
+    - **Total Regression Suite:** 370/370 PASSED across 17 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
+
+- **Phase 16 — Permanent Student Deletion with Cascade Cleanup:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Cascade Cleanup Engine (`backend/src/services/userService.js`):**
+      - Removes all student submissions (`Submission.deleteMany({ student: studentId })`).
+      - Removes all automated evaluation scoring records (`Evaluation.deleteMany({ student: studentId })`).
+      - Removes all viva voce evaluations (`VivaEvaluation.deleteMany({ student: studentId })`).
+      - Removes all re-evaluation requests (`ReevaluationRequest.deleteMany({ student: studentId })`).
+      - Cleans up notification targeting and student read receipts (`Notification.updateMany`).
+      - Deletes the student `User` document permanently.
+    - **Shared Academic Data Preservation:**
+      - Explicitly preserves sections, labs, experiments, test cases, faculty assignments, and other student cohorts.
+    - **Safety Guards & RBAC:**
+      - Strict `ADMIN_HOD` authorization guard.
+      - Blocks deletion of `ADMIN_HOD` or `TEACHER` accounts with `400 Bad Request`.
+      - Safe transactional execution with session rollback support.
+    - **Stitch UI Confirmation Flow:**
+      - Red/destructive action button `Delete` in student roster table.
+      - Strong confirmation dialog requiring exact roll number input match before activating the permanent deletion action.
+      - Instant roster refresh and dismissible success alert.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 12/12 PASSED (`backend/src/tests/student_deletion.test.js`)
+    - **Total Regression Suite:** 382/382 PASSED across 18 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
+
+- **Phase 17 — Permanent Teacher Deletion with Safe Cascade Cleanup:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Safe Cascade Engine (`backend/src/services/userService.js`):**
+      - Removes teacher-specific assignments (`LabAssignment.deleteMany({ teacher: teacherId })`).
+      - Cleans teacher notification targeting and removes teacher read receipts (`Notification.updateMany`).
+      - Deletes teacher `User` account document permanently.
+    - **Academic Data & Student History Preservation:**
+      - Explicitly preserves Students, Sections/Cohorts, Labs, Experiments, Test Cases, Student Submissions, Evaluations, Viva Evaluations, Reevaluation Requests, and other Teacher records.
+      - Preserves historical references (e.g., `Experiment.createdBy`, `VivaEvaluation.evaluatedBy`).
+    - **Safety Guards & Role Verification:**
+      - Strict `ADMIN_HOD` authorization guard.
+      - Validates `role === 'TEACHER'` (rejects deletion attempts on `STUDENT` or `ADMIN_HOD` accounts via this operation).
+      - Unified `DELETE /api/users/:id` routing with role-specific cascade routing (`STUDENT` -> student cascade, `TEACHER` -> teacher safe cascade, `ADMIN_HOD` -> blocked with `400 Bad Request`).
+      - Dedicated endpoint `DELETE /api/users/teachers/:id` and `DELETE /api/teachers/:id`.
+    - **Stitch UI Confirmation Flow:**
+      - Added destructive `Delete` button in Teacher Management table with consistent styling.
+      - Strong confirmation dialog displaying teacher name and username/ID, explaining data preservation guarantees, and requiring exact username input before enabling permanent deletion.
+      - Immediate roster refresh and dismissible success notification alert.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 12/12 PASSED (`backend/src/tests/teacher_deletion.test.js`)
+    - **Total Regression Suite:** 394/394 PASSED across 19 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
+
+- **Phase 18 — Permanent Section/Cohort Deletion with Dependency Protection:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Critical Safety Guard & Pre-Deletion Dependency Check:**
+      - Strictly prevents deletion of any section that has assigned students (active or inactive).
+      - Returns clean, descriptive `400 Bad Request` without deleting, reassigning, or detaching students or student academic history.
+    - **Safe Cascade Engine for Empty Sections (`backend/src/services/sectionService.js`):**
+      - Removes section-specific assignments (`LabAssignment.deleteMany({ section: sectionId })`).
+      - Cleans up section notification targeting (`Notification.updateMany` with `$pull`).
+      - Deletes the `Section` document permanently.
+    - **Shared Academic Data & User Protection:**
+      - Explicitly preserves Students, Teachers, Labs, Experiments, Test Cases, Submissions, Evaluations, Viva Evaluations, and other sections.
+    - **Strict Authorization & Routing:**
+      - Protected by `ADMIN_HOD` authorization guard on `DELETE /api/sections/:id`.
+      - Rejects `STUDENT` and `TEACHER` attempts with `403 Forbidden`.
+    - **Stitch UI Blocked & Confirmation Dialogs:**
+      - Added destructive `Delete` action button to Section Management table.
+      - If section has assigned students: displays Blocked Modal explaining student count and asking admin to reassign/remove students first, with shortcut to View Students.
+      - If section has zero assigned students: displays Confirmation Modal with section metadata, preservation guarantees, and exact section code input guard before enabling permanent deletion.
+      - Immediate section roster refresh and dismissible success notification alert.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 12/12 PASSED (`backend/src/tests/section_deletion.test.js`)
+    - **Total Regression Suite:** 406/406 PASSED across 20 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
+
+- **Phase 19 — Permanent Lab Deletion with Academic History Protection:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Academic History Protection Engine (`backend/src/services/labService.js`):**
+      - Pre-deletion inspection (`getLabDeletionStatus`) checks for student submissions, automated evaluations, viva evaluations, and re-evaluation requests referencing the lab or its experiments.
+      - **Strict Invariant**: If any student academic records exist (`submissions > 0 || evaluations > 0 || vivaEvaluations > 0 || reevaluationRequests > 0`), permanent deletion is **STRICTLY BLOCKED** (`400 Bad Request`). Academic records and student evaluation history are never destroyed.
+    - **Safe Cascade Engine for Labs without Academic History:**
+      - If submissions = 0, evaluations = 0, vivaEvaluations = 0, reevaluationRequests = 0:
+        - Cascades and removes lab-owned test cases (`TestCase.deleteMany`).
+        - Cascades and removes lab-owned experiments (`Experiment.deleteMany`).
+        - Cascades and removes lab assignment mappings (`LabAssignment.deleteMany`).
+        - Cleans lab targeting references from notifications (`Notification.updateMany` with `$pull`).
+        - Deletes the `Lab` document cleanly.
+    - **Shared Academic Data & User Protection:**
+      - Explicitly preserves Teachers, Sections, Students, and records/experiments from other Labs.
+    - **Strict Authorization & Routing:**
+      - Protected by `ADMIN_HOD` authorization guard on `GET /api/labs/:id/deletion-status` and `DELETE /api/labs/:id`.
+      - Rejects `STUDENT` and `TEACHER` attempts with `403 Forbidden`.
+    - **Stitch UI Blocked & Confirmation Dialogs (`frontend/src/pages/admin/LabManagementPage.jsx`):**
+      - Added destructive `Delete` action button to Laboratories table.
+      - If academic history exists: displays "Permanent Deletion Blocked" modal with database-backed counters (Experiments, Submissions, Evaluations, Viva, Re-evaluations), explains preservation guarantees, and offers a 1-click shortcut to "Archive / Deactivate Lab".
+      - If zero academic history: displays "Delete Lab Permanently?" confirmation modal detailing resources to be removed, and requires exact lab name/code input match before enabling permanent deletion.
+      - Immediate laboratories ledger refresh and dismissible success notification banner.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 11/11 PASSED (`backend/src/tests/lab_deletion.test.js`)
+    - **Total Regression Suite:** 417/417 PASSED across 21 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
+
+- **Phase 20 — Bulk Student Deletion with Complete Cascade Cleanup:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Bulk Cascade Cleanup Engine (`backend/src/services/userService.js`):**
+      - `previewBulkDeleteStudents(studentIds)` inspects affected submissions, evaluations, viva scores, and re-evaluation tickets across selected students.
+      - `bulkDeleteStudents(studentIds)` performs atomic cascade deletion across all selected students (`Submission.deleteMany`, `Evaluation.deleteMany`, `VivaEvaluation.deleteMany`, `ReevaluationRequest.deleteMany`, `Notification.updateMany`, and `User.deleteMany`).
+    - **Validation & Role Protection:**
+      - Rejects non-student accounts (`TEACHER`, `ADMIN_HOD`) with `400 Bad Request`.
+      - Rejects invalid ObjectId formats and empty selections.
+      - Protected by `ADMIN_HOD` authorization guard.
+    - **Preservation Guarantee:**
+      - Explicitly preserves Sections, Labs, Experiments, Test Cases, Teachers, and unselected Students.
+    - **Stitch UI Selection & Confirmation (`frontend/src/pages/admin/StudentManagementPage.jsx`):**
+      - Added row-level checkboxes and "Select All Visible" header checkbox.
+      - Selection summary bar with selected count, "Clear Selection", and "Delete Selected" actions.
+      - Bulk Delete modal with database-backed statistics breakdown, scrollable list of selected students, preservation guarantees, and exact `DELETE` confirmation text requirement.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 10/10 PASSED (`backend/src/tests/bulk_student_deletion.test.js`)
+    - **Total Regression Suite:** 427/427 PASSED across 22 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
+
 ---
 
 ## Current Database Structure
@@ -155,9 +300,9 @@ Status: Completed & Verified (Ready for Review)
 
 - `GET /api/health` — Working (200 OK)
 - **Auth:** `login`, `change-password`, `me`, `logout` — Working
-- **Users:** `GET /users`, `GET /users/:id`, `POST /users/teacher`, `POST /users/student`, `PUT /users/:id`, `PATCH /users/:id/status`, `POST /users/:id/reset-password` — Working
-- **Sections:** `GET /sections`, `GET /sections/:id`, `POST /sections`, `PUT /sections/:id`, `PATCH /sections/:id/status`, `GET /sections/:id/students`, `POST /sections/:id/assign-student` — Working
-- **Labs:** `GET /labs/assigned`, `GET /labs/:id`, `GET /labs`, `POST /labs`, `PUT /labs/:id`, `PATCH /labs/:id/status` — Working
+- **Users & Students & Teachers:** `GET /users`, `GET /users/:id`, `POST /users/teacher`, `POST /users/student`, `POST /users/bulk-import/preview`, `POST /users/bulk-import`, `POST /students/bulk-import/preview`, `POST /students/bulk-import`, `POST /users/bulk-delete/preview`, `POST /users/bulk-delete`, `POST /students/bulk-delete/preview`, `POST /students/bulk-delete`, `PUT /users/:id`, `PATCH /users/:id/status`, `POST /users/:id/reset-password`, `DELETE /users/:id`, `DELETE /users/students/:id`, `DELETE /users/teachers/:id`, `DELETE /students/:id`, `DELETE /teachers/:id` — Working
+- **Sections:** `GET /sections`, `GET /sections/:id`, `POST /sections`, `PUT /sections/:id`, `PATCH /sections/:id/status`, `GET /sections/:id/students`, `POST /sections/:id/assign-student`, `DELETE /sections/:id` — Working
+- **Labs:** `GET /labs/assigned`, `GET /labs/:id`, `GET /labs`, `POST /labs`, `PUT /labs/:id`, `PATCH /labs/:id/status`, `GET /labs/:id/deletion-status`, `DELETE /labs/:id` — Working
 - **Lab Assignments:** `GET /lab-assignments`, `POST /lab-assignments`, `DELETE /lab-assignments/:id` — Working
 - **Experiments:** `GET /experiments`, `GET /experiments/:id`, `POST /experiments`, `PUT /experiments/:id`, `POST /experiments/:id/publish`, `POST /experiments/:id/schedule`, `POST /experiments/:id/reopen`, `POST /experiments/:id/close`, `PUT /experiments/reorder/batch`, `PATCH /experiments/:id/status`, `POST /experiments/extract-pdf`, `POST /experiments/confirm-pdf` — Working
 - **Submissions:** `POST /submissions/run`, `POST /submissions/submit`, `GET /submissions/experiment/:experimentId`, `GET /submissions/lab/:labId`, `GET /submissions/:id` — Working

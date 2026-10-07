@@ -1,4 +1,17 @@
-const { Lab, LabAssignment, Section, User } = require('../models');
+const mongoose = require('mongoose');
+const {
+  Lab,
+  LabAssignment,
+  Section,
+  User,
+  Experiment,
+  TestCase,
+  Submission,
+  Evaluation,
+  VivaEvaluation,
+  ReevaluationRequest,
+  Notification
+} = require('../models');
 const AppError = require('../utils/appError');
 
 class LabService {
@@ -418,6 +431,182 @@ class LabService {
     lab.active = active;
     await lab.save();
     return lab;
+  }
+
+  /**
+   * Pre-deletion inspection determining whether a laboratory can be safely deleted
+   * or if permanent deletion is blocked due to existing student academic history.
+   */
+  async getLabDeletionStatus(id) {
+    const lab = await Lab.findById(id);
+    if (!lab) {
+      throw new AppError('Laboratory not found', 404);
+    }
+
+    // 1. Find all experiments for this lab
+    const experiments = await Experiment.find({ lab: lab._id });
+    const experimentIds = experiments.map((e) => e._id);
+
+    // 2. Count test cases belonging to these experiments
+    const testCasesCount = await TestCase.countDocuments({
+      experiment: { $in: experimentIds }
+    });
+
+    // 3. Count teacher assignments for this lab
+    const assignmentsCount = await LabAssignment.countDocuments({ lab: lab._id });
+
+    // 4. Count student academic records (submissions, evaluations, viva, re-evaluation)
+    const submissionsCount = await Submission.countDocuments({
+      $or: [{ lab: lab._id }, { experiment: { $in: experimentIds } }]
+    });
+
+    const evaluationsCount = await Evaluation.countDocuments({
+      $or: [{ lab: lab._id }, { experiment: { $in: experimentIds } }]
+    });
+
+    const vivaEvaluationsCount = await VivaEvaluation.countDocuments({
+      $or: [{ lab: lab._id }, { experiment: { $in: experimentIds } }]
+    });
+
+    const reevaluationRequestsCount = await ReevaluationRequest.countDocuments({
+      $or: [{ lab: lab._id }, { experiment: { $in: experimentIds } }]
+    });
+
+    const hasAcademicHistory =
+      submissionsCount > 0 ||
+      evaluationsCount > 0 ||
+      vivaEvaluationsCount > 0 ||
+      reevaluationRequestsCount > 0;
+
+    return {
+      labId: lab._id,
+      name: lab.name,
+      code: lab.code,
+      active: lab.active,
+      canDelete: !hasAcademicHistory,
+      hasAcademicHistory,
+      reason: hasAcademicHistory ? 'ACADEMIC_HISTORY_EXISTS' : 'SAFE_TO_DELETE',
+      experiments: experiments.length,
+      experimentsCount: experiments.length,
+      testCases: testCasesCount,
+      testCasesCount: testCasesCount,
+      assignments: assignmentsCount,
+      assignmentsCount: assignmentsCount,
+      submissions: submissionsCount,
+      submissionsCount: submissionsCount,
+      evaluations: evaluationsCount,
+      evaluationsCount: evaluationsCount,
+      vivaEvaluations: vivaEvaluationsCount,
+      vivaEvaluationsCount: vivaEvaluationsCount,
+      reevaluationRequests: reevaluationRequestsCount,
+      reevaluationRequestsCount: reevaluationRequestsCount
+    };
+  }
+
+  /**
+   * Safe permanent laboratory deletion with academic history protection
+   */
+  async deleteLab(id) {
+    const lab = await Lab.findById(id);
+    if (!lab) {
+      throw new AppError('Laboratory not found', 404);
+    }
+
+    const status = await this.getLabDeletionStatus(id);
+
+    // CRITICAL SAFETY RULE: Never delete a lab that contains student academic history
+    if (status.hasAcademicHistory) {
+      const err = new AppError(
+        `This laboratory cannot be permanently deleted because academic history exists (${status.submissions} Submissions, ${status.evaluations} Evaluations, ${status.vivaEvaluations} Viva Evaluations, ${status.reevaluationRequests} Re-evaluation Requests). Please archive/deactivate it instead.`,
+        400
+      );
+      err.dependencies = {
+        experiments: status.experiments,
+        submissions: status.submissions,
+        evaluations: status.evaluations,
+        vivaEvaluations: status.vivaEvaluations,
+        reevaluationRequests: status.reevaluationRequests
+      };
+      throw err;
+    }
+
+    let session = null;
+    let useTransaction = false;
+
+    // Attempt MongoDB transaction if supported in current environment
+    try {
+      if (mongoose.connection && mongoose.connection.readyState === 1) {
+        session = await mongoose.startSession();
+        session.startTransaction();
+        useTransaction = true;
+      }
+    } catch (_) {
+      session = null;
+      useTransaction = false;
+    }
+
+    try {
+      const opts = useTransaction && session ? { session } : {};
+
+      // 1. Find all experiments for this lab
+      const experiments = await Experiment.find({ lab: lab._id });
+      const experimentIds = experiments.map((e) => e._id);
+
+      // 2. Cascade delete lab-owned test cases
+      if (experimentIds.length > 0) {
+        await TestCase.deleteMany({ experiment: { $in: experimentIds } }, opts);
+      }
+
+      // 3. Cascade delete lab-owned experiments
+      await Experiment.deleteMany({ lab: lab._id }, opts);
+
+      // 4. Cascade delete lab assignments
+      await LabAssignment.deleteMany({ lab: lab._id }, opts);
+
+      // 5. Clean up notification targeting references
+      if (Notification) {
+        await Notification.updateMany(
+          { targetLabs: lab._id },
+          { $pull: { targetLabs: lab._id } },
+          opts
+        );
+      }
+
+      // 6. Delete the Lab document itself
+      await Lab.deleteOne({ _id: lab._id }, opts);
+
+      if (useTransaction && session) {
+        await session.commitTransaction();
+      }
+
+      return {
+        success: true,
+        message: `Laboratory '${lab.name}' (${lab.code}) and lab-specific configuration have been permanently deleted. Shared academic resources and student records were preserved.`,
+        deletedLab: {
+          _id: lab._id,
+          name: lab.name,
+          code: lab.code
+        },
+        cascadeSummary: {
+          experimentsRemoved: experiments.length,
+          testCasesRemoved: status.testCases,
+          assignmentsRemoved: status.assignments
+        }
+      };
+    } catch (err) {
+      if (useTransaction && session) {
+        try {
+          await session.abortTransaction();
+        } catch (_) {}
+      }
+      throw err;
+    } finally {
+      if (session) {
+        try {
+          await session.endSession();
+        } catch (_) {}
+      }
+    }
   }
 }
 
