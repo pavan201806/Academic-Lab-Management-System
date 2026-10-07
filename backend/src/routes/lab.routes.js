@@ -13,6 +13,21 @@ router.use(requirePasswordChangeCompleted);
 // Role-aware assigned laboratories endpoint (accessible to ADMIN_HOD, TEACHER, STUDENT)
 router.get('/assigned', authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'), labController.getAssignedLabs);
 
+// Teacher/Admin Student Performance Dashboard endpoints for a laboratory
+router.get(
+  '/:id/students/performance',
+  authorize('ADMIN_HOD', 'TEACHER'),
+  validateObjectIdParam('id'),
+  labController.getLabStudentsPerformance
+);
+router.get(
+  '/:id/students/:studentId/performance',
+  authorize('ADMIN_HOD', 'TEACHER'),
+  validateObjectIdParam('id'),
+  validateObjectIdParam('studentId'),
+  labController.getStudentLabPerformanceDetail
+);
+
 // Role-aware laboratory details endpoint (verifies active assignment / cohort enrollment)
 router.get('/:id', authorize('ADMIN_HOD', 'TEACHER', 'STUDENT'), validateObjectIdParam('id'), labController.getLabById);
 router.get(

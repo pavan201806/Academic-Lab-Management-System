@@ -52,6 +52,32 @@ const deleteLab = asyncHandler(async (req, res) => {
   return successResponse(res, result, result.message || 'Laboratory deleted successfully');
 });
 
+const getLabStudentsPerformance = asyncHandler(async (req, res) => {
+  const sectionId = req.query.sectionId;
+  const section = req.query.section;
+  const search = req.query.search;
+  const active = req.query.active;
+
+  const result = await labService.getLabStudentsPerformance(req.params.id, req.user, {
+    sectionId,
+    section,
+    search,
+    active
+  });
+
+  return successResponse(res, result, 'Laboratory students performance retrieved successfully');
+});
+
+const getStudentLabPerformanceDetail = asyncHandler(async (req, res) => {
+  const result = await labService.getStudentLabPerformanceDetail(
+    req.params.id,
+    req.params.studentId,
+    req.user
+  );
+
+  return successResponse(res, result, 'Student laboratory performance details retrieved successfully');
+});
+
 module.exports = {
   getLabs,
   getAssignedLabs,
@@ -60,6 +86,8 @@ module.exports = {
   updateLab,
   toggleActive,
   getLabDeletionStatus,
-  deleteLab
+  deleteLab,
+  getLabStudentsPerformance,
+  getStudentLabPerformanceDetail
 };
 

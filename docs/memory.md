@@ -277,6 +277,27 @@ Status: Completed & Verified (Ready for Review)
     - **Total Regression Suite:** 427/427 PASSED across 22 test suites
     - **Frontend Production Build:** Built cleanly with Vite (0 errors, 140 modules)
 
+- **Phase 21 — Teacher Lab → Student Performance Dashboard:**
+  - **Status:** COMPLETE
+  - **Features Implemented:**
+    - **Performance Telemetry Engine (`backend/src/services/labService.js`):**
+      - `getLabStudentsPerformance(labId, user, options)` computes cohort summary and student-by-student metrics (Total Experiments, Completed Experiments, Pending Experiments, Completion Rate %, Average Score %, Status).
+      - `getStudentLabPerformanceDetail(labId, studentId, user)` computes experiment-wise breakdowns (attempts, status, scores out of 10/100, last submission dates, passed/failed attempt counters).
+      - Enforces strict faculty assignment IDOR verification (teachers only access students from sections assigned to them in that lab; `ADMIN_HOD` accesses all assigned cohorts).
+      - Uses batch database queries (`$in`) across Submissions, Evaluations, and Vivas to prevent N+1 queries.
+    - **New Endpoints (`backend/src/routes/lab.routes.js`):**
+      - `GET /api/labs/:id/students/performance` [ADMIN_HOD, TEACHER] (Cohort summary & student table)
+      - `GET /api/labs/:id/students/:studentId/performance` [ADMIN_HOD, TEACHER] (Student detailed breakdown)
+    - **Frontend Integration (`frontend/src/pages/common/LabDetailsPage.jsx` & `frontend/src/components/progress/LabStudentPerformanceView.jsx`):**
+      - Lab Details page embedded summary strip: Total Students, Active Students, Completed All Protocols, Average Completion %, Average Score %, and Pending Submissions.
+      - Interactive Filter bar: Search (Roll Number / Name), Section dropdown, Status dropdown (Completed, Good, Average, Needs Attention, Not Started), Completion filter, and multi-field sorting.
+      - Responsive student performance table with visual mini progress bars and status badges.
+      - Detailed inspection modal showing overall attempt summaries and experiment-by-experiment performance tables.
+  - **Verification & Test Results:**
+    - **Dedicated Test Suite:** 20/20 PASSED (`backend/src/tests/student_performance.test.js`)
+    - **Total Regression Suite:** 447/447 PASSED across 23 test suites
+    - **Frontend Production Build:** Built cleanly with Vite (0 errors, 141 modules)
+
 ---
 
 ## Current Database Structure
@@ -302,7 +323,7 @@ Status: Completed & Verified (Ready for Review)
 - **Auth:** `login`, `change-password`, `me`, `logout` — Working
 - **Users & Students & Teachers:** `GET /users`, `GET /users/:id`, `POST /users/teacher`, `POST /users/student`, `POST /users/bulk-import/preview`, `POST /users/bulk-import`, `POST /students/bulk-import/preview`, `POST /students/bulk-import`, `POST /users/bulk-delete/preview`, `POST /users/bulk-delete`, `POST /students/bulk-delete/preview`, `POST /students/bulk-delete`, `PUT /users/:id`, `PATCH /users/:id/status`, `POST /users/:id/reset-password`, `DELETE /users/:id`, `DELETE /users/students/:id`, `DELETE /users/teachers/:id`, `DELETE /students/:id`, `DELETE /teachers/:id` — Working
 - **Sections:** `GET /sections`, `GET /sections/:id`, `POST /sections`, `PUT /sections/:id`, `PATCH /sections/:id/status`, `GET /sections/:id/students`, `POST /sections/:id/assign-student`, `DELETE /sections/:id` — Working
-- **Labs:** `GET /labs/assigned`, `GET /labs/:id`, `GET /labs`, `POST /labs`, `PUT /labs/:id`, `PATCH /labs/:id/status`, `GET /labs/:id/deletion-status`, `DELETE /labs/:id` — Working
+- **Labs:** `GET /labs/assigned`, `GET /labs/:id`, `GET /labs/:id/students/performance`, `GET /labs/:id/students/:studentId/performance`, `GET /labs`, `POST /labs`, `PUT /labs/:id`, `PATCH /labs/:id/status`, `GET /labs/:id/deletion-status`, `DELETE /labs/:id` — Working
 - **Lab Assignments:** `GET /lab-assignments`, `POST /lab-assignments`, `DELETE /lab-assignments/:id` — Working
 - **Experiments:** `GET /experiments`, `GET /experiments/:id`, `POST /experiments`, `PUT /experiments/:id`, `POST /experiments/:id/publish`, `POST /experiments/:id/schedule`, `POST /experiments/:id/reopen`, `POST /experiments/:id/close`, `PUT /experiments/reorder/batch`, `PATCH /experiments/:id/status`, `POST /experiments/extract-pdf`, `POST /experiments/confirm-pdf` — Working
 - **Submissions:** `POST /submissions/run`, `POST /submissions/submit`, `GET /submissions/experiment/:experimentId`, `GET /submissions/lab/:labId`, `GET /submissions/:id` — Working

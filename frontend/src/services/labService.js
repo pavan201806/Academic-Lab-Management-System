@@ -47,5 +47,23 @@ export const labService = {
   deleteLab: async (id) => {
     const res = await apiClient.delete(`/labs/${id}`);
     return res.data || res;
+  },
+
+  getLabStudentsPerformance: async (id, filter = {}) => {
+    const params = new URLSearchParams();
+    if (filter.sectionId) params.append('sectionId', filter.sectionId);
+    if (filter.section) params.append('section', filter.section);
+    if (filter.search) params.append('search', filter.search);
+    if (filter.active !== undefined) params.append('active', filter.active);
+
+    const queryString = params.toString();
+    const url = queryString ? `/labs/${id}/students/performance?${queryString}` : `/labs/${id}/students/performance`;
+    const res = await apiClient.get(url);
+    return res.data || res;
+  },
+
+  getStudentLabPerformanceDetail: async (labId, studentId) => {
+    const res = await apiClient.get(`/labs/${labId}/students/${studentId}/performance`);
+    return res.data || res;
   }
 };

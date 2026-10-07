@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { labService } from '../../services/labService';
 import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import LabStudentPerformanceView from '../../components/progress/LabStudentPerformanceView';
 
 const LabDetailsPage = () => {
   const { id } = useParams();
@@ -358,6 +359,18 @@ const LabDetailsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* TEACHER / ADMIN: STUDENTS & PERFORMANCE DASHBOARD                         */}
+      {/* ========================================================================= */}
+      {isTeacherOrAdmin && (
+        <LabStudentPerformanceView
+          labId={lab._id}
+          labName={lab.name}
+          labCode={lab.code}
+          defaultSectionId={sectionId}
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* EXPERIMENT CURRICULUM SECTION                                             */}

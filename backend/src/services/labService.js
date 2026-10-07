@@ -608,6 +608,544 @@ class LabService {
       }
     }
   }
+  /**
+   * Retrieves student performance and cohort summary for a specific laboratory
+   * Enforces strict faculty assignment IDOR verification and supports section filtering
+   * Uses batch database queries to prevent N+1 performance issues
+   */
+  async getLabStudentsPerformance(labId, user, options = {}) {
+    if (!user || !user.active) {
+      throw new AppError('User account is inactive or invalid', 403);
+    }
+
+    if (user.role === 'STUDENT') {
+      throw new AppError('Students are not authorized to access laboratory student performance', 403);
+    }
+
+    const lab = await Lab.findById(labId);
+    if (!lab) {
+      throw new AppError('Laboratory not found', 404);
+    }
+
+    let authorizedSections = [];
+
+    if (user.role === 'TEACHER') {
+      const teacherAssignments = await LabAssignment.find({
+        lab: lab._id,
+        teacher: user._id,
+        active: true
+      }).populate('section');
+
+      const activeTeacherAssignments = teacherAssignments.filter(
+        (a) => a.section && a.section.active
+      );
+
+      if (activeTeacherAssignments.length === 0) {
+        throw new AppError('You do not have an active faculty assignment for this laboratory', 403);
+      }
+
+      authorizedSections = activeTeacherAssignments.map((a) => a.section);
+
+      // Section filtering if specified
+      if (options.sectionId || options.section) {
+        const matchingSection = authorizedSections.find((s) => {
+          if (options.sectionId && s._id.toString() === options.sectionId.toString()) return true;
+          if (options.section && s.sectionCode?.toUpperCase() === options.section.toUpperCase()) return true;
+          return false;
+        });
+
+        if (!matchingSection) {
+          throw new AppError(
+            'You do not have an active faculty assignment for this section in this laboratory',
+            403
+          );
+        }
+
+        authorizedSections = [matchingSection];
+      }
+    } else if (user.role === 'ADMIN_HOD') {
+      const assignmentQuery = { lab: lab._id, active: true };
+      if (options.sectionId) {
+        assignmentQuery.section = options.sectionId;
+      }
+
+      const assignments = await LabAssignment.find(assignmentQuery).populate('section');
+      let sections = assignments.map((a) => a.section).filter((s) => s && s.active);
+
+      if (options.section) {
+        sections = sections.filter(
+          (s) => s.sectionCode?.toUpperCase() === options.section.toUpperCase()
+        );
+      }
+
+      // Deduplicate sections
+      const seenSecIds = new Set();
+      authorizedSections = sections.filter((s) => {
+        const idStr = s._id.toString();
+        if (seenSecIds.has(idStr)) return false;
+        seenSecIds.add(idStr);
+        return true;
+      });
+    }
+
+    const sectionCodes = [...new Set(authorizedSections.map((s) => s.sectionCode?.toUpperCase()).filter(Boolean))];
+
+    // Fetch active experiments for this lab
+    const experiments = await Experiment.find({ lab: lab._id, active: true }).sort({
+      experimentNumber: 1,
+      order: 1
+    });
+    const totalExperiments = experiments.length;
+    const expIds = experiments.map((e) => e._id);
+
+    // If no sections assigned to lab, return empty performance structure
+    if (sectionCodes.length === 0) {
+      return {
+        lab: {
+          _id: lab._id,
+          id: lab._id,
+          name: lab.name,
+          code: lab.code,
+          subject: lab.subject,
+          department: lab.department,
+          semester: lab.semester,
+          academicYear: lab.academicYear
+        },
+        availableSections: [],
+        summary: {
+          totalStudents: 0,
+          activeStudents: 0,
+          completedAll: 0,
+          averageCompletion: 0,
+          averageScore: null,
+          pendingSubmissions: 0
+        },
+        students: []
+      };
+    }
+
+    // Fetch students belonging to authorized section codes
+    const studentQuery = {
+      role: 'STUDENT',
+      section: { $in: sectionCodes }
+    };
+
+    if (options.active !== undefined) {
+      studentQuery.active = options.active === 'true' || options.active === true;
+    }
+
+    if (options.search) {
+      const regex = new RegExp(options.search, 'i');
+      studentQuery.$or = [{ name: regex }, { rollNumber: regex }];
+    }
+
+    const students = await User.find(studentQuery).sort({ rollNumber: 1 });
+    const studentIds = students.map((s) => s._id);
+
+    if (students.length === 0) {
+      return {
+        lab: {
+          _id: lab._id,
+          id: lab._id,
+          name: lab.name,
+          code: lab.code,
+          subject: lab.subject,
+          department: lab.department,
+          semester: lab.semester,
+          academicYear: lab.academicYear
+        },
+        availableSections: authorizedSections.map((s) => ({
+          _id: s._id,
+          name: s.name,
+          sectionCode: s.sectionCode
+        })),
+        summary: {
+          totalStudents: 0,
+          activeStudents: 0,
+          completedAll: 0,
+          averageCompletion: 0,
+          averageScore: null,
+          pendingSubmissions: 0
+        },
+        students: []
+      };
+    }
+
+    // Batch query all submissions, evaluations, and vivas for these students in this lab
+    const submissions = expIds.length > 0
+      ? await Submission.find({
+          lab: lab._id,
+          student: { $in: studentIds },
+          active: true
+        }).sort({ submittedAt: -1 })
+      : [];
+
+    const evaluations = expIds.length > 0
+      ? await Evaluation.find({
+          lab: lab._id,
+          student: { $in: studentIds },
+          active: true
+        }).sort({ score: -1, evaluatedAt: -1 })
+      : [];
+
+    const vivas = expIds.length > 0
+      ? await VivaEvaluation.find({
+          lab: lab._id,
+          student: { $in: studentIds },
+          active: true
+        })
+      : [];
+
+    // Map lookups: studentId -> experimentId -> items
+    const subsMap = new Map();
+    for (const sub of submissions) {
+      const stuId = sub.student.toString();
+      const expId = sub.experiment.toString();
+      if (!subsMap.has(stuId)) subsMap.set(stuId, new Map());
+      const stuSubs = subsMap.get(stuId);
+      if (!stuSubs.has(expId)) stuSubs.set(expId, []);
+      stuSubs.get(expId).push(sub);
+    }
+
+    const evalsMap = new Map();
+    for (const ev of evaluations) {
+      const stuId = ev.student.toString();
+      const expId = ev.experiment.toString();
+      if (!evalsMap.has(stuId)) evalsMap.set(stuId, new Map());
+      const stuEvals = evalsMap.get(stuId);
+      if (!stuEvals.has(expId)) stuEvals.set(expId, []);
+      stuEvals.get(expId).push(ev);
+    }
+
+    const vivasMap = new Map();
+    for (const v of vivas) {
+      const stuId = v.student.toString();
+      const expId = v.experiment.toString();
+      if (!vivasMap.has(stuId)) vivasMap.set(stuId, new Map());
+      const stuVivas = vivasMap.get(stuId);
+      if (!stuVivas.has(expId)) stuVivas.set(expId, []);
+      stuVivas.get(expId).push(v);
+    }
+
+    let totalCompletionPercentageSum = 0;
+    let totalCohortScoreSum = 0;
+    let studentsWithScoresCount = 0;
+    let totalPendingSubmissions = 0;
+    let completedAllCount = 0;
+
+    const studentResults = students.map((student) => {
+      const stuIdStr = student._id.toString();
+      const studentSubsByExp = subsMap.get(stuIdStr) || new Map();
+      const studentEvalsByExp = evalsMap.get(stuIdStr) || new Map();
+      const studentVivasByExp = vivasMap.get(stuIdStr) || new Map();
+
+      let completedCount = 0;
+      let studentScoreSum = 0;
+      let studentEvaluatedCount = 0;
+      let totalStudentSubsCount = 0;
+
+      for (const exp of experiments) {
+        const expIdStr = exp._id.toString();
+        const expSubs = studentSubsByExp.get(expIdStr) || [];
+        const expEvals = studentEvalsByExp.get(expIdStr) || [];
+        const expVivas = studentVivasByExp.get(expIdStr) || [];
+
+        totalStudentSubsCount += expSubs.length;
+
+        const hasPassedSub = expSubs.some((s) => s.status === 'SUCCESS');
+        const hasEval = expEvals.length > 0;
+        const hasViva = expVivas.length > 0;
+        const hasAttempt = expSubs.length > 0;
+
+        // An experiment is completed if student has passed submission, evaluation, viva, or attempts
+        const isCompleted = hasPassedSub || hasEval || hasViva || hasAttempt;
+
+        if (isCompleted) {
+          completedCount++;
+        }
+
+        if (hasEval) {
+          // Highest evaluation score (normalized to percentage out of 100)
+          const highestEval = expEvals[0];
+          const scoreOutOf10 = typeof highestEval.score === 'number' ? highestEval.score : 0;
+          const scorePercent = Number((scoreOutOf10 * 10).toFixed(1));
+          studentScoreSum += scorePercent;
+          studentEvaluatedCount++;
+        }
+      }
+
+      const pendingCount = totalExperiments - completedCount;
+      totalPendingSubmissions += pendingCount;
+
+      const completionPct =
+        totalExperiments > 0 ? Number(((completedCount / totalExperiments) * 100).toFixed(1)) : 0;
+      totalCompletionPercentageSum += completionPct;
+
+      if (totalExperiments > 0 && completedCount === totalExperiments) {
+        completedAllCount++;
+      }
+
+      const averageScore =
+        studentEvaluatedCount > 0
+          ? Number((studentScoreSum / studentEvaluatedCount).toFixed(1))
+          : null;
+
+      if (averageScore !== null) {
+        totalCohortScoreSum += averageScore;
+        studentsWithScoresCount++;
+      }
+
+      // Determine status
+      let status = 'Needs Attention';
+      if (totalExperiments === 0) {
+        status = 'Not Started';
+      } else if (completedCount === totalExperiments) {
+        status = 'Completed';
+      } else if (completionPct >= 75) {
+        status = 'Good';
+      } else if (completionPct >= 50) {
+        status = 'Average';
+      } else if (totalStudentSubsCount === 0) {
+        status = 'Not Started';
+      } else {
+        status = 'Needs Attention';
+      }
+
+      return {
+        studentId: student._id,
+        _id: student._id,
+        rollNumber: student.rollNumber,
+        name: student.name,
+        section: student.section,
+        active: student.active,
+        totalExperiments,
+        completedExperiments: completedCount,
+        pendingExperiments: pendingCount,
+        completionPercentage: completionPct,
+        averageScore,
+        status
+      };
+    });
+
+    const averageCompletion =
+      students.length > 0
+        ? Number((totalCompletionPercentageSum / students.length).toFixed(1))
+        : 0;
+
+    const averageCohortScore =
+      studentsWithScoresCount > 0
+        ? Number((totalCohortScoreSum / studentsWithScoresCount).toFixed(1))
+        : null;
+
+    return {
+      lab: {
+        _id: lab._id,
+        id: lab._id,
+        name: lab.name,
+        code: lab.code,
+        subject: lab.subject,
+        department: lab.department,
+        semester: lab.semester,
+        academicYear: lab.academicYear
+      },
+      availableSections: authorizedSections.map((s) => ({
+        _id: s._id,
+        name: s.name,
+        sectionCode: s.sectionCode
+      })),
+      summary: {
+        totalStudents: students.length,
+        activeStudents: students.filter((s) => s.active).length,
+        completedAll: completedAllCount,
+        averageCompletion,
+        averageScore: averageCohortScore,
+        pendingSubmissions: totalPendingSubmissions
+      },
+      students: studentResults
+    };
+  }
+
+  /**
+   * Retrieves detailed experiment-wise student performance breakdown for a single student in a lab
+   */
+  async getStudentLabPerformanceDetail(labId, studentId, user) {
+    if (!user || !user.active) {
+      throw new AppError('User account is inactive or invalid', 403);
+    }
+
+    if (user.role === 'STUDENT') {
+      throw new AppError('Students are not authorized to access detailed performance view via faculty routes', 403);
+    }
+
+    const lab = await Lab.findById(labId);
+    if (!lab) {
+      throw new AppError('Laboratory not found', 404);
+    }
+
+    const student = await User.findById(studentId);
+    if (!student || student.role !== 'STUDENT') {
+      throw new AppError('Student not found or invalid account type', 404);
+    }
+
+    if (user.role === 'TEACHER') {
+      const teacherAssignments = await LabAssignment.find({
+        lab: lab._id,
+        teacher: user._id,
+        active: true
+      }).populate('section');
+
+      const activeTeacherAssignments = teacherAssignments.filter(
+        (a) => a.section && a.section.active
+      );
+
+      if (activeTeacherAssignments.length === 0) {
+        throw new AppError('You do not have an active faculty assignment for this laboratory', 403);
+      }
+
+      const assignedSectionCodes = activeTeacherAssignments.map((a) =>
+        a.section?.sectionCode?.toUpperCase()
+      );
+
+      if (!student.section || !assignedSectionCodes.includes(student.section.toUpperCase())) {
+        throw new AppError('You are not authorized to view performance for students outside your assigned sections', 403);
+      }
+    }
+
+    const experiments = await Experiment.find({ lab: lab._id, active: true }).sort({
+      experimentNumber: 1,
+      order: 1
+    });
+    const totalExperiments = experiments.length;
+    const expIds = experiments.map((e) => e._id);
+
+    const submissions = expIds.length > 0
+      ? await Submission.find({
+          lab: lab._id,
+          student: student._id,
+          active: true
+        }).sort({ submittedAt: -1 })
+      : [];
+
+    const evaluations = expIds.length > 0
+      ? await Evaluation.find({
+          lab: lab._id,
+          student: student._id,
+          active: true
+        }).sort({ score: -1, evaluatedAt: -1 })
+      : [];
+
+    const vivas = expIds.length > 0
+      ? await VivaEvaluation.find({
+          lab: lab._id,
+          student: student._id,
+          active: true
+        })
+      : [];
+
+    let completedCount = 0;
+    let scoresList = [];
+    let passedSubmissionsCount = 0;
+    let failedSubmissionsCount = 0;
+    let latestSubmissionDate = null;
+
+    if (submissions.length > 0) {
+      latestSubmissionDate = submissions[0].submittedAt;
+      for (const s of submissions) {
+        if (s.status === 'SUCCESS') passedSubmissionsCount++;
+        else failedSubmissionsCount++;
+      }
+    }
+
+    const experimentsBreakdown = experiments.map((exp) => {
+      const expIdStr = exp._id.toString();
+      const expSubs = submissions.filter((s) => s.experiment.toString() === expIdStr);
+      const expEvals = evaluations.filter((e) => e.experiment.toString() === expIdStr);
+      const expVivas = vivas.filter((v) => v.experiment.toString() === expIdStr);
+
+      const hasPassedSub = expSubs.some((s) => s.status === 'SUCCESS');
+      const hasEval = expEvals.length > 0;
+      const hasViva = expVivas.length > 0;
+      const hasAttempt = expSubs.length > 0;
+
+      const isCompleted = hasPassedSub || hasEval || hasViva || hasAttempt;
+      if (isCompleted) completedCount++;
+
+      let expScorePercent = null;
+      if (hasEval) {
+        const scoreOutOf10 = typeof expEvals[0].score === 'number' ? expEvals[0].score : 0;
+        expScorePercent = Number((scoreOutOf10 * 10).toFixed(1));
+        scoresList.push(expScorePercent);
+      }
+
+      let expStatus = 'Pending';
+      if (isCompleted && hasEval) {
+        expStatus = 'Completed';
+      } else if (hasPassedSub) {
+        expStatus = 'Completed';
+      } else if (hasAttempt) {
+        expStatus = hasEval ? 'Completed' : 'Awaiting Evaluation';
+      } else {
+        expStatus = 'Pending';
+      }
+
+      const lastExpSub = expSubs.length > 0 ? expSubs[0].submittedAt : null;
+
+      return {
+        experimentId: exp._id,
+        experimentNumber: exp.experimentNumber || exp.order,
+        title: exp.title,
+        status: expStatus,
+        score: expScorePercent,
+        scoreOutOf10: expEvals.length > 0 ? expEvals[0].score : null,
+        attempts: expSubs.length,
+        lastSubmission: lastExpSub
+      };
+    });
+
+    const completionPct =
+      totalExperiments > 0 ? Number(((completedCount / totalExperiments) * 100).toFixed(1)) : 0;
+
+    const avgScore =
+      scoresList.length > 0
+        ? Number((scoresList.reduce((a, b) => a + b, 0) / scoresList.length).toFixed(1))
+        : null;
+
+    const highestScore = scoresList.length > 0 ? Math.max(...scoresList) : null;
+    const lowestScore = scoresList.length > 0 ? Math.min(...scoresList) : null;
+
+    return {
+      student: {
+        _id: student._id,
+        name: student.name,
+        rollNumber: student.rollNumber,
+        section: student.section,
+        active: student.active
+      },
+      lab: {
+        _id: lab._id,
+        name: lab.name,
+        code: lab.code,
+        subject: lab.subject,
+        department: lab.department,
+        semester: lab.semester,
+        academicYear: lab.academicYear
+      },
+      overall: {
+        totalExperiments,
+        completedExperiments: completedCount,
+        pendingExperiments: totalExperiments - completedCount,
+        completionPercentage: completionPct,
+        averageScore: avgScore,
+        highestScore,
+        lowestScore,
+        totalSubmissions: submissions.length,
+        passedSubmissions: passedSubmissionsCount,
+        failedSubmissions: failedSubmissionsCount,
+        lastSubmission: latestSubmissionDate
+      },
+      experiments: experimentsBreakdown
+    };
+  }
 }
 
 module.exports = new LabService();
