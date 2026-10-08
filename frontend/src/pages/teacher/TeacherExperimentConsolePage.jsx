@@ -480,6 +480,118 @@ const TeacherExperimentConsolePage = () => {
     return user?.role === 'ADMIN_HOD' ? `/admin/labs/${labId}` : `/teacher/labs/${labId}`;
   };
 
+  const renderExecutionDetails = (output) => {
+    if (!output) {
+      return (
+        <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
+          No execution output recorded for this submission.
+        </div>
+      );
+    }
+
+    if (typeof output === 'string') {
+      return (
+        <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#E2E8F0', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '160px', overflowY: 'auto' }}>
+          {output}
+        </pre>
+      );
+    }
+
+    const stdout = typeof output.stdout === 'string' ? output.stdout : '';
+    const stderr = typeof output.stderr === 'string' ? output.stderr : '';
+    const executionTimeMs = typeof output.executionTimeMs === 'number' ? output.executionTimeMs : (output.executionTimeMs || null);
+    const exitCode = output.exitCode !== undefined && output.exitCode !== null ? output.exitCode : null;
+    const status = typeof output.status === 'string' ? output.status : null;
+
+    const hasStdout = Boolean(stdout && stdout.length > 0);
+    const hasStderr = Boolean(stderr && stderr.length > 0);
+
+    const getStatusStyle = (st) => {
+      switch (st) {
+        case 'SUCCESS':
+        case 'SUBMITTED':
+          return { bg: 'var(--color-success-subtle)', color: 'var(--color-success)', text: `✓ ${st}` };
+        case 'COMPILE_ERROR':
+        case 'RUNTIME_ERROR':
+        case 'TIMEOUT':
+        case 'OUTPUT_LIMIT':
+        case 'EXECUTION_ERROR':
+          return { bg: 'var(--color-error-subtle)', color: 'var(--color-error)', text: `✕ ${st}` };
+        default:
+          return { bg: 'var(--color-surface-hover)', color: 'var(--color-text-secondary)', text: st || 'COMPLETED' };
+      }
+    };
+
+    const statusInfo = status ? getStatusStyle(status) : null;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+        {/* Execution Metadata Bar: Status, Exit Code, Execution Time */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 0.75rem', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Status:</span>
+            {statusInfo ? (
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: statusInfo.bg, color: statusInfo.color }}>
+                {statusInfo.text}
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>—</span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.75rem' }}>
+            <div>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Exit Code: </span>
+              <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, color: exitCode === 0 ? 'var(--color-success)' : exitCode !== null ? 'var(--color-error)' : 'var(--color-text-secondary)' }}>
+                {exitCode !== null ? exitCode : '—'}
+              </span>
+            </div>
+
+            <div style={{ color: 'var(--color-border)' }}>|</div>
+
+            <div>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Execution Time: </span>
+              <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 600, color: 'var(--color-primary)' }}>
+                {executionTimeMs !== null ? `${executionTimeMs} ms` : '—'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Standard Output (stdout) */}
+        {hasStdout && (
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+              Standard Output (stdout):
+            </div>
+            <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#E2E8F0', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '160px', overflowY: 'auto' }}>
+              {stdout}
+            </pre>
+          </div>
+        )}
+
+        {/* Standard Error (stderr) */}
+        {hasStderr && (
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-error)', marginBottom: '0.25rem' }}>
+              Error Output (stderr):
+            </div>
+            <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#F87171', border: '1px solid var(--color-error)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '160px', overflowY: 'auto' }}>
+              {stderr}
+            </pre>
+          </div>
+        )}
+
+        {/* Neither stdout nor stderr present */}
+        {!hasStdout && !hasStderr && (
+          <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
+            No output generated during execution.
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center' }}>
@@ -1436,15 +1548,13 @@ const TeacherExperimentConsolePage = () => {
               </div>
             </div>
 
-            {/* Execution Output */}
-            {inspectingSubmission.executionOutput && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Execution Output:</div>
-                <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '120px', overflowY: 'auto' }}>
-                  {inspectingSubmission.executionOutput}
-                </pre>
+            {/* Execution Output & Diagnostics Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                Execution Output &amp; Diagnostics:
               </div>
-            )}
+              {renderExecutionDetails(inspectingSubmission?.executionOutput)}
+            </div>
 
             {/* Inline Viva Evaluation Section */}
             <div

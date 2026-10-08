@@ -712,6 +712,13 @@ class LabService {
           academicYear: lab.academicYear
         },
         availableSections: [],
+        experiments: experiments.map((exp) => ({
+          _id: exp._id,
+          id: exp._id,
+          experimentNumber: exp.experimentNumber || exp.order,
+          order: exp.order,
+          title: exp.title
+        })),
         summary: {
           totalStudents: 0,
           activeStudents: 0,
@@ -758,6 +765,13 @@ class LabService {
           _id: s._id,
           name: s.name,
           sectionCode: s.sectionCode
+        })),
+        experiments: experiments.map((exp) => ({
+          _id: exp._id,
+          id: exp._id,
+          experimentNumber: exp.experimentNumber || exp.order,
+          order: exp.order,
+          title: exp.title
         })),
         summary: {
           totalStudents: 0,
@@ -911,6 +925,49 @@ class LabService {
         status = 'Needs Attention';
       }
 
+      const studentExpBreakdown = experiments.map((exp) => {
+        const expIdStr = exp._id.toString();
+        const expSubs = studentSubsByExp.get(expIdStr) || [];
+        const expEvals = studentEvalsByExp.get(expIdStr) || [];
+        const expVivas = studentVivasByExp.get(expIdStr) || [];
+
+        const programScore = expEvals.length > 0 && typeof expEvals[0].score === 'number' ? expEvals[0].score : null;
+        const vivaScore = expVivas.length > 0 && typeof expVivas[0].marks === 'number' ? expVivas[0].marks : null;
+        const totalScore = programScore !== null || vivaScore !== null
+          ? Math.round(((programScore || 0) + (vivaScore || 0)) * 100) / 100
+          : null;
+
+        const hasAttempt = expSubs.length > 0;
+        const hasEval = expEvals.length > 0;
+        const hasViva = expVivas.length > 0;
+        const hasPassedSub = expSubs.some((s) => s.status === 'SUCCESS');
+
+        let expStatus = 'Pending';
+        if (hasPassedSub || (hasAttempt && hasEval)) {
+          expStatus = 'Completed';
+        } else if (hasAttempt) {
+          expStatus = 'Awaiting Evaluation';
+        } else if (hasViva) {
+          expStatus = 'Completed';
+        }
+
+        return {
+          experimentId: exp._id,
+          experimentNumber: exp.experimentNumber || exp.order,
+          order: exp.order,
+          title: exp.title,
+          marks: totalScore,
+          scoreOutOf10: programScore,
+          programScore,
+          vivaScore,
+          vivaRemarks: expVivas.length > 0 ? expVivas[0].remarks || '' : '',
+          totalScore,
+          totalAvailableMarks: 15,
+          attempts: expSubs.length,
+          status: expStatus
+        };
+      });
+
       return {
         studentId: student._id,
         _id: student._id,
@@ -923,7 +980,8 @@ class LabService {
         pendingExperiments: pendingCount,
         completionPercentage: completionPct,
         averageScore,
-        status
+        status,
+        experiments: studentExpBreakdown
       };
     });
 
@@ -936,6 +994,14 @@ class LabService {
       studentsWithScoresCount > 0
         ? Number((totalCohortScoreSum / studentsWithScoresCount).toFixed(1))
         : null;
+
+    const experimentsList = experiments.map((exp) => ({
+      _id: exp._id,
+      id: exp._id,
+      experimentNumber: exp.experimentNumber || exp.order,
+      order: exp.order,
+      title: exp.title
+    }));
 
     return {
       lab: {
@@ -953,6 +1019,7 @@ class LabService {
         name: s.name,
         sectionCode: s.sectionCode
       })),
+      experiments: experimentsList,
       summary: {
         totalStudents: students.length,
         activeStudents: students.filter((s) => s.active).length,

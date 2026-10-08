@@ -16,7 +16,7 @@ const startServer = async () => {
   }
 
   // Start Express server
-  const server = app.listen(config.port, () => {
+  const server = app.listen(config.port, '0.0.0.0', () => {
     logger.info(`Server running in [${config.env}] mode on port ${config.port}`);
     logger.info(`Health check available at http://localhost:${config.port}/api/health`);
   });

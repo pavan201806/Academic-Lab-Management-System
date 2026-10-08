@@ -62,6 +62,19 @@ export const labService = {
     return res.data || res;
   },
 
+  getLabExperimentMarksMatrix: async (id, filter = {}) => {
+    const params = new URLSearchParams();
+    if (filter.sectionId) params.append('sectionId', filter.sectionId);
+    if (filter.section) params.append('section', filter.section);
+    if (filter.search) params.append('search', filter.search);
+    if (filter.active !== undefined) params.append('active', filter.active);
+
+    const queryString = params.toString();
+    const url = queryString ? `/labs/${id}/marks-matrix?${queryString}` : `/labs/${id}/marks-matrix`;
+    const res = await apiClient.get(url);
+    return res.data || res;
+  },
+
   getStudentLabPerformanceDetail: async (labId, studentId) => {
     const res = await apiClient.get(`/labs/${labId}/students/${studentId}/performance`);
     return res.data || res;
