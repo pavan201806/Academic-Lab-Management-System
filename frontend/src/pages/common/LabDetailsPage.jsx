@@ -361,18 +361,6 @@ const LabDetailsPage = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* TEACHER / ADMIN: STUDENTS & PERFORMANCE DASHBOARD                         */}
-      {/* ========================================================================= */}
-      {isTeacherOrAdmin && (
-        <LabStudentPerformanceView
-          labId={lab._id}
-          labName={lab.name}
-          labCode={lab.code}
-          defaultSectionId={sectionId}
-        />
-      )}
-
-      {/* ========================================================================= */}
       {/* EXPERIMENT CURRICULUM SECTION                                             */}
       {/* ========================================================================= */}
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.5rem' }}>
@@ -506,13 +494,23 @@ const LabDetailsPage = () => {
                       View Protocol &rarr;
                     </button>
                   ) : (
-                    <Link
-                      to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments` : `/teacher/labs/${lab._id}/experiments`}
-                      className="btn btn-secondary"
-                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.625rem', textDecoration: 'none' }}
-                    >
-                      Edit Protocol &rarr;
-                    </Link>
+                    <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                      <Link
+                        to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments/${exp._id}` : `/teacher/labs/${lab._id}/experiments/${exp._id}`}
+                        className="btn btn-primary"
+                        style={{ fontSize: '0.75rem', padding: '0.3rem 0.625rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                      >
+                        <span>🧪</span> Open Experiment Console &rarr;
+                      </Link>
+                      <Link
+                        to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/experiments` : `/teacher/labs/${lab._id}/experiments`}
+                        className="btn btn-secondary"
+                        style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem', textDecoration: 'none' }}
+                        title="Manage and edit protocol parameters"
+                      >
+                        ⚙️ Edit
+                      </Link>
+                    </div>
                   )}
                 </div>
               </div>
@@ -520,6 +518,18 @@ const LabDetailsPage = () => {
           </div>
         )}
       </div>
+
+      {/* ========================================================================= */}
+      {/* TEACHER / ADMIN: STUDENTS & PERFORMANCE DASHBOARD                         */}
+      {/* ========================================================================= */}
+      {isTeacherOrAdmin && (
+        <LabStudentPerformanceView
+          labId={lab._id}
+          labName={lab.name}
+          labCode={lab.code}
+          defaultSectionId={sectionId}
+        />
+      )}
     </div>
   );
 };

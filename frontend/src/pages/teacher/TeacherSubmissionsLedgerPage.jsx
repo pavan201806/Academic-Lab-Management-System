@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { submissionService } from '../../services/submissionService';
 import { evaluationService } from '../../services/evaluationService';
+import { vivaService } from '../../services/vivaService';
 import { labService } from '../../services/labService';
 import { experimentService } from '../../services/experimentService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -18,6 +19,7 @@ const TeacherSubmissionsLedgerPage = () => {
   const [selectedExperimentId, setSelectedExperimentId] = useState('');
   const [submissions, setSubmissions] = useState([]);
   const [evaluations, setEvaluations] = useState([]);
+  const [vivas, setVivas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,6 +27,14 @@ const TeacherSubmissionsLedgerPage = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [inspectingSubmission, setInspectingSubmission] = useState(null);
   const [inspectingEvaluation, setInspectingEvaluation] = useState(null);
+  const [inspectingViva, setInspectingViva] = useState(null);
+
+  // In-modal viva grading state
+  const [vivaInputMarks, setVivaInputMarks] = useState(4.0);
+  const [vivaInputRemarks, setVivaInputRemarks] = useState('');
+  const [savingViva, setSavingViva] = useState(false);
+  const [vivaSaveSuccess, setVivaSaveSuccess] = useState('');
+  const [vivaSaveError, setVivaSaveError] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -51,19 +61,90 @@ const TeacherSubmissionsLedgerPage = () => {
   const fetchSubmissionsAndEvaluations = async () => {
     setLoading(true);
     try {
-      const [subRes, evalRes] = await Promise.all([
+      const [subRes, evalRes, vivaRes] = await Promise.all([
         submissionService.getTeacherSubmissionsForLab(labId, selectedExperimentId),
-        evaluationService.getLabEvaluations(labId, selectedExperimentId)
+        evaluationService.getLabEvaluations(labId, selectedExperimentId),
+        vivaService.getLabVivaEvaluations(labId, selectedExperimentId).catch(() => ({ data: [] }))
       ]);
       const subData = subRes.data || subRes;
       const evalData = evalRes.data || evalRes;
+      const vivaData = vivaRes.data || vivaRes;
       setSubmissions(Array.isArray(subData) ? subData : []);
       setEvaluations(Array.isArray(evalData) ? evalData : []);
+      setVivas(Array.isArray(vivaData) ? vivaData : []);
     } catch (err) {
       console.error('Failed to load lab submissions and evaluations ledger:', err);
       setError(err.response?.data?.message || 'Access Denied to lab submissions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenInspection = (sub, matchedEval) => {
+    const studentId = (sub.student?._id || sub.student)?.toString();
+    const experimentId = (sub.experiment?._id || sub.experiment)?.toString();
+    const matchedViva = vivas.find(
+      (v) => (v.student?._id || v.student)?.toString() === studentId && (v.experiment?._id || v.experiment)?.toString() === experimentId
+    );
+
+    setInspectingSubmission(sub);
+    setInspectingEvaluation(matchedEval || null);
+    setInspectingViva(matchedViva || null);
+    setVivaInputMarks(matchedViva ? matchedViva.marks : 4.0);
+    setVivaInputRemarks(matchedViva ? matchedViva.remarks || '' : '');
+    setVivaSaveSuccess('');
+    setVivaSaveError('');
+  };
+
+  const handleSaveViva = async (e) => {
+    e.preventDefault();
+    if (!inspectingSubmission) return;
+
+    const numMarks = Number(vivaInputMarks);
+    if (isNaN(numMarks) || numMarks < 0 || numMarks > 5) {
+      setVivaSaveError('Viva marks must be a valid number between 0 and 5.');
+      return;
+    }
+
+    setSavingViva(true);
+    setVivaSaveError('');
+    setVivaSaveSuccess('');
+
+    try {
+      const studentId = (inspectingSubmission.student?._id || inspectingSubmission.student)?.toString();
+      const experimentId = (inspectingSubmission.experiment?._id || inspectingSubmission.experiment)?.toString();
+
+      const res = await vivaService.updateViva({
+        studentId,
+        experimentId,
+        marks: numMarks,
+        remarks: vivaInputRemarks
+      });
+
+      const updatedViva = res.data || res;
+      setInspectingViva(updatedViva);
+
+      // Refresh or update vivas list
+      setVivas((prev) => {
+        const idx = prev.findIndex(
+          (v) => (v.student?._id || v.student)?.toString() === studentId && (v.experiment?._id || v.experiment)?.toString() === experimentId
+        );
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = updatedViva;
+          return updated;
+        }
+        return [...prev, updatedViva];
+      });
+
+      const progScore = inspectingEvaluation ? inspectingEvaluation.score : 0;
+      const totalScoreCalc = Math.round((progScore + numMarks) * 100) / 100;
+      setVivaSaveSuccess(`✓ Viva score updated successfully (${numMarks}/5) — Total: ${totalScoreCalc}/15.`);
+    } catch (err) {
+      console.error('Failed to save viva evaluation:', err);
+      setVivaSaveError(err.response?.data?.message || 'Failed to save Viva score.');
+    } finally {
+      setSavingViva(false);
     }
   };
 
@@ -166,7 +247,7 @@ const TeacherSubmissionsLedgerPage = () => {
             Evaluation Ledger &amp; Submissions
           </h1>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-            {lab?.name} &bull; Automated test case results, scores out of 10, and code submissions
+            {lab?.name} &bull; Automated test case results, Viva Voce scores, and official submissions
           </p>
         </div>
       </div>
@@ -287,16 +368,31 @@ const TeacherSubmissionsLedgerPage = () => {
                   <th style={{ padding: '0.75rem 0.5rem' }}>Experiment</th>
                   <th style={{ padding: '0.75rem 0.5rem' }}>Attempt</th>
                   <th style={{ padding: '0.75rem 0.5rem' }}>Language</th>
-                  <th style={{ padding: '0.75rem 0.5rem' }}>Score / 10</th>
+                  <th style={{ padding: '0.75rem 0.5rem' }}>Program / 10</th>
+                  <th style={{ padding: '0.75rem 0.5rem' }}>Viva / 5</th>
+                  <th style={{ padding: '0.75rem 0.5rem' }}>Total / 15</th>
                   <th style={{ padding: '0.75rem 0.5rem' }}>Status</th>
                   <th style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredSubmissions.map((sub) => {
+                  const studentId = (sub.student?._id || sub.student)?.toString();
+                  const experimentId = (sub.experiment?._id || sub.experiment)?.toString();
+
                   const matchedEval = evaluations.find(
                     (ev) => ev.submission?._id === sub._id || ev.submission === sub._id
                   );
+
+                  const matchedViva = vivas.find(
+                    (v) => (v.student?._id || v.student)?.toString() === studentId && (v.experiment?._id || v.experiment)?.toString() === experimentId
+                  );
+
+                  const autoScore = matchedEval && typeof matchedEval.score === 'number' ? matchedEval.score : null;
+                  const vivaMarks = matchedViva && typeof matchedViva.marks === 'number' ? matchedViva.marks : null;
+                  const totalScore = (autoScore !== null || vivaMarks !== null)
+                    ? Math.round(((autoScore || 0) + (vivaMarks || 0)) * 100) / 100
+                    : null;
 
                   return (
                     <tr key={sub._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
@@ -335,19 +431,34 @@ const TeacherSubmissionsLedgerPage = () => {
                         )}
                       </td>
                       <td style={{ padding: '0.75rem 0.5rem' }}>
+                        {matchedViva ? (
+                          <strong style={{ color: '#16a34a', fontSize: '0.875rem' }}>
+                            {matchedViva.marks} / 5
+                          </strong>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)' }}>— / 5</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
+                        {totalScore !== null ? (
+                          <strong style={{ color: 'var(--color-primary)', fontSize: '0.875rem' }}>
+                            {totalScore} / 15
+                          </strong>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)' }}>— / 15</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '0.75rem 0.5rem' }}>
                         {getStatusBadge(sub.status)}
                       </td>
                       <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
                         <button
                           type="button"
-                          onClick={() => {
-                            setInspectingSubmission(sub);
-                            setInspectingEvaluation(matchedEval || null);
-                          }}
+                          onClick={() => handleOpenInspection(sub, matchedEval)}
                           className="btn btn-secondary"
                           style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
                         >
-                          👁 Inspect Evaluation
+                          👁 Inspect &amp; Grade
                         </button>
                       </td>
                     </tr>
@@ -376,7 +487,7 @@ const TeacherSubmissionsLedgerPage = () => {
           <div
             className="card"
             style={{
-              maxWidth: '880px',
+              maxWidth: '900px',
               width: '100%',
               maxHeight: '92vh',
               overflowY: 'auto',
@@ -400,6 +511,7 @@ const TeacherSubmissionsLedgerPage = () => {
                 onClick={() => {
                   setInspectingSubmission(null);
                   setInspectingEvaluation(null);
+                  setInspectingViva(null);
                 }}
                 className="btn btn-secondary"
                 style={{ padding: '0.25rem 0.5rem' }}
@@ -408,41 +520,177 @@ const TeacherSubmissionsLedgerPage = () => {
               </button>
             </div>
 
-            {/* Score & Evaluation Overview */}
-            {inspectingEvaluation && (
+            {/* Score & Evaluation Overview Cards */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '0.75rem'
+              }}
+            >
+              {/* Automated Program Score Card */}
               <div
                 style={{
                   backgroundColor: 'var(--color-surface-hover)',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '1rem 1.25rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '1rem'
+                  padding: '1rem'
                 }}
               >
-                <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
-                    Automated Score
-                  </div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-                    {inspectingEvaluation.score} / 10
-                  </div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    {inspectingEvaluation.earnedMarks} of {inspectingEvaluation.totalAvailableMarks} marks earned
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Program Score
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.25rem' }}>
+                  {inspectingEvaluation ? `${inspectingEvaluation.score} / 10` : '— / 10'}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  {inspectingEvaluation ? `${inspectingEvaluation.earnedMarks} of ${inspectingEvaluation.totalAvailableMarks} marks earned` : 'No automated evaluation'}
+                </span>
+              </div>
+
+              {/* Viva Score Card */}
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Viva Voce Score
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a', marginTop: '0.25rem' }}>
+                  {inspectingViva ? `${inspectingViva.marks} / 5` : 'Pending / 5'}
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  Oral defense evaluation
+                </span>
+              </div>
+
+              {/* Total Aggregate Score Card */}
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface-hover)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1rem'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Total Evaluation
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.25rem' }}>
+                  {Math.round(((inspectingEvaluation?.score || 0) + (inspectingViva?.marks || 0)) * 100) / 100} / 15
+                </div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  Combined Program &amp; Viva
+                </span>
+              </div>
+            </div>
+
+            {/* TEACHER VIVA GRADING SECTION */}
+            <div
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--color-text-primary)' }}>
+                  🎙 Viva Score &amp; Oral Defense Assessment
+                </h4>
+                {inspectingViva && (
+                  <span className="badge badge-success" style={{ fontSize: '0.75rem' }}>
+                    ✓ Current Viva: {inspectingViva.marks} / 5
                   </span>
+                )}
+              </div>
+
+              {vivaSaveSuccess && (
+                <div className="alert alert-success" style={{ fontSize: '0.8125rem' }}>
+                  {vivaSaveSuccess}
+                </div>
+              )}
+
+              {vivaSaveError && (
+                <div className="alert alert-error" style={{ fontSize: '0.8125rem' }}>
+                  {vivaSaveError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveViva} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                      Viva Score (0.0 - 5.0) <span style={{ color: 'var(--color-error)' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.5"
+                        value={vivaInputMarks}
+                        onChange={(e) => setVivaInputMarks(e.target.value)}
+                        required
+                        style={{
+                          width: '100px',
+                          padding: '0.45rem 0.6rem',
+                          fontSize: '0.9375rem',
+                          fontWeight: 700,
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: 'var(--color-surface)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>/ 5 Marks</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+                      Teacher Remarks &amp; Feedback
+                    </label>
+                    <input
+                      type="text"
+                      value={vivaInputRemarks}
+                      onChange={(e) => setVivaInputRemarks(e.target.value)}
+                      placeholder="Optional notes regarding student oral defense..."
+                      style={{
+                        width: '100%',
+                        padding: '0.45rem 0.6rem',
+                        fontSize: '0.8125rem',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-surface)',
+                        color: 'var(--color-text-primary)'
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {inspectingEvaluation.isHighestScore && (
-                    <span className="badge badge-success">★ Highest Attempt Score</span>
-                  )}
-                  {getStatusBadge(inspectingSubmission.status)}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                    Total after saving: <strong style={{ color: 'var(--color-primary)' }}>{Math.round(((inspectingEvaluation?.score || 0) + (Number(vivaInputMarks) || 0)) * 100) / 100} / 15</strong>
+                  </span>
+                  <button
+                    type="submit"
+                    disabled={savingViva}
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.8125rem', padding: '0.4rem 1rem' }}
+                  >
+                    {savingViva ? 'Saving Viva Score...' : '💾 Save Viva Score'}
+                  </button>
                 </div>
-              </div>
-            )}
+              </form>
+            </div>
 
             {/* Test Case Evaluation Results Table for Teacher */}
             {inspectingEvaluation?.testCaseResults && inspectingEvaluation.testCaseResults.length > 0 && (

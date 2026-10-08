@@ -25,6 +25,7 @@ import LabDetailsPage from '../pages/common/LabDetailsPage';
 
 // Phase 4 Experiment Management Pages
 import TeacherExperimentManagementPage from '../pages/teacher/TeacherExperimentManagementPage';
+import TeacherExperimentConsolePage from '../pages/teacher/TeacherExperimentConsolePage';
 import StudentExperimentDetailPage from '../pages/student/StudentExperimentDetailPage';
 
 // Phase 5 PDF Extraction Suite Page
@@ -96,6 +97,7 @@ const AppRoutes = () => {
         <Route path="labs" element={<LabManagementPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
+        <Route path="labs/:labId/experiments/:experimentId" element={<TeacherExperimentConsolePage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
         <Route path="labs/:labId/malpractice" element={<TeacherMalpracticeDashboardPage />} />
@@ -120,6 +122,7 @@ const AppRoutes = () => {
         <Route path="labs" element={<TeacherLabDashboardPage />} />
         <Route path="labs/:id" element={<LabDetailsPage />} />
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
+        <Route path="labs/:labId/experiments/:experimentId" element={<TeacherExperimentConsolePage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
         <Route path="labs/:labId/malpractice" element={<TeacherMalpracticeDashboardPage />} />

@@ -23,6 +23,19 @@ export const vivaService = {
   },
 
   /**
+   * Update / set viva evaluation score & remarks directly (Teacher / Admin)
+   */
+  updateViva: async ({ studentId, experimentId, marks, remarks }) => {
+    const res = await apiClient.put(`/viva/student/${studentId}/experiment/${experimentId}`, {
+      studentId,
+      experimentId,
+      marks,
+      remarks
+    });
+    return res.data || res;
+  },
+
+  /**
    * Get student's own viva details & version history
    */
   getStudentViva: async (experimentId) => {

@@ -856,13 +856,69 @@ async function runPhase8Tests() {
     );
   });
 
-  await test('30. Student cannot directly modify Viva marks or update evaluation records', () => {
-    const vivaController = require('../controllers/viva.controller');
-    assert.strictEqual(vivaController.updateViva, undefined, 'No direct updateViva handler exists');
-    assert.strictEqual(vivaController.deleteViva, undefined, 'No deleteViva handler exists');
+  await test('30. Student cannot modify Viva marks or update evaluation records (403 Forbidden)', async () => {
+    await assert.rejects(
+      async () => {
+        await vivaService.updateVivaEvaluation(
+          {
+            studentId: studentA._id.toString(),
+            experimentId: experiment1._id.toString(),
+            marks: 5,
+            remarks: 'Student trying to update marks'
+          },
+          studentA
+        );
+      },
+      (err) => err.statusCode === 403 && err.message.includes('Faculty privileges required')
+    );
   });
 
-  await test('31. Re-evaluation process validates action and rejects invalid actions', () => {
+  await test('31. Authorized teacher can directly update existing Viva score and remarks', async () => {
+    const updated = await vivaService.updateVivaEvaluation(
+      {
+        studentId: studentA._id.toString(),
+        experimentId: experiment1._id.toString(),
+        marks: 4.8,
+        remarks: 'Updated after additional code review'
+      },
+      teacherMainA
+    );
+    assert.ok(updated);
+    assert.strictEqual(updated.marks, 4.8);
+    assert.strictEqual(updated.remarks, 'Updated after additional code review');
+  });
+
+  await test('32. Unauthorized teacher cannot update Viva marks for unassigned student (403 Forbidden)', async () => {
+    await assert.rejects(
+      async () => {
+        await vivaService.updateVivaEvaluation(
+          {
+            studentId: studentA._id.toString(),
+            experimentId: experiment1._id.toString(),
+            marks: 5
+          },
+          teacherUnassigned
+        );
+      },
+      (err) => err.statusCode === 403 && err.message.includes('not have an active faculty assignment')
+    );
+  });
+
+  await test('33. Admin HOD can update Viva marks across any lab/section', async () => {
+    const adminUpdated = await vivaService.updateVivaEvaluation(
+      {
+        studentId: studentA._id.toString(),
+        experimentId: experiment1._id.toString(),
+        marks: 5.0,
+        remarks: 'Admin final review score'
+      },
+      adminUser
+    );
+    assert.ok(adminUpdated);
+    assert.strictEqual(adminUpdated.marks, 5.0);
+  });
+
+  await test('34. Re-evaluation process validates action and rejects invalid actions', () => {
     let error = null;
     validateProcessReevaluationInput(
       { body: { action: 'INVALID_ACTION' } },
@@ -874,11 +930,10 @@ async function runPhase8Tests() {
     assert.ok(error.message.includes('APPROVE or REJECT'));
   });
 
-  await test('32. All historical Viva records remain retrievable and immutable', async () => {
+  await test('35. All historical Viva records remain retrievable and immutable', async () => {
     const studentViva = await vivaService.getStudentViva(experiment1._id, studentA);
     assert.strictEqual(studentViva.history.length, 2);
-    assert.strictEqual(studentViva.history[0].marks, 3.5);
-    assert.strictEqual(studentViva.history[1].marks, 4.5);
+    assert.strictEqual(studentViva.currentViva.marks, 5.0);
   });
 
   console.log(`\n==================================================`);

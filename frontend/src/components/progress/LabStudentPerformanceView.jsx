@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { labService } from '../../services/labService';
 import LoadingSpinner from '../common/LoadingSpinner';
+import VivaManagementModal from '../viva/VivaManagementModal';
 
 const LabStudentPerformanceView = ({ labId, labName, labCode, defaultSectionId = null }) => {
   const [data, setData] = useState(null);
@@ -18,6 +19,10 @@ const LabStudentPerformanceView = ({ labId, labName, labCode, defaultSectionId =
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
+
+  // Viva Modal Trigger State
+  const [showVivaModal, setShowVivaModal] = useState(false);
+  const [selectedVivaExp, setSelectedVivaExp] = useState(null);
 
   useEffect(() => {
     if (labId) {
@@ -730,9 +735,11 @@ const LabStudentPerformanceView = ({ labId, labName, labCode, defaultSectionId =
                           <tr style={{ backgroundColor: 'var(--color-canvas)', borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
                             <th style={{ padding: '0.625rem 0.875rem' }}>Protocol</th>
                             <th style={{ padding: '0.625rem 0.875rem' }}>Status</th>
-                            <th style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>Score</th>
+                            <th style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>Program / 10</th>
+                            <th style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>Viva / 5</th>
+                            <th style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>Total / 15</th>
                             <th style={{ padding: '0.625rem 0.875rem', textAlign: 'center' }}>Attempts</th>
-                            <th style={{ padding: '0.625rem 0.875rem' }}>Last Submission</th>
+                            <th style={{ padding: '0.625rem 0.875rem', textAlign: 'right' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -747,24 +754,33 @@ const LabStudentPerformanceView = ({ labId, labName, labCode, defaultSectionId =
                                 {getExperimentStatusBadge(exp.status)}
                               </td>
                               <td style={{ padding: '0.625rem 0.875rem', textAlign: 'center', fontWeight: 700, color: 'var(--color-primary)' }}>
-                                {exp.score !== null ? (
-                                  <span>
-                                    {exp.score}%{' '}
-                                    {exp.scoreOutOf10 !== null && (
-                                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 400 }}>
-                                        ({exp.scoreOutOf10}/10)
-                                      </span>
-                                    )}
-                                  </span>
-                                ) : (
-                                  '--'
-                                )}
+                                {exp.scoreOutOf10 !== null ? `${exp.scoreOutOf10} / 10` : '--'}
+                              </td>
+                              <td style={{ padding: '0.625rem 0.875rem', textAlign: 'center', fontWeight: 700, color: '#16a34a' }}>
+                                {exp.vivaScore !== null ? `${exp.vivaScore} / 5` : '-- / 5'}
+                              </td>
+                              <td style={{ padding: '0.625rem 0.875rem', textAlign: 'center', fontWeight: 700, color: 'var(--color-primary)' }}>
+                                {exp.totalScore !== null ? `${exp.totalScore} / 15` : '--'}
                               </td>
                               <td style={{ padding: '0.625rem 0.875rem', textAlign: 'center', fontWeight: 600 }}>
                                 {exp.attempts} {exp.attempts === 1 ? 'attempt' : 'attempts'}
                               </td>
-                              <td style={{ padding: '0.625rem 0.875rem', color: 'var(--color-text-secondary)' }}>
-                                {exp.lastSubmission ? new Date(exp.lastSubmission).toLocaleString() : '--'}
+                              <td style={{ padding: '0.625rem 0.875rem', textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedVivaExp({
+                                      _id: exp.experimentId,
+                                      title: exp.title,
+                                      experimentNumber: exp.experimentNumber
+                                    });
+                                    setShowVivaModal(true);
+                                  }}
+                                  className="btn btn-secondary"
+                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: '#16a34a', borderColor: '#16a34a' }}
+                                >
+                                  {exp.vivaScore !== null ? '✏️ Edit Viva' : '🎙 Grade Viva'}
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -793,6 +809,21 @@ const LabStudentPerformanceView = ({ labId, labName, labCode, defaultSectionId =
           </div>
         </div>
       )}
+
+      {/* VIVA MANAGEMENT MODAL */}
+      <VivaManagementModal
+        isOpen={showVivaModal}
+        onClose={async () => {
+          setShowVivaModal(false);
+          setSelectedVivaExp(null);
+          if (selectedStudent) {
+            await handleOpenStudentDetail(selectedStudent);
+          }
+          await fetchPerformanceData();
+        }}
+        experiment={selectedVivaExp}
+        labId={labId}
+      />
     </div>
   );
 };

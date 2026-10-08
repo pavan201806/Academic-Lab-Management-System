@@ -188,6 +188,62 @@ class VivaService {
   }
 
   /**
+   * Directly sets or updates a student's Viva evaluation score & remarks
+   * Updates the existing current record if present, or creates a new one
+   */
+  async updateVivaEvaluation({ studentId, experimentId, marks, remarks }, facultyUser) {
+    const student = await User.findById(studentId);
+    if (!student || student.role !== 'STUDENT' || !student.active) {
+      throw new AppError('Valid active student is required', 404);
+    }
+
+    const { experiment, lab, section } = await this.validateStudentExperimentAccess(student, experimentId);
+    await this.validateFacultyAccess(facultyUser, lab._id, section._id);
+
+    const existingCurrentViva = await VivaEvaluation.findOne({
+      student: studentId,
+      experiment: experimentId,
+      isCurrent: true,
+      active: true
+    });
+
+    if (existingCurrentViva) {
+      existingCurrentViva.marks = Math.round(Number(marks) * 100) / 100;
+      if (remarks !== undefined) {
+        existingCurrentViva.remarks = remarks ? remarks.trim() : '';
+      }
+      existingCurrentViva.evaluatedBy = facultyUser._id;
+      existingCurrentViva.evaluatedAt = new Date();
+      await existingCurrentViva.save();
+
+      return await VivaEvaluation.findById(existingCurrentViva._id)
+        .populate('student', 'name rollNumber section')
+        .populate('evaluatedBy', 'name rollNumber')
+        .populate('experiment', 'title experimentNumber');
+    }
+
+    const vivaEvaluation = await VivaEvaluation.create({
+      student: studentId,
+      experiment: experimentId,
+      lab: lab._id,
+      section: section._id,
+      evaluatedBy: facultyUser._id,
+      marks: Math.round(Number(marks) * 100) / 100,
+      remarks: remarks ? remarks.trim() : '',
+      status: 'EVALUATED',
+      evaluationVersion: 1,
+      isCurrent: true,
+      evaluatedAt: new Date(),
+      active: true
+    });
+
+    return await VivaEvaluation.findById(vivaEvaluation._id)
+      .populate('student', 'name rollNumber section')
+      .populate('evaluatedBy', 'name rollNumber')
+      .populate('experiment', 'title experimentNumber');
+  }
+
+  /**
    * Get student's current viva evaluation, version history, and pending re-evaluation request
    */
   async getStudentViva(experimentId, studentUser) {

@@ -95,13 +95,15 @@ const VivaManagementModal = ({ isOpen, onClose, experiment, labId }) => {
 
     setSubmittingGrade(true);
     try {
-      await vivaService.createViva({
+      await vivaService.updateViva({
         studentId: gradingStudent.student._id,
         experimentId: experiment._id,
         marks: numMarks,
         remarks: remarksInput
       });
-      setSuccessMsg(`Viva evaluation saved for ${gradingStudent.student.name} (${numMarks}/5).`);
+      const autoScore = gradingStudent.highestAutomatedScore || 0;
+      const totalScoreCalc = Math.round((autoScore + numMarks) * 100) / 100;
+      setSuccessMsg(`✓ Viva evaluation saved for ${gradingStudent.student.name} (${numMarks}/5) — Total: ${totalScoreCalc}/15.`);
       setGradingStudent(null);
       await fetchData();
     } catch (err) {
@@ -310,81 +312,108 @@ const VivaManagementModal = ({ isOpen, onClose, experiment, labId }) => {
                         <th style={{ padding: '0.65rem 0.5rem' }}>Student</th>
                         <th style={{ padding: '0.65rem 0.5rem' }}>Roll No</th>
                         <th style={{ padding: '0.65rem 0.5rem' }}>Section</th>
-                        <th style={{ padding: '0.65rem 0.5rem' }}>Auto Score / 10</th>
-                        <th style={{ padding: '0.65rem 0.5rem' }}>Viva Score / 5</th>
+                        <th style={{ padding: '0.65rem 0.5rem' }}>Program / 10</th>
+                        <th style={{ padding: '0.65rem 0.5rem' }}>Viva / 5</th>
+                        <th style={{ padding: '0.65rem 0.5rem' }}>Total / 15</th>
                         <th style={{ padding: '0.65rem 0.5rem' }}>Status</th>
                         <th style={{ padding: '0.65rem 0.5rem', textAlign: 'right' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {eligibleStudents.map((item) => (
-                        <tr key={item.student._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                          <td style={{ padding: '0.65rem 0.5rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                            {item.student.name}
-                          </td>
-                          <td style={{ padding: '0.65rem 0.5rem', fontFamily: 'var(--font-family-mono)' }}>
-                            {item.student.rollNumber}
-                          </td>
-                          <td style={{ padding: '0.65rem 0.5rem' }}>
-                            <span className="badge badge-info">{item.student.section}</span>
-                          </td>
-                          <td style={{ padding: '0.65rem 0.5rem' }}>
-                            {item.submissionsCount > 0 ? (
-                              <strong style={{ color: 'var(--color-primary)' }}>{item.highestAutomatedScore} / 10</strong>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-muted)' }}>Not submitted</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '0.65rem 0.5rem' }}>
-                            {item.viva ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <strong style={{ color: '#16a34a', fontSize: '0.875rem' }}>
-                                  {item.viva.marks} / 5
-                                </strong>
-                                {item.viva.status === 'RE_EVALUATED' && (
-                                  <span className="badge badge-warning" style={{ fontSize: '0.625rem', padding: '0.1rem 0.35rem' }}>
-                                    v{item.viva.evaluationVersion} Re-eval
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-muted)' }}>— / 5</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '0.65rem 0.5rem' }}>
-                            {item.viva ? (
-                              <span className="badge badge-success">✓ Evaluated</span>
-                            ) : (
-                              <span className="badge badge-warning">⏳ Pending Viva</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '0.65rem 0.5rem', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
-                              {!item.viva ? (
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenGrade(item)}
-                                  className="btn btn-primary"
-                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                                >
-                                  🎙 Grade Viva
-                                </button>
+                      {eligibleStudents.map((item) => {
+                        const autoScore = item.submissionsCount > 0 ? (item.highestAutomatedScore || 0) : null;
+                        const vivaMarks = item.viva ? item.viva.marks : null;
+                        const totalScore = (autoScore !== null || vivaMarks !== null)
+                          ? Math.round(((autoScore || 0) + (vivaMarks || 0)) * 100) / 100
+                          : null;
+
+                        return (
+                          <tr key={item.student._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <td style={{ padding: '0.65rem 0.5rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                              {item.student.name}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem', fontFamily: 'var(--font-family-mono)' }}>
+                              {item.student.rollNumber}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>
+                              <span className="badge badge-info">{item.student.section}</span>
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>
+                              {item.submissionsCount > 0 ? (
+                                <strong style={{ color: 'var(--color-primary)' }}>{item.highestAutomatedScore} / 10</strong>
                               ) : (
-                                <>
+                                <span style={{ color: 'var(--color-text-muted)' }}>Not submitted</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>
+                              {item.viva ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <strong style={{ color: '#16a34a', fontSize: '0.875rem' }}>
+                                    {item.viva.marks} / 5
+                                  </strong>
+                                  {item.viva.status === 'RE_EVALUATED' && (
+                                    <span className="badge badge-warning" style={{ fontSize: '0.625rem', padding: '0.1rem 0.35rem' }}>
+                                      v{item.viva.evaluationVersion} Re-eval
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ color: 'var(--color-text-muted)' }}>— / 5</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>
+                              {totalScore !== null ? (
+                                <strong style={{ color: 'var(--color-primary)', fontSize: '0.875rem' }}>
+                                  {totalScore} / 15
+                                </strong>
+                              ) : (
+                                <span style={{ color: 'var(--color-text-muted)' }}>— / 15</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem' }}>
+                              {item.viva ? (
+                                <span className="badge badge-success">✓ Evaluated</span>
+                              ) : (
+                                <span className="badge badge-warning">⏳ Pending Viva</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.65rem 0.5rem', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                                {!item.viva ? (
                                   <button
                                     type="button"
-                                    onClick={() => handleOpenHistory(item.student)}
-                                    className="btn btn-secondary"
+                                    onClick={() => handleOpenGrade(item)}
+                                    className="btn btn-primary"
                                     style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
                                   >
-                                    📜 History
+                                    🎙 Grade Viva
                                   </button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenGrade(item)}
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', color: '#16a34a', borderColor: '#16a34a' }}
+                                      title="Edit or update viva score"
+                                    >
+                                      ✏️ Edit Viva
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenHistory(item.student)}
+                                      className="btn btn-secondary"
+                                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                                    >
+                                      📜 History
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -469,7 +498,7 @@ const VivaManagementModal = ({ isOpen, onClose, experiment, labId }) => {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '1rem', margin: 0, color: 'var(--color-text-primary)' }}>
-                  🎙 Grade Viva
+                  {gradingStudent.viva ? '✏️ Edit Viva Score' : '🎙 Grade Viva'}
                 </h3>
                 <button
                   type="button"
@@ -485,6 +514,46 @@ const VivaManagementModal = ({ isOpen, onClose, experiment, labId }) => {
                 <strong>{gradingStudent.student.name}</strong>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   Roll: {gradingStudent.student.rollNumber} &bull; Sec: {gradingStudent.student.section}
+                </div>
+              </div>
+
+              {/* Live Score Breakdown Card */}
+              <div
+                style={{
+                  backgroundColor: 'var(--color-surface)',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--color-border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem',
+                  fontSize: '0.75rem'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Program Score:</span>
+                  <strong>{gradingStudent.highestAutomatedScore || 0} / 10</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Viva Score:</span>
+                  <strong style={{ color: '#16a34a' }}>
+                    {!isNaN(Number(marksInput)) && Number(marksInput) >= 0 && Number(marksInput) <= 5 ? Number(marksInput) : 0} / 5
+                  </strong>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    borderTop: '1px dashed var(--color-border)',
+                    paddingTop: '0.35rem',
+                    fontWeight: 700,
+                    fontSize: '0.8125rem'
+                  }}
+                >
+                  <span style={{ color: 'var(--color-primary)' }}>Total Score:</span>
+                  <strong style={{ color: 'var(--color-primary)' }}>
+                    {Math.round(((gradingStudent.highestAutomatedScore || 0) + (Number(marksInput) || 0)) * 100) / 100} / 15
+                  </strong>
                 </div>
               </div>
 

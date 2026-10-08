@@ -629,7 +629,31 @@ async function runMalpracticeTests() {
       assert.ok(overview.summary.totalEvents >= 5);
     });
 
-    await test('22. getEvents supports pagination, student filtering and severity filtering for Teachers', async () => {
+    await test('22. Experiment-scoped malpractice overview isolates events to specific experimentId', async () => {
+      // Test with active experimentId
+      const expOverview = await malpracticeService.getLabMalpracticeOverview({
+        user: teacher,
+        labId: labId.toString(),
+        experimentId: experimentId.toString()
+      });
+
+      assert.ok(expOverview.summary);
+      assert.ok(expOverview.summary.totalEvents >= 5);
+
+      // Test with an unused experimentId (should yield 0 events)
+      const unusedExpId = new mongoose.Types.ObjectId('65f000000000000000000999');
+      const emptyOverview = await malpracticeService.getLabMalpracticeOverview({
+        user: teacher,
+        labId: labId.toString(),
+        experimentId: unusedExpId.toString()
+      });
+
+      assert.strictEqual(emptyOverview.summary.totalEvents, 0);
+      assert.strictEqual(emptyOverview.summary.studentsWithEvents, 0);
+      assert.strictEqual(emptyOverview.summary.studentsRequiringReview, 0);
+    });
+
+    await test('23. getEvents supports pagination, student filtering and severity filtering for Teachers', async () => {
       const result = await malpracticeService.getEvents({
         user: teacher,
         query: {
@@ -651,7 +675,7 @@ async function runMalpracticeTests() {
 
     console.log('\n--- Section 6: Cascade Deletion on Student Removal ---');
 
-    await test('23. Deleting a student cascade-removes their malpractice records', async () => {
+    await test('24. Deleting a student cascade-removes their malpractice records', async () => {
       const initialCount = inMemoryEvents.filter((e) => e.student.toString() === studentAliceId.toString()).length;
       assert.ok(initialCount > 0);
 

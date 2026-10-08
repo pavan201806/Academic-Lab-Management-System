@@ -1088,7 +1088,20 @@ class LabService {
         expStatus = 'Pending';
       }
 
-      const lastExpSub = expSubs.length > 0 ? expSubs[0].submittedAt : null;
+      const programScore = expEvals.length > 0 && typeof expEvals[0].score === 'number' ? expEvals[0].score : null;
+      const vivaScore = expVivas.length > 0 && typeof expVivas[0].marks === 'number' ? expVivas[0].marks : null;
+      const totalScore = programScore !== null || vivaScore !== null
+        ? Math.round(((programScore || 0) + (vivaScore || 0)) * 100) / 100
+        : null;
+
+      const lastExpSub = expSubs.length > 0
+        ? {
+            submittedAt: expSubs[0].submittedAt,
+            status: expSubs[0].status,
+            attemptNumber: expSubs[0].attemptNumber,
+            executionStatus: expSubs[0].executionStatus
+          }
+        : null;
 
       return {
         experimentId: exp._id,
@@ -1096,7 +1109,12 @@ class LabService {
         title: exp.title,
         status: expStatus,
         score: expScorePercent,
-        scoreOutOf10: expEvals.length > 0 ? expEvals[0].score : null,
+        scoreOutOf10: programScore,
+        programScore,
+        vivaScore,
+        vivaRemarks: expVivas.length > 0 ? expVivas[0].remarks || '' : '',
+        totalScore,
+        totalAvailableMarks: 15,
         attempts: expSubs.length,
         lastSubmission: lastExpSub
       };

@@ -84,9 +84,28 @@ const getVivaById = async (req, res, next) => {
   }
 };
 
+const updateViva = async (req, res, next) => {
+  try {
+    const studentId = req.params.studentId || req.body.studentId;
+    const experimentId = req.params.experimentId || req.body.experimentId;
+    const { marks, remarks } = req.body;
+    const viva = await vivaService.updateVivaEvaluation(
+      { studentId, experimentId, marks, remarks },
+      req.user
+    );
+    res.status(200).json({
+      status: 'success',
+      data: viva
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getEligibleStudents,
   createViva,
+  updateViva,
   getStudentViva,
   getStudentVivaForFaculty,
   getLabVivaEvaluations,

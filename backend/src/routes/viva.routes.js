@@ -23,6 +23,23 @@ router.post(
   vivaController.createViva
 );
 
+// Update / set viva evaluation score & remarks directly (Teacher / Admin)
+router.put(
+  '/student/:studentId/experiment/:experimentId',
+  authorize('ADMIN_HOD', 'TEACHER'),
+  validateObjectIdParam('studentId'),
+  validateObjectIdParam('experimentId'),
+  validateCreateVivaInput,
+  vivaController.updateViva
+);
+
+router.put(
+  '/',
+  authorize('ADMIN_HOD', 'TEACHER'),
+  validateCreateVivaInput,
+  vivaController.updateViva
+);
+
 // Student gets their own viva details & history
 router.get(
   '/experiment/:experimentId/my-viva',
