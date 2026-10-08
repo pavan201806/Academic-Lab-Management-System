@@ -40,6 +40,9 @@ import TeacherNotificationsPage from '../pages/teacher/TeacherNotificationsPage'
 import TeacherReportsPage from '../pages/teacher/TeacherReportsPage';
 import StudentReportsPage from '../pages/student/StudentReportsPage';
 
+// Phase 3 Malpractice Monitoring Dashboard
+import TeacherMalpracticeDashboardPage from '../pages/teacher/TeacherMalpracticeDashboardPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -95,6 +98,7 @@ const AppRoutes = () => {
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
+        <Route path="labs/:labId/malpractice" element={<TeacherMalpracticeDashboardPage />} />
         <Route path="sections" element={<SectionManagementPage />} />
         <Route path="teachers" element={<TeacherManagementPage />} />
         <Route path="students" element={<StudentManagementPage />} />
@@ -118,6 +122,7 @@ const AppRoutes = () => {
         <Route path="labs/:labId/experiments" element={<TeacherExperimentManagementPage />} />
         <Route path="labs/:labId/experiments/import-pdf" element={<PdfExperimentExtractionPage />} />
         <Route path="labs/:labId/submissions" element={<TeacherSubmissionsLedgerPage />} />
+        <Route path="labs/:labId/malpractice" element={<TeacherMalpracticeDashboardPage />} />
         <Route path="notifications" element={<TeacherNotificationsPage />} />
         <Route path="reports" element={<TeacherReportsPage />} />
       </Route>

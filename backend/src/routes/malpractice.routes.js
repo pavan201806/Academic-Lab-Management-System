@@ -4,7 +4,8 @@ const malpracticeController = require('../controllers/malpractice.controller');
 const { authenticate, requirePasswordChangeCompleted } = require('../middleware/auth');
 const {
   validateRecordEventInput,
-  validateGetEventsQuery
+  validateGetEventsQuery,
+  validateGetLabOverview
 } = require('../validators/malpractice.validator');
 
 // All malpractice routes require active authentication & completed password change
@@ -19,5 +20,8 @@ router.get('/events', validateGetEventsQuery, malpracticeController.getEvents);
 
 // Summary statistics for malpractice occurrences
 router.get('/summary', malpracticeController.getEventSummary);
+
+// Laboratory-level comprehensive malpractice overview for Teachers & Admins
+router.get('/labs/:labId/overview', validateGetLabOverview, malpracticeController.getLabMalpracticeOverview);
 
 module.exports = router;

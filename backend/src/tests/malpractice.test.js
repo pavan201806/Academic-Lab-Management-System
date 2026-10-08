@@ -5,6 +5,8 @@ const {
   MalpracticeEvent,
   Experiment,
   Lab,
+  LabAssignment,
+  Section,
   User,
   EVENT_TYPES,
   SEVERITY_LEVELS,
@@ -86,19 +88,101 @@ async function runMalpracticeTests() {
     programmingLanguages: ['Python', 'C++']
   };
 
+  const sectionAId = new mongoose.Types.ObjectId('65f000000000000000000301');
+
+  const mockLab = {
+    _id: labId,
+    name: 'Data Structures Laboratory',
+    code: 'CS301L',
+    department: 'CSE',
+    semester: 3,
+    active: true
+  };
+
+  const mockSection = {
+    _id: sectionAId,
+    sectionCode: 'CSE-A',
+    department: 'CSE',
+    academicYear: '2025-2026',
+    active: true
+  };
+
+  const mockAssignment = {
+    _id: new mongoose.Types.ObjectId('65f000000000000000000401'),
+    teacher: teacherId,
+    lab: labId,
+    section: sectionAId,
+    active: true
+  };
+
   // --- Mock Database In-Memory Collections ---
   const inMemoryEvents = [];
 
   // Patch Mongoose model methods for isolated testing
   const originalExperimentFindById = Experiment.findById;
+  const originalLabFindById = Lab.findById;
+  const originalLabAssignmentFindOne = LabAssignment.findOne;
+  const originalLabAssignmentFind = LabAssignment.find;
+  const originalSectionFind = Section.find;
+  const originalUserFind = User.find;
   const originalEventCreate = MalpracticeEvent.create;
   const originalEventFind = MalpracticeEvent.find;
   const originalEventCount = MalpracticeEvent.countDocuments;
   const originalEventAggregate = MalpracticeEvent.aggregate;
   const originalEventDeleteMany = MalpracticeEvent.deleteMany;
 
+  Lab.findById = async function (id) {
+    if (id && id.toString() === labId.toString()) {
+      return mockLab;
+    }
+    return null;
+  };
+
+  LabAssignment.findOne = async function (filter = {}) {
+    if (
+      filter.lab &&
+      filter.lab.toString() === labId.toString() &&
+      filter.teacher &&
+      filter.teacher.toString() === teacherId.toString() &&
+      filter.active === true
+    ) {
+      return mockAssignment;
+    }
+    return null;
+  };
+
+  LabAssignment.find = async function (filter = {}) {
+    if (filter.lab && filter.lab.toString() === labId.toString()) {
+      if (filter.teacher && filter.teacher.toString() !== teacherId.toString()) {
+        return [];
+      }
+      return [mockAssignment];
+    }
+    return [];
+  };
+
+  Section.find = async function (filter = {}) {
+    return [mockSection];
+  };
+
+  User.find = function (filter = {}) {
+    let users = [studentAlice, studentBob];
+    if (filter.section && filter.section.$in) {
+      users = users.filter((u) => filter.section.$in.includes(u.section));
+    }
+    const queryObj = {
+      sort: function () {
+        return Promise.resolve(users);
+      },
+      then: function (resolve) {
+        return Promise.resolve(users).then(resolve);
+      }
+    };
+    return queryObj;
+  };
+
   Experiment.findById = async function (id) {
-    if (id.toString() === experimentId.toString()) {
+    if (id && id.toString() === experimentId.toString()) {
       return mockExperiment;
     }
     return null;
@@ -163,6 +247,7 @@ async function runMalpracticeTests() {
       if (filter.experiment && e.experiment.toString() !== filter.experiment.toString()) return false;
       if (filter.lab && e.lab.toString() !== filter.lab.toString()) return false;
       if (filter.eventType && e.eventType !== filter.eventType) return false;
+      if (filter.severity && e.severity !== filter.severity) return false;
       return true;
     }).length;
   };
@@ -173,11 +258,25 @@ async function runMalpracticeTests() {
       if (matchStage.active !== undefined && e.active !== matchStage.active) return false;
       if (matchStage.student && e.student.toString() !== matchStage.student.toString()) return false;
       if (matchStage.experiment && e.experiment.toString() !== matchStage.experiment.toString()) return false;
+      if (matchStage.lab && e.lab.toString() !== matchStage.lab.toString()) return false;
       return true;
     });
 
     const groupStage = pipeline.find((s) => s.$group)?.$group;
     if (groupStage) {
+      if (groupStage._id === '$student') {
+        const studentMap = {};
+        filtered.forEach((item) => {
+          const sId = item.student.toString();
+          if (!studentMap[sId]) {
+            studentMap[sId] = { _id: item.student, total: 0, events: [] };
+          }
+          studentMap[sId].total++;
+          studentMap[sId].events.push(item);
+        });
+        return Object.values(studentMap);
+      }
+
       const field = groupStage._id.replace('$', '');
       const counts = {};
       filtered.forEach((item) => {
@@ -207,7 +306,7 @@ async function runMalpracticeTests() {
   try {
     console.log('--- Section 1: Malpractice Event Model & Enums Validation ---');
 
-    await test('1. EVENT_TYPES includes required Phase 1 and Phase 2 events', () => {
+    await test('1. EVENT_TYPES includes required Phase 1, Phase 2 and future Phase 4 events', () => {
       const requiredTypes = [
         'COPY_ATTEMPT',
         'PASTE_ATTEMPT',
@@ -452,9 +551,107 @@ async function runMalpracticeTests() {
       assert.ok(summary.bySeverity['MEDIUM'] >= 3);
     });
 
-    console.log('\n--- Section 5: Cascade Deletion on Student Removal ---');
+    console.log('\n--- Section 5: Phase 3 Teacher Malpractice Dashboard & Telemetry ---');
 
-    await test('18. Deleting a student cascade-removes their malpractice records', async () => {
+    await test('18. Student cannot access Teacher Lab Malpractice Overview (403 Forbidden)', async () => {
+      let threw = false;
+      try {
+        await malpracticeService.getLabMalpracticeOverview({
+          user: studentAlice,
+          labId: labId.toString()
+        });
+      } catch (err) {
+        threw = true;
+        assert.strictEqual(err.statusCode, 403);
+      }
+      assert.strictEqual(threw, true);
+    });
+
+    await test('19. Unauthorized Teacher without assignment cannot access Lab Overview (403)', async () => {
+      const otherTeacher = {
+        _id: new mongoose.Types.ObjectId('65f000000000000000000099'),
+        name: 'Prof. Unassigned',
+        role: 'TEACHER',
+        active: true
+      };
+
+      let threw = false;
+      try {
+        await malpracticeService.getLabMalpracticeOverview({
+          user: otherTeacher,
+          labId: labId.toString()
+        });
+      } catch (err) {
+        threw = true;
+        assert.strictEqual(err.statusCode, 403);
+      }
+      assert.strictEqual(threw, true);
+    });
+
+    await test('20. Authorized Teacher retrieves complete Lab Malpractice Overview with telemetry and student statuses', async () => {
+      const overview = await malpracticeService.getLabMalpracticeOverview({
+        user: teacher,
+        labId: labId.toString()
+      });
+
+      assert.ok(overview.lab);
+      assert.strictEqual(overview.lab._id.toString(), labId.toString());
+      assert.strictEqual(overview.lab.code, 'CS301L');
+
+      assert.ok(overview.summary);
+      assert.strictEqual(overview.summary.studentsMonitored, 2);
+      assert.ok(overview.summary.totalEvents >= 5);
+      assert.strictEqual(overview.summary.studentsWithEvents, 1); // Alice has events, Bob has 0
+      assert.ok(overview.summary.studentsRequiringReview >= 1); // Alice has >=3 events
+
+      assert.ok(Array.isArray(overview.students));
+      assert.strictEqual(overview.students.length, 2);
+
+      const aliceStatus = overview.students.find((s) => s.studentId.toString() === studentAliceId.toString());
+      assert.ok(aliceStatus);
+      assert.ok(aliceStatus.totalEvents >= 5);
+      assert.strictEqual(aliceStatus.status, 'REVIEW_REQUIRED');
+
+      const bobStatus = overview.students.find((s) => s.studentId.toString() === studentBobId.toString());
+      assert.ok(bobStatus);
+      assert.strictEqual(bobStatus.totalEvents, 0);
+      assert.strictEqual(bobStatus.status, 'NORMAL');
+    });
+
+    await test('21. Admin HOD can view Lab Overview without explicit teacher assignment', async () => {
+      const overview = await malpracticeService.getLabMalpracticeOverview({
+        user: admin,
+        labId: labId.toString()
+      });
+
+      assert.ok(overview.lab);
+      assert.strictEqual(overview.summary.studentsMonitored, 2);
+      assert.ok(overview.summary.totalEvents >= 5);
+    });
+
+    await test('22. getEvents supports pagination, student filtering and severity filtering for Teachers', async () => {
+      const result = await malpracticeService.getEvents({
+        user: teacher,
+        query: {
+          labId: labId.toString(),
+          studentId: studentAliceId.toString(),
+          severity: 'MEDIUM',
+          page: 1,
+          limit: 2
+        }
+      });
+
+      assert.ok(Array.isArray(result.events));
+      assert.strictEqual(result.events.length, 2);
+      assert.strictEqual(result.page, 1);
+      assert.strictEqual(result.limit, 2);
+      assert.ok(result.total >= 3);
+      assert.ok(result.totalPages >= 2);
+    });
+
+    console.log('\n--- Section 6: Cascade Deletion on Student Removal ---');
+
+    await test('23. Deleting a student cascade-removes their malpractice records', async () => {
       const initialCount = inMemoryEvents.filter((e) => e.student.toString() === studentAliceId.toString()).length;
       assert.ok(initialCount > 0);
 
@@ -466,11 +663,16 @@ async function runMalpracticeTests() {
     });
 
     console.log('\n==============================================');
-    console.log(`Phase 1 & 2 Malpractice Prevention Tests: ${passed}/${total} PASSED (100%)`);
+    console.log(`Phase 1, 2 & 3 Malpractice Prevention Tests: ${passed}/${total} PASSED (100%)`);
     console.log('==============================================\n');
   } finally {
     // Restore patched methods
     Experiment.findById = originalExperimentFindById;
+    Lab.findById = originalLabFindById;
+    LabAssignment.findOne = originalLabAssignmentFindOne;
+    LabAssignment.find = originalLabAssignmentFind;
+    Section.find = originalSectionFind;
+    User.find = originalUserFind;
     MalpracticeEvent.create = originalEventCreate;
     MalpracticeEvent.find = originalEventFind;
     MalpracticeEvent.countDocuments = originalEventCount;
@@ -480,3 +682,4 @@ async function runMalpracticeTests() {
 }
 
 runMalpracticeTests();
+

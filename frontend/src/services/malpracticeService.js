@@ -57,6 +57,14 @@ export const malpracticeService = {
   },
 
   /**
+   * Retrieves malpractice events matching filter parameters (for timeline & student activity)
+   */
+  async getMalpracticeEvents(params = {}) {
+    const response = await apiClient.get('/malpractice/events', { params });
+    return response.data || response;
+  },
+
+  /**
    * Retrieves malpractice events for the active student session
    */
   async getStudentMalpracticeEvents(experimentId) {
@@ -69,9 +77,17 @@ export const malpracticeService = {
   /**
    * Retrieves summary statistics of malpractice occurrences
    */
-  async getMalpracticeSummary(experimentId) {
-    const response = await apiClient.get('/malpractice/summary', {
-      params: { experimentId }
+  async getMalpracticeSummary(params = {}) {
+    const response = await apiClient.get('/malpractice/summary', { params });
+    return response.data || response;
+  },
+
+  /**
+   * Retrieves comprehensive lab-level malpractice overview for teachers & admins
+   */
+  async getLabMalpracticeOverview(labId, query = {}) {
+    const response = await apiClient.get(`/malpractice/labs/${labId}/overview`, {
+      params: query
     });
     return response.data || response;
   },

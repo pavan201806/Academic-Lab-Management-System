@@ -389,7 +389,14 @@ const LabDetailsPage = () => {
           </div>
 
           {isTeacherOrAdmin && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Link
+                to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/malpractice` : `/teacher/labs/${lab._id}/malpractice`}
+                className="btn btn-secondary"
+                style={{ fontSize: '0.8125rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <span>🛡️</span> Malpractice Monitor &rarr;
+              </Link>
               <Link
                 to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${lab._id}/submissions` : `/teacher/labs/${lab._id}/submissions`}
                 className="btn btn-secondary"

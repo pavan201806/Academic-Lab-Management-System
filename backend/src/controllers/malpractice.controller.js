@@ -26,8 +26,21 @@ const getEventSummary = asyncHandler(async (req, res) => {
   return successResponse(res, summary, 'Malpractice summary retrieved successfully');
 });
 
+const getLabMalpracticeOverview = asyncHandler(async (req, res) => {
+  const { labId } = req.params;
+  const { sectionId, experimentId } = req.query;
+  const overview = await malpracticeService.getLabMalpracticeOverview({
+    user: req.user,
+    labId,
+    sectionId,
+    experimentId
+  });
+  return successResponse(res, overview, 'Lab malpractice overview retrieved successfully');
+});
+
 module.exports = {
   recordEvent,
   getEvents,
-  getEventSummary
+  getEventSummary,
+  getLabMalpracticeOverview
 };
