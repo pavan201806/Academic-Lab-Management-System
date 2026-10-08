@@ -15,7 +15,7 @@ const {
   validateGetEventsQuery
 } = require('../validators/malpractice.validator');
 
-console.log('=== Running Phase 1 Malpractice Prevention Test Suite ===\n');
+console.log('=== Running Phase 1 & Phase 2 Malpractice Prevention Test Suite ===\n');
 
 async function runMalpracticeTests() {
   let passed = 0;
@@ -162,6 +162,7 @@ async function runMalpracticeTests() {
       if (filter.student && e.student.toString() !== filter.student.toString()) return false;
       if (filter.experiment && e.experiment.toString() !== filter.experiment.toString()) return false;
       if (filter.lab && e.lab.toString() !== filter.lab.toString()) return false;
+      if (filter.eventType && e.eventType !== filter.eventType) return false;
       return true;
     }).length;
   };
@@ -206,7 +207,7 @@ async function runMalpracticeTests() {
   try {
     console.log('--- Section 1: Malpractice Event Model & Enums Validation ---');
 
-    await test('1. EVENT_TYPES includes required Phase 1 and future phase events', () => {
+    await test('1. EVENT_TYPES includes required Phase 1 and Phase 2 events', () => {
       const requiredTypes = [
         'COPY_ATTEMPT',
         'PASTE_ATTEMPT',
@@ -225,25 +226,28 @@ async function runMalpracticeTests() {
       });
     });
 
-    await test('2. DEFAULT_SEVERITY_MAP maps actions to proper severity ratings', () => {
+    await test('2. DEFAULT_SEVERITY_MAP maps actions to proper Phase 1 and Phase 2 ratings', () => {
       assert.strictEqual(DEFAULT_SEVERITY_MAP['COPY_ATTEMPT'], 'LOW');
       assert.strictEqual(DEFAULT_SEVERITY_MAP['CUT_ATTEMPT'], 'LOW');
       assert.strictEqual(DEFAULT_SEVERITY_MAP['PASTE_ATTEMPT'], 'MEDIUM');
       assert.strictEqual(DEFAULT_SEVERITY_MAP['CONTEXT_MENU_ATTEMPT'], 'LOW');
       assert.strictEqual(DEFAULT_SEVERITY_MAP['DRAG_DROP_ATTEMPT'], 'MEDIUM');
+      assert.strictEqual(DEFAULT_SEVERITY_MAP['TAB_SWITCH'], 'MEDIUM');
+      assert.strictEqual(DEFAULT_SEVERITY_MAP['WINDOW_BLUR'], 'MEDIUM');
+      assert.strictEqual(DEFAULT_SEVERITY_MAP['FULLSCREEN_EXIT'], 'MEDIUM');
       assert.strictEqual(DEFAULT_SEVERITY_MAP['CAMERA_DISABLED'], 'HIGH');
     });
 
     console.log('\n--- Section 2: Validator Middleware ---');
 
-    await test('3. validateRecordEventInput passes on valid input', async () => {
+    await test('3. validateRecordEventInput passes on valid Phase 2 input', async () => {
       let nextCalled = false;
       let errPassed = null;
       const req = {
         body: {
           experimentId: experimentId.toString(),
-          eventType: 'PASTE_ATTEMPT',
-          details: { language: 'Python' }
+          eventType: 'TAB_SWITCH',
+          details: { visibilityState: 'hidden' }
         }
       };
       const res = {};
@@ -262,7 +266,7 @@ async function runMalpracticeTests() {
       const req = {
         body: {
           experimentId: 'not-a-valid-id',
-          eventType: 'PASTE_ATTEMPT'
+          eventType: 'WINDOW_BLUR'
         }
       };
       validateRecordEventInput(req, {}, (err) => {
@@ -277,7 +281,7 @@ async function runMalpracticeTests() {
       const req = {
         body: {
           experimentId: experimentId.toString(),
-          eventType: 'HACKING_ATTEMPT'
+          eventType: 'UNKNOWN_ACTION'
         }
       };
       validateRecordEventInput(req, {}, (err) => {
@@ -287,7 +291,7 @@ async function runMalpracticeTests() {
       assert.strictEqual(errPassed.statusCode, 400);
     });
 
-    console.log('\n--- Section 3: Service Layer Event Recording & Security ---');
+    console.log('\n--- Section 3: Phase 1 & Phase 2 Event Recording ---');
 
     await test('6. Authenticated student can record a valid COPY_ATTEMPT event', async () => {
       const event = await malpracticeService.recordEvent(studentAlice, {
@@ -304,17 +308,43 @@ async function runMalpracticeTests() {
       assert.ok(event.timestamp instanceof Date);
     });
 
-    await test('7. Authenticated student recording PASTE_ATTEMPT receives MEDIUM severity by default', async () => {
+    await test('7. Authenticated student recording TAB_SWITCH receives MEDIUM severity and preserves metadata', async () => {
       const event = await malpracticeService.recordEvent(studentAlice, {
         experimentId: experimentId.toString(),
-        eventType: 'PASTE_ATTEMPT'
+        eventType: 'TAB_SWITCH',
+        details: { visibilityState: 'hidden' }
       });
 
-      assert.strictEqual(event.eventType, 'PASTE_ATTEMPT');
+      assert.strictEqual(event.eventType, 'TAB_SWITCH');
       assert.strictEqual(event.severity, 'MEDIUM');
+      assert.strictEqual(event.details.visibilityState, 'hidden');
     });
 
-    await test('8. Server derives labId automatically from Experiment if omitted', async () => {
+    await test('8. Authenticated student recording WINDOW_BLUR receives MEDIUM severity and preserves metadata', async () => {
+      const event = await malpracticeService.recordEvent(studentAlice, {
+        experimentId: experimentId.toString(),
+        eventType: 'WINDOW_BLUR',
+        details: { source: 'window_blur' }
+      });
+
+      assert.strictEqual(event.eventType, 'WINDOW_BLUR');
+      assert.strictEqual(event.severity, 'MEDIUM');
+      assert.strictEqual(event.details.source, 'window_blur');
+    });
+
+    await test('9. Authenticated student recording FULLSCREEN_EXIT receives MEDIUM severity and metadata', async () => {
+      const event = await malpracticeService.recordEvent(studentAlice, {
+        experimentId: experimentId.toString(),
+        eventType: 'FULLSCREEN_EXIT',
+        details: { fullscreenElementPresent: false }
+      });
+
+      assert.strictEqual(event.eventType, 'FULLSCREEN_EXIT');
+      assert.strictEqual(event.severity, 'MEDIUM');
+      assert.strictEqual(event.details.fullscreenElementPresent, false);
+    });
+
+    await test('10. Server derives labId automatically from Experiment if omitted', async () => {
       const event = await malpracticeService.recordEvent(studentAlice, {
         experimentId: experimentId.toString(),
         eventType: 'DRAG_DROP_ATTEMPT'
@@ -324,12 +354,12 @@ async function runMalpracticeTests() {
       assert.strictEqual(event.severity, 'MEDIUM');
     });
 
-    await test('9. Unauthenticated request to recordEvent throws 401', async () => {
+    await test('11. Unauthenticated request to recordEvent throws 401', async () => {
       let threw = false;
       try {
         await malpracticeService.recordEvent(null, {
           experimentId: experimentId.toString(),
-          eventType: 'PASTE_ATTEMPT'
+          eventType: 'TAB_SWITCH'
         });
       } catch (err) {
         threw = true;
@@ -338,12 +368,12 @@ async function runMalpracticeTests() {
       assert.strictEqual(threw, true);
     });
 
-    await test('10. Non-existent experimentId throws 404', async () => {
+    await test('12. Non-existent experimentId throws 404', async () => {
       let threw = false;
       try {
         await malpracticeService.recordEvent(studentAlice, {
           experimentId: new mongoose.Types.ObjectId().toString(),
-          eventType: 'PASTE_ATTEMPT'
+          eventType: 'WINDOW_BLUR'
         });
       } catch (err) {
         threw = true;
@@ -352,11 +382,10 @@ async function runMalpracticeTests() {
       assert.strictEqual(threw, true);
     });
 
-    await test('11. Student identity is strictly taken from auth user, preventing forgery', async () => {
-      // If a malicious payload passes a forged studentId, the service uses studentAlice._id
+    await test('13. Student identity is strictly taken from auth user, preventing forgery', async () => {
       const event = await malpracticeService.recordEvent(studentAlice, {
         experimentId: experimentId.toString(),
-        eventType: 'CUT_ATTEMPT',
+        eventType: 'FULLSCREEN_EXIT',
         studentId: studentBobId.toString() // attempt to forge Bob's id
       });
 
@@ -366,20 +395,20 @@ async function runMalpracticeTests() {
 
     console.log('\n--- Section 4: Event Retrieval & RBAC Isolation ---');
 
-    await test('12. Student can retrieve their own malpractice events', async () => {
+    await test('14. Student can retrieve their own Phase 1 & 2 malpractice events', async () => {
       const result = await malpracticeService.getEvents({
         user: studentAlice,
         query: { experimentId: experimentId.toString() }
       });
 
       assert.ok(Array.isArray(result.events));
-      assert.ok(result.events.length >= 3);
+      assert.ok(result.events.length >= 5);
       result.events.forEach((e) => {
         assert.strictEqual(e.student.toString(), studentAliceId.toString());
       });
     });
 
-    await test('13. Student querying another studentId is strictly forbidden (403)', async () => {
+    await test('15. Student querying another studentId is strictly forbidden (403)', async () => {
       let threw = false;
       try {
         await malpracticeService.getEvents({
@@ -393,36 +422,39 @@ async function runMalpracticeTests() {
       assert.strictEqual(threw, true);
     });
 
-    await test('14. Teacher and Admin can query malpractice events across students', async () => {
+    await test('16. Teacher and Admin can filter malpractice events by eventType (TAB_SWITCH, FULLSCREEN_EXIT)', async () => {
       const teacherRes = await malpracticeService.getEvents({
         user: teacher,
-        query: { experimentId: experimentId.toString() }
+        query: { experimentId: experimentId.toString(), eventType: 'TAB_SWITCH' }
       });
       assert.ok(Array.isArray(teacherRes.events));
+      assert.ok(teacherRes.events.every((e) => e.eventType === 'TAB_SWITCH'));
 
       const adminRes = await malpracticeService.getEvents({
         user: admin,
-        query: { experimentId: experimentId.toString() }
+        query: { experimentId: experimentId.toString(), eventType: 'FULLSCREEN_EXIT' }
       });
       assert.ok(Array.isArray(adminRes.events));
+      assert.ok(adminRes.events.every((e) => e.eventType === 'FULLSCREEN_EXIT'));
     });
 
-    await test('15. Summary aggregation returns accurate breakdown by eventType and severity', async () => {
+    await test('17. Summary aggregation returns accurate breakdown for Phase 1 & 2 events', async () => {
       const summary = await malpracticeService.getEventSummary({
         user: studentAlice,
         experimentId: experimentId.toString()
       });
 
-      assert.ok(summary.totalEvents >= 3);
-      assert.ok(typeof summary.byType === 'object');
-      assert.ok(typeof summary.bySeverity === 'object');
+      assert.ok(summary.totalEvents >= 5);
       assert.ok(summary.byType['COPY_ATTEMPT'] >= 1);
-      assert.ok(summary.byType['PASTE_ATTEMPT'] >= 1);
+      assert.ok(summary.byType['TAB_SWITCH'] >= 1);
+      assert.ok(summary.byType['WINDOW_BLUR'] >= 1);
+      assert.ok(summary.byType['FULLSCREEN_EXIT'] >= 1);
+      assert.ok(summary.bySeverity['MEDIUM'] >= 3);
     });
 
     console.log('\n--- Section 5: Cascade Deletion on Student Removal ---');
 
-    await test('16. Deleting a student cascade-removes their malpractice records', async () => {
+    await test('18. Deleting a student cascade-removes their malpractice records', async () => {
       const initialCount = inMemoryEvents.filter((e) => e.student.toString() === studentAliceId.toString()).length;
       assert.ok(initialCount > 0);
 
@@ -434,7 +466,7 @@ async function runMalpracticeTests() {
     });
 
     console.log('\n==============================================');
-    console.log(`Phase 1 Malpractice Prevention Tests: ${passed}/${total} PASSED (100%)`);
+    console.log(`Phase 1 & 2 Malpractice Prevention Tests: ${passed}/${total} PASSED (100%)`);
     console.log('==============================================\n');
   } finally {
     // Restore patched methods

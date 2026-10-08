@@ -8,6 +8,7 @@ import { testCaseService } from '../../services/testCaseService';
 import { vivaService } from '../../services/vivaService';
 import { reevaluationService } from '../../services/reevaluationService';
 import { malpracticeService } from '../../services/malpracticeService';
+import { useMalpracticeMonitor } from '../../hooks/useMalpracticeMonitor';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CodeEditor from '../../components/code/CodeEditor';
 
@@ -109,9 +110,32 @@ const StudentExperimentDetailPage = () => {
   // Active tab on page: 'workbench' | 'guide' | 'history'
   const [activeViewTab, setActiveViewTab] = useState('workbench');
 
-  // Phase 1 Malpractice Prevention State
+  // Phase 1 & 2 Malpractice Prevention State
   const [malpracticeWarning, setMalpracticeWarning] = useState(null);
   const malpracticeTimerRef = useRef(null);
+
+  const isExperimentActive = !loading && !error && experiment && experiment.status !== 'CLOSED';
+
+  // Phase 2: Tab Switch, Window Blur, and Fullscreen Monitoring
+  const {
+    isFullscreen,
+    hasEverEnteredFullscreen,
+    requestFullscreen,
+    exitFullscreen
+  } = useMalpracticeMonitor({
+    experimentId,
+    labId,
+    enabled: isExperimentActive,
+    onWarning: (message) => {
+      if (malpracticeTimerRef.current) {
+        clearTimeout(malpracticeTimerRef.current);
+      }
+      setMalpracticeWarning(message);
+      malpracticeTimerRef.current = setTimeout(() => {
+        setMalpracticeWarning(null);
+      }, 4000);
+    }
+  });
 
   const handleMalpracticeAttempt = (eventType, message) => {
     if (malpracticeTimerRef.current) {
@@ -120,7 +144,7 @@ const StudentExperimentDetailPage = () => {
     setMalpracticeWarning(message);
     malpracticeTimerRef.current = setTimeout(() => {
       setMalpracticeWarning(null);
-    }, 3500);
+    }, 4000);
 
     malpracticeService.recordMalpracticeEvent({
       experimentId,
@@ -806,6 +830,22 @@ const StudentExperimentDetailPage = () => {
               >
                 ⌨ Standard Input {stdin ? '●' : ''}
               </button>
+
+              <button
+                type="button"
+                onClick={isFullscreen ? exitFullscreen : requestFullscreen}
+                className="btn btn-secondary"
+                style={{
+                  fontSize: '0.75rem',
+                  padding: '0.35rem 0.65rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen (Required for Monitored Sessions)'}
+              >
+                <span>{isFullscreen ? '⛶ Exit Fullscreen' : '⛶ Fullscreen'}</span>
+              </button>
             </div>
 
             {/* Right Controls: Run Code & Official Submit */}
@@ -897,28 +937,50 @@ const StudentExperimentDetailPage = () => {
                 borderRadius: 'var(--radius-md)',
                 color: '#F87171',
                 fontSize: '0.8125rem',
-                fontWeight: 500
+                fontWeight: 500,
+                gap: '0.75rem',
+                flexWrap: 'wrap'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1rem' }}>⚠️</span>
                 <span>{malpracticeWarning}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setMalpracticeWarning(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#F87171',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  padding: '0.1rem 0.3rem',
-                  lineHeight: 1
-                }}
-              >
-                &times;
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {!isFullscreen && (
+                  <button
+                    type="button"
+                    onClick={requestFullscreen}
+                    style={{
+                      backgroundColor: 'rgba(239, 68, 68, 0.25)',
+                      border: '1px solid rgba(239, 68, 68, 0.45)',
+                      color: '#FCA5A5',
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.6rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ⛶ Return to Fullscreen
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMalpracticeWarning(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#F87171',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    padding: '0.1rem 0.3rem',
+                    lineHeight: 1
+                  }}
+                >
+                  &times;
+                </button>
+              </div>
             </div>
           )}
 

@@ -1,22 +1,41 @@
 import apiClient from './api';
 
-// Throttle tracker to prevent duplicate malpractice events within cooldown window
+// Throttle and correlation trackers to eliminate duplicate events across browser APIs
 const eventCooldownMap = new Map();
+const lastTabSwitchTimes = new Map();
+
 const COOLDOWN_MS = 1200; // 1.2s cooldown per event type for duplicate browser events
+const TAB_BLUR_CORRELATION_WINDOW_MS = 1500; // Window blur occurring within 1.5s of tab switch is suppressed
 
 export const malpracticeService = {
   /**
-   * Records a malpractice event with client-side throttling to avoid duplicate API calls
+   * Records a malpractice event with intelligent client-side throttling and cross-event deduplication
    */
   async recordMalpracticeEvent({ experimentId, labId, eventType, details = {} }) {
     if (!experimentId || !eventType) return null;
 
-    const cooldownKey = `${experimentId}_${eventType}`;
     const now = Date.now();
+
+    // 1. Cross-event deduplication: Tab switch causes window.blur in modern browsers.
+    // If a TAB_SWITCH happened recently for this experiment, suppress duplicate WINDOW_BLUR
+    if (eventType === 'WINDOW_BLUR') {
+      const lastTabSwitch = lastTabSwitchTimes.get(experimentId) || 0;
+      if (now - lastTabSwitch < TAB_BLUR_CORRELATION_WINDOW_MS) {
+        // Suppress duplicate blur caused by the same tab switch action
+        return null;
+      }
+    }
+
+    if (eventType === 'TAB_SWITCH') {
+      lastTabSwitchTimes.set(experimentId, now);
+    }
+
+    // 2. Per-event-type cooldown
+    const cooldownKey = `${experimentId}_${eventType}`;
     const lastTrigger = eventCooldownMap.get(cooldownKey) || 0;
 
     if (now - lastTrigger < COOLDOWN_MS) {
-      // Prohibited action blocked on client, throttled API dispatch
+      // Event throttled on client
       return null;
     }
 
@@ -31,7 +50,7 @@ export const malpracticeService = {
       });
       return response.data?.event || response.data || response;
     } catch (error) {
-      // Silent error logging so student coding session is not abruptly blocked if network glitches
+      // Non-blocking warning logging
       console.warn('Failed to dispatch malpractice event log:', error);
       return null;
     }
@@ -58,10 +77,11 @@ export const malpracticeService = {
   },
 
   /**
-   * Clears the cooldown cache (e.g. on unmount or session switch)
+   * Clears all cooldown and correlation caches (on unmount or experiment switch)
    */
   clearCooldownCache() {
     eventCooldownMap.clear();
+    lastTabSwitchTimes.clear();
   }
 };
 
