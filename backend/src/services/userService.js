@@ -6,7 +6,8 @@ const {
   Evaluation,
   VivaEvaluation,
   ReevaluationRequest,
-  Notification
+  Notification,
+  MalpracticeEvent
 } = require('../models');
 const AppError = require('../utils/appError');
 
@@ -167,7 +168,10 @@ class UserService {
         opts
       );
 
-      // 6. Delete the student User record itself
+      // 6. Delete all malpractice records associated with the student
+      await MalpracticeEvent.deleteMany({ student: studentId }, opts);
+
+      // 7. Delete the student User record itself
       await User.deleteOne({ _id: studentId }, opts);
 
       if (useTransaction && session) {
@@ -339,7 +343,10 @@ class UserService {
         opts
       );
 
-      // 6. Delete the student User records
+      // 6. Delete all malpractice records associated with the selected students
+      await MalpracticeEvent.deleteMany({ student: { $in: validStudentIds } }, opts);
+
+      // 7. Delete the student User records
       const userRes = await User.deleteMany({ _id: { $in: validStudentIds }, role: 'STUDENT' }, opts);
 
       if (useTransaction && session) {

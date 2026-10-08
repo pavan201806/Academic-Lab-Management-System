@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { experimentService } from '../../services/experimentService';
@@ -7,6 +7,7 @@ import { evaluationService } from '../../services/evaluationService';
 import { testCaseService } from '../../services/testCaseService';
 import { vivaService } from '../../services/vivaService';
 import { reevaluationService } from '../../services/reevaluationService';
+import { malpracticeService } from '../../services/malpracticeService';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CodeEditor from '../../components/code/CodeEditor';
 
@@ -108,8 +109,38 @@ const StudentExperimentDetailPage = () => {
   // Active tab on page: 'workbench' | 'guide' | 'history'
   const [activeViewTab, setActiveViewTab] = useState('workbench');
 
+  // Phase 1 Malpractice Prevention State
+  const [malpracticeWarning, setMalpracticeWarning] = useState(null);
+  const malpracticeTimerRef = useRef(null);
+
+  const handleMalpracticeAttempt = (eventType, message) => {
+    if (malpracticeTimerRef.current) {
+      clearTimeout(malpracticeTimerRef.current);
+    }
+    setMalpracticeWarning(message);
+    malpracticeTimerRef.current = setTimeout(() => {
+      setMalpracticeWarning(null);
+    }, 3500);
+
+    malpracticeService.recordMalpracticeEvent({
+      experimentId,
+      labId,
+      eventType,
+      details: {
+        language,
+        codeLength: sourceCode ? sourceCode.length : 0
+      }
+    });
+  };
+
   useEffect(() => {
     fetchExperimentAndHistory();
+    return () => {
+      if (malpracticeTimerRef.current) {
+        clearTimeout(malpracticeTimerRef.current);
+      }
+      malpracticeService.clearCooldownCache();
+    };
   }, [experimentId]);
 
   const fetchExperimentAndHistory = async () => {
@@ -853,12 +884,52 @@ const StudentExperimentDetailPage = () => {
             </div>
           )}
 
-          {/* Code Editor */}
+          {/* Malpractice Warning Banner */}
+          {malpracticeWarning && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.625rem 1rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: 'var(--radius-md)',
+                color: '#F87171',
+                fontSize: '0.8125rem',
+                fontWeight: 500
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1rem' }}>⚠️</span>
+                <span>{malpracticeWarning}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMalpracticeWarning(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#F87171',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  padding: '0.1rem 0.3rem',
+                  lineHeight: 1
+                }}
+              >
+                &times;
+              </button>
+            </div>
+          )}
+
+          {/* Code Editor with Malpractice Protection Enabled */}
           <CodeEditor
             value={sourceCode}
             onChange={setSourceCode}
             language={language}
             height="460px"
+            enableMalpracticeProtection={true}
+            onMalpracticeAttempt={handleMalpracticeAttempt}
           />
 
           {/* Phase 7 Test Case Evaluation Results Card */}

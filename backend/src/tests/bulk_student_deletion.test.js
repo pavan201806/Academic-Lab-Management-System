@@ -12,7 +12,8 @@ const {
   Evaluation,
   VivaEvaluation,
   ReevaluationRequest,
-  Notification
+  Notification,
+  MalpracticeEvent
 } = require('../models');
 const { authorize } = require('../middleware/auth');
 
@@ -251,6 +252,18 @@ async function runBulkStudentDeletionTests() {
       );
     }
     const res = { deletedCount: prev - mockNotifications.length };
+    return {
+      session: function () {
+        return Promise.resolve(res);
+      },
+      then: function (resolve) {
+        return Promise.resolve(res).then(resolve);
+      }
+    };
+  };
+
+  MalpracticeEvent.deleteMany = function (query = {}) {
+    const res = { deletedCount: 0 };
     return {
       session: function () {
         return Promise.resolve(res);

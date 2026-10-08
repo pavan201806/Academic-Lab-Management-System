@@ -9,6 +9,7 @@ const Evaluation = require('./evaluation.model');
 const VivaEvaluation = require('./vivaEvaluation.model');
 const ReevaluationRequest = require('./reevaluationRequest.model');
 const Notification = require('./notification.model');
+const { MalpracticeEvent, EVENT_TYPES, SEVERITY_LEVELS, DEFAULT_SEVERITY_MAP } = require('./malpracticeEvent.model');
 
 module.exports = {
   User,
@@ -21,7 +22,11 @@ module.exports = {
   Evaluation,
   VivaEvaluation,
   ReevaluationRequest,
-  Notification
+  Notification,
+  MalpracticeEvent,
+  EVENT_TYPES,
+  SEVERITY_LEVELS,
+  DEFAULT_SEVERITY_MAP
 };
 
 

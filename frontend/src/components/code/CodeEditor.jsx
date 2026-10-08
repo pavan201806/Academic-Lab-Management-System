@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 
 const CodeEditor = ({
   value,
@@ -6,7 +6,9 @@ const CodeEditor = ({
   language,
   readOnly = false,
   height = '420px',
-  placeholder = '// Write your solution here...'
+  placeholder = '// Write your solution here...',
+  enableMalpracticeProtection = false,
+  onMalpracticeAttempt = null
 }) => {
   const textareaRef = useRef(null);
   const lineNumbersRef = useRef(null);
@@ -21,9 +23,97 @@ const CodeEditor = ({
     }
   };
 
-  // Handle Tab key and automatic indentation
+  // Trigger malpractice attempt notification & callback safely
+  const triggerMalpractice = (eventType, message) => {
+    if (enableMalpracticeProtection && !readOnly && onMalpracticeAttempt) {
+      onMalpracticeAttempt(eventType, message);
+    }
+  };
+
+  // Copy event handler
+  const handleCopy = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      triggerMalpractice('COPY_ATTEMPT', 'Copying code is disabled during lab sessions.');
+    }
+  };
+
+  // Cut event handler
+  const handleCut = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      triggerMalpractice('CUT_ATTEMPT', 'Cutting code is disabled during lab sessions.');
+    }
+  };
+
+  // Paste event handler
+  const handlePaste = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      triggerMalpractice('PASTE_ATTEMPT', 'Pasting code is disabled during lab sessions.');
+    }
+  };
+
+  // Context menu (right-click) handler
+  const handleContextMenu = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      triggerMalpractice('CONTEXT_MENU_ATTEMPT', 'Context menu is disabled in the code editor.');
+    }
+  };
+
+  // Drag & drop handlers
+  const handleDragEnter = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'none';
+      }
+    }
+  };
+
+  const handleDragOver = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'none';
+      }
+    }
+  };
+
+  const handleDrop = (e) => {
+    if (enableMalpracticeProtection && !readOnly) {
+      e.preventDefault();
+      triggerMalpractice('DRAG_DROP_ATTEMPT', 'Dragging and dropping content into the editor is disabled.');
+    }
+  };
+
+  // Handle Tab key, automatic indentation, and shortcut intercepts
   const handleKeyDown = (e) => {
     if (readOnly) return;
+
+    const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+    const key = e.key ? e.key.toLowerCase() : '';
+
+    // Malpractice prevention keyboard shortcuts
+    if (enableMalpracticeProtection && isCtrlOrMeta) {
+      if (key === 'c') {
+        e.preventDefault();
+        triggerMalpractice('COPY_ATTEMPT', 'Copying is disabled during lab sessions.');
+        return;
+      }
+      if (key === 'v') {
+        e.preventDefault();
+        triggerMalpractice('PASTE_ATTEMPT', 'Pasting is disabled during lab sessions.');
+        return;
+      }
+      if (key === 'x') {
+        e.preventDefault();
+        triggerMalpractice('CUT_ATTEMPT', 'Cutting is disabled during lab sessions.');
+        return;
+      }
+      // Allowed shortcuts continue normally: Ctrl+Z, Ctrl+Y, Ctrl+A, Ctrl+F, Ctrl+S, etc.
+    }
 
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -46,6 +136,10 @@ const CodeEditor = ({
 
   return (
     <div
+      onContextMenu={handleContextMenu}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -71,7 +165,7 @@ const CodeEditor = ({
           color: '#94A3B8'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <span
             style={{
               display: 'inline-block',
@@ -95,6 +189,26 @@ const CodeEditor = ({
               }}
             >
               READ ONLY
+            </span>
+          )}
+          {enableMalpracticeProtection && !readOnly && (
+            <span
+              title="Malpractice prevention active: Copy, paste, cut, and right-click are restricted."
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                color: '#34D399',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                padding: '0.15rem 0.5rem',
+                borderRadius: '9999px',
+                fontSize: '0.6875rem',
+                fontWeight: 600
+              }}
+            >
+              <span style={{ fontSize: '0.75rem' }}>🛡️</span>
+              Lab Integrity Monitoring Active
             </span>
           )}
         </div>
@@ -135,6 +249,13 @@ const CodeEditor = ({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onScroll={handleScroll}
+          onCopy={handleCopy}
+          onCut={handleCut}
+          onPaste={handlePaste}
+          onContextMenu={handleContextMenu}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
           readOnly={readOnly}
           placeholder={placeholder}
           spellCheck="false"

@@ -11,7 +11,8 @@ const {
   Evaluation,
   VivaEvaluation,
   ReevaluationRequest,
-  Notification
+  Notification,
+  MalpracticeEvent
 } = require('../models');
 const { authorize } = require('../middleware/auth');
 
@@ -157,6 +158,10 @@ async function runStudentDeletionTests() {
       );
     }
     return { deletedCount: prevCount - mockNotifications.length };
+  };
+
+  MalpracticeEvent.deleteMany = async function (query) {
+    return { deletedCount: 0 };
   };
 
   // Seed baseline shared records
