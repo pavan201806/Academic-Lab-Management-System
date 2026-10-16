@@ -148,8 +148,16 @@ class SubmissionService {
     });
 
     // Phase 7: Automatically evaluate submission against active test cases
-    const evaluationService = require('./evaluationService');
-    const evaluation = await evaluationService.evaluateSubmission(submission);
+    let evaluation;
+    try {
+      const evaluationService = require('./evaluationService');
+      evaluation = await evaluationService.evaluateSubmission(submission);
+    } catch (evalErr) {
+      // If evaluation fails (e.g. execution provider failure during test-case execution),
+      // roll back the uncompleted submission so the student does not lose an attempt
+      await Submission.deleteOne({ _id: submission._id });
+      throw evalErr;
+    }
 
     return {
       ...submission.toObject ? submission.toObject() : submission,

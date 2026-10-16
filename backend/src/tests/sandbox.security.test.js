@@ -6,6 +6,9 @@ const codeExecutionService = require('../services/codeExecutionService');
 
 console.log('=== Running Phase 6 Sandbox Container Security & Attack Tests ===\n');
 
+// Explicitly test Docker sandbox provider
+codeExecutionService.setProvider('docker');
+
 async function runSecurityTests() {
   let passed = 0;
   let total = 0;

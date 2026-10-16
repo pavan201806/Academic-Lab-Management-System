@@ -142,7 +142,7 @@ class EvaluationService {
       active: true
     }).sort({ score: -1, attemptNumber: 1 });
 
-    if (evaluations.length === 0) return;
+    if (!evaluations || !Array.isArray(evaluations) || evaluations.length === 0) return;
 
     const highestScore = evaluations[0].score;
 
