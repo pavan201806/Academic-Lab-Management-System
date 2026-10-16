@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { experimentService } from '../../services/experimentService';
@@ -93,6 +93,8 @@ const StudentExperimentDetailPage = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
+  const [selectedAttemptForView, setSelectedAttemptForView] = useState(null);
+  const [evaluationError, setEvaluationError] = useState('');
 
   // Phase 8: Viva & Re-evaluation State
   const [vivaData, setVivaData] = useState({
@@ -225,13 +227,15 @@ const StudentExperimentDetailPage = () => {
       const res = await evaluationService.getStudentEvaluations(experimentId);
       const data = res.data || res;
       setEvaluationsData({
-        evaluations: data.evaluations || [],
-        highestScore: data.highestScore || 0,
-        totalAttempts: data.totalAttempts || 0,
-        attemptsRemaining: data.attemptsRemaining !== undefined ? data.attemptsRemaining : 3
+        evaluations: Array.isArray(data.evaluations) ? data.evaluations : [],
+        highestScore: typeof data.highestScore === 'number' ? data.highestScore : 0,
+        totalAttempts: typeof data.totalAttempts === 'number' ? data.totalAttempts : (data.evaluations?.length || 0),
+        attemptsRemaining: data.attemptsRemaining !== undefined ? data.attemptsRemaining : Math.max(0, 3 - (data.evaluations?.length || 0))
       });
+      setEvaluationError('');
     } catch (err) {
       console.error('Failed to load student evaluations:', err);
+      setEvaluationError(err.message || 'Failed to load evaluation history');
     }
   };
 
@@ -321,7 +325,31 @@ const StudentExperimentDetailPage = () => {
       } else {
         setActiveOutputTab('stdout');
       }
-      // Refresh history & evaluations
+
+      // Immediately synchronize evaluationsData if submission response includes evaluation
+      if (data.evaluation) {
+        setEvaluationsData((prev) => {
+          const updated = [...(prev.evaluations || [])];
+          const idx = updated.findIndex((e) => e._id === data.evaluation._id || e.attemptNumber === data.evaluation.attemptNumber);
+          if (idx >= 0) {
+            updated[idx] = data.evaluation;
+          } else {
+            updated.push(data.evaluation);
+          }
+          const highest = updated.reduce((max, ev) => Math.max(max, typeof ev.score === 'number' ? ev.score : 0), 0);
+          return {
+            evaluations: updated,
+            highestScore: highest,
+            totalAttempts: updated.length,
+            attemptsRemaining: Math.max(0, 3 - updated.length)
+          };
+        });
+      }
+
+      // Reset selected attempt to latest so the new attempt is shown immediately
+      setSelectedAttemptForView(null);
+
+      // Refresh history & evaluations to verify persisted records
       await Promise.all([fetchSubmissionHistory(), fetchEvaluations()]);
     } catch (err) {
       console.error('Submission failed:', err);
@@ -383,15 +411,118 @@ const StudentExperimentDetailPage = () => {
       ? evaluationsData.evaluations[evaluationsData.evaluations.length - 1]
       : null;
 
+  // Active evaluation to display in the workbench Test Cases panel (selected attempt or latest)
+  const activeEvaluation = selectedAttemptForView !== null
+    ? (evaluationsData.evaluations?.find((e) => e.attemptNumber === selectedAttemptForView) || latestEvaluation)
+    : latestEvaluation;
+
   const currentViva = vivaData.currentViva;
   const reevaluationRequest = vivaData.reevaluationRequest;
 
-  const automatedHighest = evaluationsData.highestScore || 0;
-  const vivaScore = currentViva ? currentViva.marks : 0;
-  const totalScore = currentViva ? Math.round((automatedHighest + vivaScore) * 100) / 100 : null;
+  // Determine official evaluation existence & score metrics
+  const hasEvaluations = Boolean(evaluationsData.evaluations && evaluationsData.evaluations.length > 0);
+  const highestAutoScore = hasEvaluations
+    ? (typeof evaluationsData.highestScore === 'number' ? evaluationsData.highestScore : 0)
+    : null;
+
+  const hasViva = Boolean(currentViva && typeof currentViva.marks === 'number');
+  const vivaScore = hasViva ? currentViva.marks : null;
+
+  // Total Score: show Auto Score + Viva Score whenever a meaningful score exists.
+  // If an official evaluation exists but viva is pending, show the available programming score rather than a dash.
+  // If neither score exists, display an appropriate pending state (null -> '—').
+  // A zero score must display as zero, not be treated as missing.
+  let totalScore = null;
+  if (hasEvaluations || hasViva) {
+    const autoPart = hasEvaluations ? highestAutoScore : 0;
+    const vivaPart = hasViva ? vivaScore : 0;
+    totalScore = Math.min(15, Math.round((autoPart + vivaPart) * 100) / 100);
+  }
 
   const attemptsUsed = evaluationsData.totalAttempts || submissions.length;
   const attemptsRemaining = Math.max(0, 3 - attemptsUsed);
+
+  // Build merged test cases array for workbench display (matches public test cases with attempt evaluation results)
+  const displayTestCases = useMemo(() => {
+    if (activeEvaluation && activeEvaluation.testCaseResults && activeEvaluation.testCaseResults.length > 0) {
+      const results = activeEvaluation.testCaseResults;
+      const evaluatedTcIds = new Set();
+      const evaluatedOrders = new Set();
+
+      const merged = results.map((r, idx) => {
+        const matchedPublic = publicTestCases.find((p) => {
+          if (r.testCaseId && p._id) {
+            return p._id.toString() === r.testCaseId.toString();
+          }
+          return p.order === r.order;
+        });
+
+        if (r.testCaseId) evaluatedTcIds.add(r.testCaseId.toString());
+        if (r.order) evaluatedOrders.add(r.order);
+
+        return {
+          id: r.testCaseId ? r.testCaseId.toString() : `eval_case_${r.order || idx}`,
+          testCaseId: r.testCaseId,
+          order: r.order || idx + 1,
+          isHidden: Boolean(r.isHidden),
+          isEvaluated: true,
+          passed: Boolean(r.passed),
+          earnedMarks: typeof r.earnedMarks === 'number' ? r.earnedMarks : 0,
+          availableMarks: typeof r.availableMarks === 'number' ? r.availableMarks : (matchedPublic?.marks || 1),
+          executionStatus: r.executionStatus || 'SUCCESS',
+          executionTimeMs: r.executionTimeMs,
+          input: matchedPublic?.input || '',
+          expectedOutput: matchedPublic?.expectedOutput || '',
+          actualOutput: r.isHidden ? undefined : r.actualOutput,
+          errorSummary: r.isHidden ? undefined : r.errorSummary
+        };
+      });
+
+      // Include any active public test cases that may not have an evaluation result
+      for (const p of publicTestCases) {
+        const pIdStr = p._id ? p._id.toString() : null;
+        const alreadyIncluded = (pIdStr && evaluatedTcIds.has(pIdStr)) || evaluatedOrders.has(p.order);
+        if (!alreadyIncluded) {
+          merged.push({
+            id: p._id ? p._id.toString() : `pub_case_${p.order}`,
+            testCaseId: p._id,
+            order: p.order,
+            isHidden: false,
+            isEvaluated: false,
+            passed: null,
+            earnedMarks: 0,
+            availableMarks: p.marks || 1,
+            executionStatus: 'PENDING',
+            executionTimeMs: undefined,
+            input: p.input || '',
+            expectedOutput: p.expectedOutput || '',
+            actualOutput: undefined,
+            errorSummary: undefined
+          });
+        }
+      }
+
+      return merged.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+
+    // Pre-submission or no official evaluation yet:
+    return publicTestCases.map((p, idx) => ({
+      id: p._id ? p._id.toString() : `pub_case_${p.order || idx}`,
+      testCaseId: p._id,
+      order: p.order || idx + 1,
+      isHidden: false,
+      isEvaluated: false,
+      passed: null,
+      earnedMarks: 0,
+      availableMarks: p.marks || 1,
+      executionStatus: 'PENDING',
+      executionTimeMs: undefined,
+      input: p.input || '',
+      expectedOutput: p.expectedOutput || '',
+      actualOutput: undefined,
+      errorSummary: undefined
+    })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [activeEvaluation, publicTestCases]);
 
   if (loading) {
     return (
@@ -505,7 +636,7 @@ const StudentExperimentDetailPage = () => {
               Auto Score
             </span>
             <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-              {evaluationsData.highestScore} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 10</span>
+              {highestAutoScore !== null ? `${highestAutoScore}` : '—'} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 10</span>
             </div>
           </div>
 
@@ -522,8 +653,8 @@ const StudentExperimentDetailPage = () => {
             <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Viva Score
             </span>
-            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: currentViva ? '#16a34a' : 'var(--color-text-muted)' }}>
-              {currentViva ? `${currentViva.marks}` : '—'} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 5</span>
+            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: hasViva ? '#16a34a' : 'var(--color-text-muted)' }}>
+              {hasViva ? `${vivaScore}` : '—'} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 5</span>
             </div>
           </div>
 
@@ -531,7 +662,7 @@ const StudentExperimentDetailPage = () => {
           <div
             style={{
               padding: '0.4rem 0.85rem',
-              backgroundColor: currentViva ? 'var(--color-primary-subtle)' : 'var(--color-canvas)',
+              backgroundColor: totalScore !== null ? 'var(--color-primary-subtle)' : 'var(--color-canvas)',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--color-primary)',
               textAlign: 'center'
@@ -994,95 +1125,7 @@ const StudentExperimentDetailPage = () => {
             onMalpracticeAttempt={handleMalpracticeAttempt}
           />
 
-          {/* Phase 7 Test Case Evaluation Results Card */}
-          {latestEvaluation && (
-            <div
-              className="card"
-              style={{
-                padding: '1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.25rem' }}>🧪</span>
-                  <h3 style={{ fontSize: '1rem', margin: 0, color: 'var(--color-text-primary)' }}>
-                    Automated Evaluation Results: Attempt #{latestEvaluation.attemptNumber}
-                  </h3>
-                  {latestEvaluation.isHighestScore && (
-                    <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>
-                      ★ HIGHEST SCORE
-                    </span>
-                  )}
-                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
-                    Earned: <strong>{latestEvaluation.earnedMarks}</strong> / {latestEvaluation.totalAvailableMarks} marks
-                  </span>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-family-mono)',
-                      fontSize: '1rem',
-                      fontWeight: 800,
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'var(--color-primary-subtle)',
-                      padding: '0.2rem 0.6rem',
-                      borderRadius: 'var(--radius-sm)'
-                    }}
-                  >
-                    {latestEvaluation.score} / 10
-                  </div>
-                </div>
-              </div>
-
-              {/* Test Case Badges Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                {latestEvaluation.testCaseResults?.map((tc, idx) => (
-                  <div
-                    key={tc.testCaseId || idx}
-                    style={{
-                      backgroundColor: tc.passed ? 'rgba(22, 163, 74, 0.08)' : 'rgba(220, 38, 38, 0.08)',
-                      border: tc.passed ? '1px solid rgba(22, 163, 74, 0.3)' : '1px solid rgba(220, 38, 38, 0.3)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '0.75rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.375rem'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, fontSize: '0.8125rem' }}>
-                        Test Case #{tc.order || idx + 1}
-                      </span>
-                      {tc.passed ? (
-                        <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>✓ Passed</span>
-                      ) : (
-                        <span className="badge badge-error" style={{ fontSize: '0.6875rem' }}>✗ Failed</span>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                      <span>{tc.isHidden ? '🔒 Hidden Case' : '👁 Public Case'}</span>
-                      <span style={{ fontWeight: 600, color: tc.passed ? '#16a34a' : '#dc2626' }}>
-                        {tc.earnedMarks} / {tc.availableMarks} pts
-                      </span>
-                    </div>
-
-                    {tc.executionTimeMs !== undefined && (
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
-                        ⏱ {tc.executionTimeMs} ms &bull; {tc.executionStatus}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Execution Output Console */}
           <div
@@ -1183,6 +1226,382 @@ const StudentExperimentDetailPage = () => {
                 executionResult.stderr || <span style={{ color: '#64748B' }}>[No errors or compiler warnings reported]</span>
               )}
             </div>
+          </div>
+
+          {/* Phase 7 & Updated: Comprehensive Test Cases & Evaluation Results Panel */}
+          <div
+            className="card"
+            style={{
+              padding: '1.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            {/* Header: Title, Attempt Indicator, Historical Switcher & Score */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '1.25rem' }}>🧪</span>
+                <h3 style={{ fontSize: '1.0625rem', margin: 0, color: 'var(--color-text-primary)', fontWeight: 700 }}>
+                  {activeEvaluation
+                    ? `Test Case Evaluation — Attempt #${activeEvaluation.attemptNumber}`
+                    : 'Available Test Cases (Pre-Submission Preview)'}
+                </h3>
+                {activeEvaluation && (
+                  <span
+                    className={`badge ${activeEvaluation.isHighestScore ? 'badge-success' : 'badge-primary'}`}
+                    style={{ fontSize: '0.6875rem' }}
+                  >
+                    {activeEvaluation.isHighestScore ? '★ HIGHEST SCORE' : `ATTEMPT #${activeEvaluation.attemptNumber}`}
+                  </span>
+                )}
+              </div>
+
+              {/* Right Side: Attempt Switcher & Evaluated Score Summary */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {evaluationsData.evaluations && evaluationsData.evaluations.length > 1 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.25rem',
+                      alignItems: 'center',
+                      backgroundColor: 'var(--color-canvas)',
+                      padding: '0.2rem',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--color-border)'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', padding: '0 0.35rem', fontWeight: 600 }}>
+                      Attempt:
+                    </span>
+                    {evaluationsData.evaluations.map((ev) => {
+                      const isSelected = activeEvaluation?.attemptNumber === ev.attemptNumber;
+                      return (
+                        <button
+                          key={ev._id || ev.attemptNumber}
+                          type="button"
+                          onClick={() => setSelectedAttemptForView(ev.attemptNumber)}
+                          className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{ fontSize: '0.6875rem', padding: '0.15rem 0.5rem', minHeight: 'auto' }}
+                        >
+                          #{ev.attemptNumber} {ev.isHighestScore ? '★' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {activeEvaluation ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                      Passed: <strong>{displayTestCases.filter((tc) => tc.passed).length}</strong> / {displayTestCases.length} cases
+                    </span>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-family-mono)',
+                        fontSize: '0.9375rem',
+                        fontWeight: 800,
+                        color: 'var(--color-primary)',
+                        backgroundColor: 'var(--color-primary-subtle)',
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: 'var(--radius-sm)'
+                      }}
+                    >
+                      {activeEvaluation.score} / 10
+                    </div>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                    {publicTestCases.length} Public {publicTestCases.length === 1 ? 'Case' : 'Cases'} Configured &bull;{' '}
+                    <span style={{ color: 'var(--color-text-muted)' }}>Run 'Official Submit' to evaluate</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Evaluation API error if any */}
+            {evaluationError && (
+              <div
+                style={{
+                  padding: '0.6rem 0.85rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid var(--color-error)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--color-error)',
+                  fontSize: '0.8125rem'
+                }}
+              >
+                <strong>Evaluation Notice:</strong> {evaluationError}
+              </div>
+            )}
+
+            {/* Test Cases List */}
+            {displayTestCases.length === 0 ? (
+              <div
+                style={{
+                  padding: '2rem',
+                  textAlign: 'center',
+                  backgroundColor: 'var(--color-canvas)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px dashed var(--color-border)',
+                  color: 'var(--color-text-secondary)',
+                  fontSize: '0.875rem'
+                }}
+              >
+                No test cases configured for this experiment.
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  maxHeight: '650px',
+                  overflowY: 'auto',
+                  paddingRight: '0.25rem'
+                }}
+              >
+                {displayTestCases.map((tc, idx) => {
+                  const isPassed = tc.isEvaluated && tc.passed;
+                  const isFailed = tc.isEvaluated && !tc.passed;
+                  const isPending = !tc.isEvaluated;
+
+                  let borderColor = 'var(--color-border)';
+                  let cardBg = 'var(--color-canvas)';
+                  if (isPassed) {
+                    borderColor = 'rgba(22, 163, 74, 0.35)';
+                    cardBg = 'rgba(22, 163, 74, 0.04)';
+                  } else if (isFailed) {
+                    borderColor = 'rgba(220, 38, 38, 0.35)';
+                    cardBg = 'rgba(220, 38, 38, 0.04)';
+                  }
+
+                  return (
+                    <div
+                      key={tc.id || idx}
+                      style={{
+                        backgroundColor: cardBg,
+                        border: `1px solid ${borderColor}`,
+                        borderRadius: 'var(--radius-md)',
+                        padding: '0.875rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.625rem',
+                        transition: 'border-color 0.2s ease'
+                      }}
+                    >
+                      {/* Test Case Card Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-family-mono)',
+                              fontWeight: 700,
+                              fontSize: '0.875rem',
+                              color: 'var(--color-text-primary)'
+                            }}
+                          >
+                            Test Case #{tc.order || idx + 1}
+                          </span>
+
+                          {tc.isHidden ? (
+                            <span
+                              className="badge"
+                              style={{
+                                backgroundColor: 'rgba(100, 116, 139, 0.15)',
+                                color: '#94A3B8',
+                                border: '1px solid #475569',
+                                fontSize: '0.6875rem'
+                              }}
+                            >
+                              🔒 Hidden Test Case
+                            </span>
+                          ) : (
+                            <span className="badge badge-info" style={{ fontSize: '0.6875rem' }}>
+                              👁 Public Case
+                            </span>
+                          )}
+
+                          {tc.isEvaluated ? (
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: isPassed ? '#16a34a' : '#dc2626' }}>
+                              {tc.earnedMarks} / {tc.availableMarks} pts
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                              {tc.availableMarks} {tc.availableMarks === 1 ? 'pt' : 'pts'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Status Indicator */}
+                        <div>
+                          {isPassed && (
+                            <span
+                              className="badge badge-success"
+                              style={{ fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
+                              <span>✓</span> Passed
+                            </span>
+                          )}
+                          {isFailed && (
+                            <span
+                              className="badge badge-error"
+                              style={{ fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
+                              <span>✗</span> {tc.executionStatus === 'SUCCESS' ? 'Failed' : tc.executionStatus}
+                            </span>
+                          )}
+                          {isPending && (
+                            <span
+                              className="badge"
+                              style={{
+                                backgroundColor: 'var(--color-surface)',
+                                color: 'var(--color-text-secondary)',
+                                border: '1px solid var(--color-border)',
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              ⏳ Not Evaluated Yet
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Test Case Content */}
+                      {tc.isHidden ? (
+                        <div
+                          style={{
+                            backgroundColor: 'var(--color-surface)',
+                            padding: '0.625rem 0.85rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px dashed var(--color-border)',
+                            fontSize: '0.8125rem',
+                            color: 'var(--color-text-muted)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          <span>🛡️</span>
+                          <span>Test case inputs and outputs are protected to maintain examination and evaluation integrity.</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem', fontSize: '0.75rem' }}>
+                          {/* Standard Input */}
+                          <div>
+                            <strong style={{ color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+                              Standard Input (stdin):
+                            </strong>
+                            <pre
+                              style={{
+                                backgroundColor: '#0F172A',
+                                color: '#E2E8F0',
+                                padding: '0.5rem 0.65rem',
+                                borderRadius: '4px',
+                                margin: 0,
+                                fontFamily: 'var(--font-family-mono)',
+                                whiteSpace: 'pre-wrap',
+                                maxHeight: '110px',
+                                overflowY: 'auto'
+                              }}
+                            >
+                              {tc.input || '<empty input>'}
+                            </pre>
+                          </div>
+
+                          {/* Expected Output */}
+                          <div>
+                            <strong style={{ color: 'var(--color-text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
+                              Expected Output:
+                            </strong>
+                            <pre
+                              style={{
+                                backgroundColor: '#0F172A',
+                                color: '#E2E8F0',
+                                padding: '0.5rem 0.65rem',
+                                borderRadius: '4px',
+                                margin: 0,
+                                fontFamily: 'var(--font-family-mono)',
+                                whiteSpace: 'pre-wrap',
+                                maxHeight: '110px',
+                                overflowY: 'auto'
+                              }}
+                            >
+                              {tc.expectedOutput || '<empty output>'}
+                            </pre>
+                          </div>
+
+                          {/* Actual Program Output if Evaluated */}
+                          {tc.isEvaluated && tc.actualOutput !== undefined && (
+                            <div>
+                              <strong style={{ color: isPassed ? '#16a34a' : '#dc2626', display: 'block', marginBottom: '0.25rem' }}>
+                                Actual Program Output:
+                              </strong>
+                              <pre
+                                style={{
+                                  backgroundColor: '#0F172A',
+                                  color: isPassed ? '#86EFAC' : '#FCA5A5',
+                                  border: isPassed ? '1px solid rgba(22, 163, 74, 0.4)' : '1px solid rgba(220, 38, 38, 0.4)',
+                                  padding: '0.5rem 0.65rem',
+                                  borderRadius: '4px',
+                                  margin: 0,
+                                  fontFamily: 'var(--font-family-mono)',
+                                  whiteSpace: 'pre-wrap',
+                                  maxHeight: '110px',
+                                  overflowY: 'auto'
+                                }}
+                              >
+                                {tc.actualOutput || '<no output>'}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Error Summary if failed */}
+                      {isFailed && tc.errorSummary && !tc.isHidden && (
+                        <div
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--color-error)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          <strong>Failure Detail:</strong> {tc.errorSummary}
+                        </div>
+                      )}
+
+                      {/* Execution Details Footer */}
+                      {tc.isEvaluated && tc.executionTimeMs !== undefined && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            fontSize: '0.6875rem',
+                            color: 'var(--color-text-muted)',
+                            borderTop: '1px solid var(--color-border)',
+                            paddingTop: '0.35rem',
+                            marginTop: '0.2rem'
+                          }}
+                        >
+                          <span>
+                            Execution Status: <strong>{tc.executionStatus}</strong>
+                          </span>
+                          <span>
+                            ⏱ Execution Time: <strong>{tc.executionTimeMs} ms</strong>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

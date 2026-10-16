@@ -5,7 +5,7 @@ export const evaluationService = {
    * Get student's evaluation results for an experiment (attempts, score /10, highest score, test case results)
    */
   getStudentEvaluations: async (experimentId) => {
-    const res = await apiClient.get(`/evaluations/experiment/${experimentId}/student`);
+    const res = await apiClient.get(`/evaluations/experiment/${experimentId}/my`);
     return res.data || res;
   },
 
