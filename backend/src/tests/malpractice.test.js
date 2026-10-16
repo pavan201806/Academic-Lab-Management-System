@@ -181,6 +181,18 @@ async function runMalpracticeTests() {
     return queryObj;
   };
 
+  Experiment.find = function (filter = {}) {
+    const queryObj = {
+      sort: function () {
+        return Promise.resolve([mockExperiment]);
+      },
+      then: function (resolve) {
+        return Promise.resolve([mockExperiment]).then(resolve);
+      }
+    };
+    return queryObj;
+  };
+
   Experiment.findById = async function (id) {
     if (id && id.toString() === experimentId.toString()) {
       return mockExperiment;
@@ -275,6 +287,25 @@ async function runMalpracticeTests() {
           studentMap[sId].events.push(item);
         });
         return Object.values(studentMap);
+      }
+
+      if (typeof groupStage._id === 'object') {
+        const compositeMap = {};
+        filtered.forEach((item) => {
+          const key = `${item.experiment}_${item.student}`;
+          if (!compositeMap[key]) {
+            compositeMap[key] = {
+              _id: { experiment: item.experiment, student: item.student },
+              eventCount: 0,
+              hasHighSeverity: 0
+            };
+          }
+          compositeMap[key].eventCount++;
+          if (item.severity === 'HIGH') {
+            compositeMap[key].hasHighSeverity = 1;
+          }
+        });
+        return Object.values(compositeMap);
       }
 
       const field = groupStage._id.replace('$', '');

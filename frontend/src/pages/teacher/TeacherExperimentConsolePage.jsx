@@ -12,17 +12,17 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import CodeEditor from '../../components/code/CodeEditor';
 
 const EVENT_CONFIG = {
-  COPY_ATTEMPT: { label: 'Copy Attempt', icon: '📋', description: 'Copying code from editor was blocked.' },
-  PASTE_ATTEMPT: { label: 'Paste Attempt', icon: '📄', description: 'Pasting code into editor was blocked.' },
-  CUT_ATTEMPT: { label: 'Cut Attempt', icon: '✂️', description: 'Cutting code from editor was blocked.' },
-  CONTEXT_MENU_ATTEMPT: { label: 'Context Menu Attempt', icon: '🖱️', description: 'Right-click context menu was triggered.' },
-  DRAG_DROP_ATTEMPT: { label: 'Drag & Drop Attempt', icon: '📥', description: 'Drag-and-drop into editor was blocked.' },
-  TAB_SWITCH: { label: 'Tab Switch', icon: '🗂️', description: 'Navigated away from active tab.' },
-  WINDOW_BLUR: { label: 'Window Focus Lost', icon: '🪟', description: 'Editor window lost application focus.' },
-  FULLSCREEN_EXIT: { label: 'Fullscreen Exit', icon: '⛶', description: 'Exited fullscreen examination mode.' },
-  CAMERA_DISABLED: { label: 'Camera Disabled', icon: '📷', description: 'Camera stream disconnected.' },
-  FACE_NOT_DETECTED: { label: 'Face Not Detected', icon: '👤', description: 'Face not detected in frame.' },
-  MULTIPLE_FACES_DETECTED: { label: 'Multiple Faces', icon: '👥', description: 'Multiple individuals in frame.' }
+  COPY_ATTEMPT: { label: 'Copy Attempt', icon: '📋', description: 'Copying code from editor was blocked.', defaultSeverity: 'LOW' },
+  PASTE_ATTEMPT: { label: 'Paste Attempt', icon: '📄', description: 'Pasting code into editor was blocked.', defaultSeverity: 'MEDIUM' },
+  CUT_ATTEMPT: { label: 'Cut Attempt', icon: '✂️', description: 'Cutting code from editor was blocked.', defaultSeverity: 'LOW' },
+  CONTEXT_MENU_ATTEMPT: { label: 'Context Menu Attempt', icon: '🖱️', description: 'Right-click context menu was triggered in editor.', defaultSeverity: 'LOW' },
+  DRAG_DROP_ATTEMPT: { label: 'Drag & Drop Attempt', icon: '📥', description: 'Drag-and-drop into editor was blocked.', defaultSeverity: 'MEDIUM' },
+  TAB_SWITCH: { label: 'Tab Switch', icon: '🗂️', description: 'Navigated away from active laboratory tab.', defaultSeverity: 'MEDIUM' },
+  WINDOW_BLUR: { label: 'Window Focus Lost', icon: '🪟', description: 'Editor window lost system application focus.', defaultSeverity: 'MEDIUM' },
+  FULLSCREEN_EXIT: { label: 'Fullscreen Exit', icon: '⛶', description: 'Exited mandatory fullscreen examination mode.', defaultSeverity: 'MEDIUM' },
+  CAMERA_DISABLED: { label: 'Camera Disabled', icon: '📷', description: 'Proctoring camera stream disconnected.', defaultSeverity: 'HIGH' },
+  FACE_NOT_DETECTED: { label: 'Face Not Detected', icon: '👤', description: 'Candidate face not detected in camera frame.', defaultSeverity: 'HIGH' },
+  MULTIPLE_FACES_DETECTED: { label: 'Multiple Faces', icon: '👥', description: 'Multiple individuals detected in camera frame.', defaultSeverity: 'HIGH' }
 };
 
 const TeacherExperimentConsolePage = () => {
@@ -33,7 +33,7 @@ const TeacherExperimentConsolePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Active Tab: 'submissions' | 'malpractice' | 'viva'
+  // Active Tab: 'submissions' | 'analytics' | 'viva'
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Core Data States
@@ -51,17 +51,18 @@ const TeacherExperimentConsolePage = () => {
 
   // Malpractice Telemetry State (Experiment-scoped)
   const [malpracticeOverview, setMalpracticeOverview] = useState(null);
-  const [malpracticeLoading, setMalpracticeLoading] = useState(false);
 
   // Viva Sub-Tab & Re-evaluations State
   const [vivaSubTab, setVivaSubTab] = useState('evaluation'); // 'evaluation' | 'reevaluations'
   const [reevalRequests, setReevalRequests] = useState([]);
 
-  // Filter States
+  // Unified Filter States
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [sectionFilter, setSectionFilter] = useState('ALL');
-  const [malpracticeStatusFilter, setMalpracticeStatusFilter] = useState('ALL');
+  const [submissionStatusFilter, setSubmissionStatusFilter] = useState('ALL');
+  const [integrityFilter, setIntegrityFilter] = useState('ALL'); // ALL, CLEAN, ATTENTION, REVIEW_REQUIRED, CRITICAL
+  const [riskLevelFilter, setRiskLevelFilter] = useState('ALL'); // ALL, HIGH, MEDIUM, LOW, NONE
+  const [sortBy, setSortBy] = useState('RISK_FIRST'); // RISK_FIRST, INCIDENTS_DESC, SCORE_DESC, SCORE_ASC, ROLL_ASC, NAME_ASC
 
   // Modal / Inspection States
   const [inspectingSubmission, setInspectingSubmission] = useState(null);
@@ -86,8 +87,8 @@ const TeacherExperimentConsolePage = () => {
   const [processError, setProcessError] = useState('');
   const [processSuccess, setProcessSuccess] = useState('');
 
-  // Student Malpractice Timeline Modal State
-  const [timelineStudent, setTimelineStudent] = useState(null);
+  // Student Malpractice Investigation Modal State
+  const [investigatingStudent, setInvestigatingStudent] = useState(null);
   const [timelineEvents, setTimelineEvents] = useState([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [timelineError, setTimelineError] = useState('');
@@ -185,14 +186,15 @@ const TeacherExperimentConsolePage = () => {
     }
   };
 
-  // Build unified student roster combining Enrollment, Submissions, Program Score, Viva Score, and Malpractice Status
+  // Build unified student roster combining Enrollment, Submissions, Scores, and Malpractice Telemetry
   const unifiedStudentRoster = useMemo(() => {
     if (!eligibleStudents || eligibleStudents.length === 0) return [];
 
     const malStudentMap = new Map();
     if (malpracticeOverview?.students) {
       malpracticeOverview.students.forEach((ms) => {
-        malStudentMap.set(ms.student?._id?.toString() || ms.student?.toString(), ms);
+        const key = ms.studentId?.toString() || ms.student?._id?.toString() || ms.student?.toString();
+        if (key) malStudentMap.set(key, ms);
       });
     }
 
@@ -200,34 +202,35 @@ const TeacherExperimentConsolePage = () => {
       const studentObj = item.student || item;
       const studentIdStr = studentObj._id?.toString();
 
-      // Find latest submission for this student and experiment
+      // Submissions for this student
       const studentSubs = submissions.filter(
         (s) => (s.student?._id || s.student)?.toString() === studentIdStr
       );
       const latestSub = studentSubs.length > 0 ? studentSubs[0] : null;
 
-      // Find highest automated evaluation score
+      // Automated evaluation
       const studentEvals = evaluations.filter(
         (e) => (e.student?._id || e.student)?.toString() === studentIdStr
       );
-      const programScore = studentEvals.length > 0 && typeof studentEvals[0].score === 'number'
-        ? studentEvals[0].score
-        : item.highestAutomatedScore !== undefined
-        ? item.highestAutomatedScore
-        : null;
+      const programScore =
+        studentEvals.length > 0 && typeof studentEvals[0].score === 'number'
+          ? studentEvals[0].score
+          : item.highestAutomatedScore !== undefined
+          ? item.highestAutomatedScore
+          : null;
 
-      // Find current viva evaluation
+      // Viva evaluation
       const matchedViva = vivas.find(
         (v) => (v.student?._id || v.student)?.toString() === studentIdStr
       );
       const vivaScore = matchedViva && typeof matchedViva.marks === 'number' ? matchedViva.marks : null;
 
       // Total Score out of 15
-      const totalScore = programScore !== null || vivaScore !== null
-        ? Math.round(((programScore || 0) + (vivaScore || 0)) * 100) / 100
-        : null;
+      const totalScore =
+        programScore !== null || vivaScore !== null
+          ? Math.round(((programScore || 0) + (vivaScore || 0)) * 100) / 100
+          : null;
 
-      // Determine Submission & Evaluation Status
       let submissionStatus = 'NOT_SUBMITTED';
       if (studentSubs.length > 0) {
         submissionStatus = 'SUBMITTED';
@@ -246,8 +249,12 @@ const TeacherExperimentConsolePage = () => {
       const malTelemetry = malStudentMap.get(studentIdStr) || {
         totalEvents: 0,
         status: 'NORMAL',
+        riskScore: 0,
+        riskLevel: 'NONE',
         byType: {},
-        latestEvent: null
+        bySeverity: {},
+        latestEvent: null,
+        latestEventTimestamp: null
       };
 
       return {
@@ -259,6 +266,7 @@ const TeacherExperimentConsolePage = () => {
         submissionStatus,
         evaluationStatus,
         attemptsCount: studentSubs.length,
+        studentSubmissions: studentSubs,
         latestSubmission: latestSub,
         programScore,
         vivaScore,
@@ -266,14 +274,18 @@ const TeacherExperimentConsolePage = () => {
         vivaRecord: matchedViva || null,
         totalScore,
         malpracticeStatus: malTelemetry.status || 'NORMAL',
+        riskScore: malTelemetry.riskScore || 0,
+        riskLevel: malTelemetry.riskLevel || 'NONE',
         malpracticeEventsCount: malTelemetry.totalEvents || 0,
         malpracticeLatestEvent: malTelemetry.latestEvent || null,
-        malpracticeByType: malTelemetry.byType || {}
+        malpracticeLatestTimestamp: malTelemetry.latestEventTimestamp || malTelemetry.latestEvent?.timestamp || null,
+        malpracticeByType: malTelemetry.byType || {},
+        malpracticeBySeverity: malTelemetry.bySeverity || {}
       };
     });
   }, [eligibleStudents, submissions, evaluations, vivas, malpracticeOverview]);
 
-  // Unique sections list for cohort filter
+  // Unique sections list
   const uniqueSections = useMemo(() => {
     const set = new Set();
     unifiedStudentRoster.forEach((s) => {
@@ -282,57 +294,66 @@ const TeacherExperimentConsolePage = () => {
     return Array.from(set).sort();
   }, [unifiedStudentRoster]);
 
-  // Filtered Roster for Submissions & Cohort Tab
-  const filteredSubmissionsRoster = useMemo(() => {
-    return unifiedStudentRoster.filter((row) => {
-      if (sectionFilter !== 'ALL' && row.section !== sectionFilter) return false;
-      if (statusFilter === 'SUBMITTED' && row.submissionStatus !== 'SUBMITTED') return false;
-      if (statusFilter === 'NOT_SUBMITTED' && row.submissionStatus !== 'NOT_SUBMITTED') return false;
-      if (statusFilter === 'EVALUATED' && row.evaluationStatus !== 'EVALUATED') return false;
-      if (statusFilter === 'VIVA_PENDING' && row.evaluationStatus !== 'VIVA_PENDING') return false;
+  // Filtered & Sorted Roster for Main View
+  const filteredMainRoster = useMemo(() => {
+    return unifiedStudentRoster
+      .filter((row) => {
+        if (sectionFilter !== 'ALL' && row.section !== sectionFilter) return false;
 
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchName = row.name?.toLowerCase().includes(term);
-        const matchRoll = row.rollNumber?.toLowerCase().includes(term);
-        return matchName || matchRoll;
-      }
-      return true;
-    });
-  }, [unifiedStudentRoster, sectionFilter, statusFilter, searchTerm]);
+        // Submission Status Filter
+        if (submissionStatusFilter === 'SUBMITTED' && row.submissionStatus !== 'SUBMITTED') return false;
+        if (submissionStatusFilter === 'NOT_SUBMITTED' && row.submissionStatus !== 'NOT_SUBMITTED') return false;
+        if (submissionStatusFilter === 'EVALUATED' && row.evaluationStatus !== 'EVALUATED') return false;
+        if (submissionStatusFilter === 'VIVA_PENDING' && row.evaluationStatus !== 'VIVA_PENDING') return false;
 
-  // Filtered Roster for Malpractice Tab
-  const filteredMalpracticeRoster = useMemo(() => {
-    return unifiedStudentRoster.filter((row) => {
-      if (sectionFilter !== 'ALL' && row.section !== sectionFilter) return false;
-      if (malpracticeStatusFilter !== 'ALL' && row.malpracticeStatus !== malpracticeStatusFilter) return false;
+        // Integrity Status Filter
+        if (integrityFilter === 'CLEAN' && row.malpracticeStatus !== 'NORMAL') return false;
+        if (integrityFilter === 'ATTENTION' && row.malpracticeStatus !== 'ATTENTION') return false;
+        if (integrityFilter === 'REVIEW_REQUIRED' && row.malpracticeStatus !== 'REVIEW_REQUIRED') return false;
+        if (integrityFilter === 'CRITICAL' && row.malpracticeStatus !== 'CRITICAL') return false;
+        if (integrityFilter === 'FLAGGED' && row.malpracticeStatus === 'NORMAL') return false;
 
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchName = row.name?.toLowerCase().includes(term);
-        const matchRoll = row.rollNumber?.toLowerCase().includes(term);
-        return matchName || matchRoll;
-      }
-      return true;
-    });
-  }, [unifiedStudentRoster, sectionFilter, malpracticeStatusFilter, searchTerm]);
+        // Risk Level Filter
+        if (riskLevelFilter !== 'ALL' && row.riskLevel !== riskLevelFilter) return false;
 
-  // Filtered Roster for Viva Tab
-  const filteredVivaRoster = useMemo(() => {
-    return unifiedStudentRoster.filter((row) => {
-      if (sectionFilter !== 'ALL' && row.section !== sectionFilter) return false;
-      if (statusFilter === 'EVALUATED' && row.vivaScore === null) return false;
-      if (statusFilter === 'PENDING' && row.vivaScore !== null) return false;
+        // Search
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase().trim();
+          const matchName = row.name?.toLowerCase().includes(term);
+          const matchRoll = row.rollNumber?.toLowerCase().includes(term);
+          if (!matchName && !matchRoll) return false;
+        }
 
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchName = row.name?.toLowerCase().includes(term);
-        const matchRoll = row.rollNumber?.toLowerCase().includes(term);
-        return matchName || matchRoll;
-      }
-      return true;
-    });
-  }, [unifiedStudentRoster, sectionFilter, statusFilter, searchTerm]);
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'RISK_FIRST') {
+          // Critical/Review first, then highest risk score, then incidents
+          const getStatusRank = (s) => (s === 'CRITICAL' ? 4 : s === 'REVIEW_REQUIRED' ? 3 : s === 'ATTENTION' ? 2 : 1);
+          const rankDiff = getStatusRank(b.malpracticeStatus) - getStatusRank(a.malpracticeStatus);
+          if (rankDiff !== 0) return rankDiff;
+          const scoreDiff = (b.riskScore || 0) - (a.riskScore || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+          return (b.malpracticeEventsCount || 0) - (a.malpracticeEventsCount || 0);
+        }
+        if (sortBy === 'INCIDENTS_DESC') {
+          return (b.malpracticeEventsCount || 0) - (a.malpracticeEventsCount || 0);
+        }
+        if (sortBy === 'SCORE_DESC') {
+          return (b.totalScore || 0) - (a.totalScore || 0);
+        }
+        if (sortBy === 'SCORE_ASC') {
+          return (a.totalScore || 0) - (b.totalScore || 0);
+        }
+        if (sortBy === 'ROLL_ASC') {
+          return (a.rollNumber || '').localeCompare(b.rollNumber || '');
+        }
+        if (sortBy === 'NAME_ASC') {
+          return (a.name || '').localeCompare(b.name || '');
+        }
+        return 0;
+      });
+  }, [unifiedStudentRoster, sectionFilter, submissionStatusFilter, integrityFilter, riskLevelFilter, searchTerm, sortBy]);
 
   // Open Inspection Modal for Submissions
   const handleOpenInspection = (row) => {
@@ -364,7 +385,8 @@ const TeacherExperimentConsolePage = () => {
     setVivaSaveSuccess('');
     setVivaSaveError('');
 
-    const targetStudentId = gradingStudent?.studentId || inspectingSubmission?.student?._id || inspectingSubmission?.student;
+    const targetStudentId =
+      gradingStudent?.studentId || inspectingSubmission?.student?._id || inspectingSubmission?.student;
 
     const numMarks = Number(vivaInputMarks);
     if (isNaN(numMarks) || numMarks < 0 || numMarks > 5) {
@@ -385,7 +407,7 @@ const TeacherExperimentConsolePage = () => {
       setTimeout(() => {
         setVivaSaveSuccess('');
         if (gradingStudent) setGradingStudent(null);
-      }, 1500);
+      }, 1400);
     } catch (err) {
       console.error('Failed to save viva evaluation:', err);
       setVivaSaveError(err.response?.data?.message || 'Failed to save Viva score.');
@@ -417,7 +439,9 @@ const TeacherExperimentConsolePage = () => {
         marks: reevalAction === 'APPROVE' ? Number(reevalMarks) : undefined,
         remarks: reevalAction === 'APPROVE' ? reevalRemarks : undefined
       });
-      setProcessSuccess(`✓ Re-evaluation request ${reevalAction === 'APPROVE' ? 'approved and marks updated' : 'rejected'}.`);
+      setProcessSuccess(
+        `✓ Re-evaluation request ${reevalAction === 'APPROVE' ? 'approved and marks updated' : 'rejected'}.`
+      );
       await refreshTabData();
       setTimeout(() => {
         setProcessSuccess('');
@@ -431,12 +455,15 @@ const TeacherExperimentConsolePage = () => {
     }
   };
 
-  // Open Malpractice Student Timeline Modal (Experiment-Scoped)
-  const handleOpenStudentTimeline = async (row) => {
-    setTimelineStudent(row);
+  // Open Malpractice Student Investigation Modal
+  const handleOpenStudentInvestigation = async (row) => {
+    setInvestigatingStudent(row);
     setTimelineLoading(true);
     setTimelineError('');
     setTimelineEvents([]);
+    setModalEventTypeFilter('ALL');
+    setModalSeverityFilter('ALL');
+
     try {
       const res = await malpracticeService.getMalpracticeEvents({
         studentId: row.studentId,
@@ -453,7 +480,7 @@ const TeacherExperimentConsolePage = () => {
     }
   };
 
-  // Filtered Timeline Events inside Modal
+  // Filtered Timeline Events inside Investigation Modal
   const filteredTimelineEvents = useMemo(() => {
     return timelineEvents.filter((e) => {
       if (modalEventTypeFilter !== 'ALL' && e.eventType !== modalEventTypeFilter) return false;
@@ -462,17 +489,85 @@ const TeacherExperimentConsolePage = () => {
     });
   }, [timelineEvents, modalEventTypeFilter, modalSeverityFilter]);
 
-  const getMalpracticeBadge = (status) => {
+  const renderIntegrityBadge = (status) => {
     switch (status) {
       case 'CRITICAL':
-        return <span className="badge badge-error">🚨 CRITICAL</span>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              color: '#F87171',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 700
+            }}
+          >
+            <span>🔴</span> Critical
+          </span>
+        );
       case 'REVIEW_REQUIRED':
-        return <span className="badge badge-error">⚠️ REVIEW REQUIRED</span>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              backgroundColor: 'rgba(249, 115, 22, 0.15)',
+              color: '#FB923C',
+              border: '1px solid rgba(249, 115, 22, 0.35)',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 700
+            }}
+          >
+            <span>🟠</span> Review Required
+          </span>
+        );
       case 'ATTENTION':
-        return <span className="badge badge-warning">⚡ ATTENTION</span>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              backgroundColor: 'rgba(234, 179, 8, 0.15)',
+              color: '#FACC15',
+              border: '1px solid rgba(234, 179, 8, 0.35)',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 600
+            }}
+          >
+            <span>🟡</span> Attention
+          </span>
+        );
       case 'NORMAL':
       default:
-        return <span className="badge badge-success">✓ NORMAL</span>;
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              backgroundColor: 'rgba(34, 197, 94, 0.12)',
+              color: '#4ADE80',
+              border: '1px solid rgba(34, 197, 94, 0.25)',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 600
+            }}
+          >
+            <span>🟢</span> Clean
+          </span>
+        );
     }
   };
 
@@ -506,86 +601,37 @@ const TeacherExperimentConsolePage = () => {
     const hasStdout = Boolean(stdout && stdout.length > 0);
     const hasStderr = Boolean(stderr && stderr.length > 0);
 
-    const getStatusStyle = (st) => {
-      switch (st) {
-        case 'SUCCESS':
-        case 'SUBMITTED':
-          return { bg: 'var(--color-success-subtle)', color: 'var(--color-success)', text: `✓ ${st}` };
-        case 'COMPILE_ERROR':
-        case 'RUNTIME_ERROR':
-        case 'TIMEOUT':
-        case 'OUTPUT_LIMIT':
-        case 'EXECUTION_ERROR':
-          return { bg: 'var(--color-error-subtle)', color: 'var(--color-error)', text: `✕ ${st}` };
-        default:
-          return { bg: 'var(--color-surface-hover)', color: 'var(--color-text-secondary)', text: st || 'COMPLETED' };
-      }
-    };
-
-    const statusInfo = status ? getStatusStyle(status) : null;
-
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-        {/* Execution Metadata Bar: Status, Exit Code, Execution Time */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 0.75rem', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Status:</span>
-            {statusInfo ? (
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-sm)', backgroundColor: statusInfo.bg, color: statusInfo.color }}>
-                {statusInfo.text}
-              </span>
-            ) : (
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>—</span>
-            )}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: status === 'SUCCESS' ? 'var(--color-success)' : 'var(--color-error)' }}>
+              {status || 'COMPLETED'}
+            </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.75rem' }}>
-            <div>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Exit Code: </span>
-              <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 700, color: exitCode === 0 ? 'var(--color-success)' : exitCode !== null ? 'var(--color-error)' : 'var(--color-text-secondary)' }}>
-                {exitCode !== null ? exitCode : '—'}
-              </span>
-            </div>
-
-            <div style={{ color: 'var(--color-border)' }}>|</div>
-
-            <div>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Execution Time: </span>
-              <span style={{ fontFamily: 'var(--font-family-mono)', fontWeight: 600, color: 'var(--color-primary)' }}>
-                {executionTimeMs !== null ? `${executionTimeMs} ms` : '—'}
-              </span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem' }}>
+            <span>Exit Code: <strong>{exitCode !== null ? exitCode : '—'}</strong></span>
+            <span>Execution Time: <strong>{executionTimeMs !== null ? `${executionTimeMs} ms` : '—'}</strong></span>
           </div>
         </div>
 
-        {/* Standard Output (stdout) */}
         {hasStdout && (
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
-              Standard Output (stdout):
-            </div>
-            <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#E2E8F0', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '160px', overflowY: 'auto' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>Standard Output (stdout):</div>
+            <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#E2E8F0', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '150px', overflowY: 'auto' }}>
               {stdout}
             </pre>
           </div>
         )}
 
-        {/* Standard Error (stderr) */}
         {hasStderr && (
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-error)', marginBottom: '0.25rem' }}>
-              Error Output (stderr):
-            </div>
-            <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#F87171', border: '1px solid var(--color-error)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '160px', overflowY: 'auto' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-error)', marginBottom: '0.25rem' }}>Error Output (stderr):</div>
+            <pre style={{ margin: 0, padding: '0.75rem', backgroundColor: '#0F172A', color: '#F87171', border: '1px solid var(--color-error)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', maxHeight: '150px', overflowY: 'auto' }}>
               {stderr}
             </pre>
-          </div>
-        )}
-
-        {/* Neither stdout nor stderr present */}
-        {!hasStdout && !hasStderr && (
-          <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-            No output generated during execution.
           </div>
         )}
       </div>
@@ -595,7 +641,7 @@ const TeacherExperimentConsolePage = () => {
   if (loading) {
     return (
       <div style={{ padding: '4rem', textAlign: 'center' }}>
-        <LoadingSpinner size={40} text="Loading Experiment Evaluation Console..." />
+        <LoadingSpinner size={40} text="Loading Experiment Evaluation Console & Integrity Suite..." />
       </div>
     );
   }
@@ -621,18 +667,30 @@ const TeacherExperimentConsolePage = () => {
   const totalStudentsCount = unifiedStudentRoster.length;
   const submittedCount = unifiedStudentRoster.filter((r) => r.submissionStatus === 'SUBMITTED').length;
   const evaluatedCount = unifiedStudentRoster.filter((r) => r.evaluationStatus === 'EVALUATED').length;
-  const malpracticeFlaggedCount = unifiedStudentRoster.filter(
-    (r) => r.malpracticeStatus === 'REVIEW_REQUIRED' || r.malpracticeStatus === 'CRITICAL' || r.malpracticeStatus === 'ATTENTION'
-  ).length;
+
+  const cleanStudentsCount = unifiedStudentRoster.filter((r) => r.malpracticeStatus === 'NORMAL').length;
+  const attentionStudentsCount = unifiedStudentRoster.filter((r) => r.malpracticeStatus === 'ATTENTION').length;
+  const reviewRequiredCount = unifiedStudentRoster.filter((r) => r.malpracticeStatus === 'REVIEW_REQUIRED').length;
+  const criticalCount = unifiedStudentRoster.filter((r) => r.malpracticeStatus === 'CRITICAL').length;
+  const totalFlaggedCount = attentionStudentsCount + reviewRequiredCount + criticalCount;
+
+  const totalIncidentsCount = malpracticeOverview?.summary?.totalEvents || 0;
+  const highSeverityIncidentsCount = malpracticeOverview?.summary?.highSeverityEvents || malpracticeOverview?.summary?.bySeverity?.HIGH || 0;
+
+  // Experiment Integrity Health
+  const experimentHealth = malpracticeOverview?.health || {
+    score: totalStudentsCount > 0 ? Math.round((cleanStudentsCount / totalStudentsCount) * 100) : 100,
+    status: totalFlaggedCount === 0 ? 'EXCELLENT' : reviewRequiredCount + criticalCount > 2 ? 'REVIEW_REQUIRED' : 'GOOD',
+    cleanPercentage: totalStudentsCount > 0 ? Math.round((cleanStudentsCount / totalStudentsCount) * 100) : 100
+  };
 
   const validScores = unifiedStudentRoster.map((r) => r.totalScore).filter((s) => s !== null);
-  const avgTotalScore = validScores.length > 0
-    ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1)
-    : '—';
+  const avgTotalScore =
+    validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1) : '—';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Breadcrumbs & Navigation Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '3rem' }}>
+      {/* Top Breadcrumbs & Navigation */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
           <Link to={user?.role === 'ADMIN_HOD' ? '/admin/labs' : '/teacher/labs'} style={{ color: 'var(--color-text-secondary)', textDecoration: 'none' }}>
@@ -653,16 +711,21 @@ const TeacherExperimentConsolePage = () => {
             &larr; Back to Lab Details
           </button>
           <Link
-            to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${labId}/experiments` : `/teacher/labs/${labId}/experiments`}
+            to={user?.role === 'ADMIN_HOD' ? `/admin/labs/${labId}/malpractice?experimentId=${experimentId}` : `/teacher/labs/${labId}/malpractice?experimentId=${experimentId}`}
             className="btn btn-secondary"
             style={{ fontSize: '0.8125rem' }}
           >
-            ⚙️ Manage / Edit Protocol
+            📊 Lab Malpractice Dashboard
           </Link>
+          <button onClick={refreshTabData} className="btn btn-primary" style={{ fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span>🔄</span> Refresh Telemetry
+          </button>
         </div>
       </div>
 
-      {/* Experiment Showcase Banner */}
+      {/* ========================================================================= */}
+      {/* LEVEL 1: EXPERIMENT IDENTITY & INTEGRITY HEALTH BANNER                    */}
+      {/* ========================================================================= */}
       <div
         style={{
           backgroundColor: 'var(--color-surface)',
@@ -672,12 +735,12 @@ const TeacherExperimentConsolePage = () => {
           boxShadow: 'var(--shadow-sm)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '1rem'
+          gap: '1.25rem'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.25rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.375rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.375rem', flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontFamily: 'var(--font-family-mono)',
@@ -696,71 +759,149 @@ const TeacherExperimentConsolePage = () => {
                 {experiment.programmingLanguages?.join(' • ')}
               </span>
             </div>
+
             <h1 style={{ fontSize: '1.625rem', color: 'var(--color-primary)', margin: 0, letterSpacing: '-0.01em' }}>
               {experiment.title}
             </h1>
+
             {experiment.objective && (
-              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.5rem 0 0 0', maxWidth: '850px', lineHeight: 1.5 }}>
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', margin: '0.4rem 0 0 0', maxWidth: '850px', lineHeight: 1.5 }}>
                 {experiment.objective}
               </p>
             )}
           </div>
 
+          {/* Experiment Integrity Health Score Meter */}
           <div
             style={{
+              padding: '1rem 1.25rem',
               backgroundColor: 'var(--color-canvas)',
-              padding: '0.75rem 1.25rem',
               borderRadius: 'var(--radius-md)',
               border: '1px solid var(--color-border)',
-              textAlign: 'right'
+              minWidth: '260px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
             }}
           >
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>
-              Cohort Context
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Experiment Integrity Health
+              </span>
+              <span
+                style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: 800,
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: '4px',
+                  backgroundColor:
+                    experimentHealth.score >= 90
+                      ? 'rgba(34, 197, 94, 0.15)'
+                      : experimentHealth.score >= 75
+                      ? 'rgba(234, 179, 8, 0.15)'
+                      : 'rgba(239, 68, 68, 0.15)',
+                  color:
+                    experimentHealth.score >= 90
+                      ? '#4ADE80'
+                      : experimentHealth.score >= 75
+                      ? '#FACC15'
+                      : '#F87171'
+                }}
+              >
+                {experimentHealth.status}
+              </span>
             </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-primary)' }}>
-              {lab.code} &bull; {lab.department}
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
+                {experimentHealth.score}%
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                ({cleanStudentsCount}/{totalStudentsCount} students clean)
+              </span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-              Semester {lab.semester} ({lab.academicYear})
+
+            {/* Health Bar */}
+            <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--color-surface)', borderRadius: '3px', overflow: 'hidden' }}>
+              <div
+                style={{
+                  width: `${experimentHealth.score}%`,
+                  height: '100%',
+                  backgroundColor:
+                    experimentHealth.score >= 90
+                      ? '#22C55E'
+                      : experimentHealth.score >= 75
+                      ? '#EAB308'
+                      : '#EF4444',
+                  transition: 'width 0.4s ease'
+                }}
+              />
             </div>
           </div>
         </div>
 
-        {/* Experiment Telemetry KPI Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.875rem', marginTop: '0.5rem' }}>
-          <div style={{ padding: '0.875rem 1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>ENROLLED STUDENTS</div>
-            <div style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.25rem' }}>
-              {totalStudentsCount}
+        {/* LEVEL 2: DECISION-ORIENTED EXPERIMENT KPIS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: '0.75rem' }}>
+          {/* Enrolled */}
+          <div style={{ padding: '0.75rem 0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Enrolled</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.15rem' }}>{totalStudentsCount}</div>
+          </div>
+
+          {/* Submissions */}
+          <div style={{ padding: '0.75rem 0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Submissions</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#38BDF8', marginTop: '0.15rem' }}>
+              {submittedCount} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>({totalStudentsCount > 0 ? Math.round((submittedCount / totalStudentsCount) * 100) : 0}%)</span>
             </div>
           </div>
 
-          <div style={{ padding: '0.875rem 1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>SUBMISSIONS</div>
-            <div style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--color-info)', marginTop: '0.25rem' }}>
-              {submittedCount} <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>({totalStudentsCount > 0 ? Math.round((submittedCount / totalStudentsCount) * 100) : 0}%)</span>
+          {/* Evaluated */}
+          <div style={{ padding: '0.75rem 0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Evaluated</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#4ADE80', marginTop: '0.15rem' }}>
+              {evaluatedCount} <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>({totalStudentsCount > 0 ? Math.round((evaluatedCount / totalStudentsCount) * 100) : 0}%)</span>
             </div>
           </div>
 
-          <div style={{ padding: '0.875rem 1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>EVALUATED (VIVA + AUTO)</div>
-            <div style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--color-success)', marginTop: '0.25rem' }}>
-              {evaluatedCount} <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>({totalStudentsCount > 0 ? Math.round((evaluatedCount / totalStudentsCount) * 100) : 0}%)</span>
+          {/* Clean Students */}
+          <div style={{ padding: '0.75rem 0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: '0.6875rem', color: '#4ADE80', fontWeight: 700, textTransform: 'uppercase' }}>Clean Students</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#4ADE80', marginTop: '0.15rem' }}>
+              {cleanStudentsCount}
             </div>
           </div>
 
-          <div style={{ padding: '0.875rem 1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>MALPRACTICE FLAGGED</div>
-            <div style={{ fontSize: '1.375rem', fontWeight: 800, color: malpracticeFlaggedCount > 0 ? 'var(--color-error)' : 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
-              {malpracticeFlaggedCount}
+          {/* Review Required / Critical */}
+          <div
+            style={{
+              padding: '0.75rem 0.875rem',
+              backgroundColor: reviewRequiredCount + criticalCount > 0 ? 'rgba(239, 68, 68, 0.05)' : 'var(--color-canvas)',
+              borderRadius: 'var(--radius-md)',
+              border: reviewRequiredCount + criticalCount > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--color-border)'
+            }}
+          >
+            <div style={{ fontSize: '0.6875rem', color: reviewRequiredCount + criticalCount > 0 ? '#F87171' : 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>
+              Flagged Review
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: reviewRequiredCount + criticalCount > 0 ? '#F87171' : 'var(--color-text-muted)', marginTop: '0.15rem' }}>
+              {reviewRequiredCount + criticalCount}
             </div>
           </div>
 
-          <div style={{ padding: '0.875rem 1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>AVG TOTAL SCORE</div>
-            <div style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.25rem' }}>
-              {avgTotalScore} <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>/ 15</span>
+          {/* Total Incidents */}
+          <div style={{ padding: '0.75rem 0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Total Incidents</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: totalIncidentsCount > 0 ? 'var(--color-primary)' : 'var(--color-text-muted)', marginTop: '0.15rem' }}>
+              {totalIncidentsCount}
+            </div>
+          </div>
+
+          {/* High Severity */}
+          <div style={{ padding: '0.75rem 0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>High Severity</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: highSeverityIncidentsCount > 0 ? '#F87171' : 'var(--color-text-muted)', marginTop: '0.15rem' }}>
+              {highSeverityIncidentsCount}
             </div>
           </div>
         </div>
@@ -782,38 +923,36 @@ const TeacherExperimentConsolePage = () => {
             borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.2s ease'
+            gap: '0.5rem'
           }}
         >
-          <span>📋</span> Submissions &amp; Evaluation
+          <span>📋</span> Unified Student Evaluation &amp; Integrity Matrix
           <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', backgroundColor: 'var(--color-canvas)', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
-            {submittedCount}
+            {totalStudentsCount}
           </span>
         </button>
 
         <button
-          onClick={() => handleTabChange('malpractice')}
+          onClick={() => handleTabChange('analytics')}
           style={{
             padding: '0.75rem 1.25rem',
             border: 'none',
-            borderBottom: activeTab === 'malpractice' ? '3px solid var(--color-primary)' : '3px solid transparent',
-            backgroundColor: activeTab === 'malpractice' ? 'var(--color-surface)' : 'transparent',
-            color: activeTab === 'malpractice' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            fontWeight: activeTab === 'malpractice' ? 700 : 600,
+            borderBottom: activeTab === 'analytics' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            backgroundColor: activeTab === 'analytics' ? 'var(--color-surface)' : 'transparent',
+            color: activeTab === 'analytics' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            fontWeight: activeTab === 'analytics' ? 700 : 600,
             fontSize: '0.9375rem',
             cursor: 'pointer',
             borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.2s ease'
+            gap: '0.5rem'
           }}
         >
-          <span>🛡️</span> Malpractice Monitor
-          {malpracticeFlaggedCount > 0 && (
-            <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', backgroundColor: 'var(--color-error-subtle)', color: 'var(--color-error)', borderRadius: '1rem', fontWeight: 700 }}>
-              {malpracticeFlaggedCount}
+          <span>📊</span> Experiment Integrity Analytics
+          {totalIncidentsCount > 0 && (
+            <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', backgroundColor: 'var(--color-primary-subtle)', color: 'var(--color-primary)', borderRadius: '1rem', fontWeight: 700 }}>
+              {totalIncidentsCount} events
             </span>
           )}
         </button>
@@ -832,11 +971,10 @@ const TeacherExperimentConsolePage = () => {
             borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.2s ease'
+            gap: '0.5rem'
           }}
         >
-          <span>🎙️</span> Viva Evaluation
+          <span>🎙️</span> Viva Voce &amp; Appeals
           <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', backgroundColor: 'var(--color-canvas)', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
             {evaluatedCount}/{totalStudentsCount}
           </span>
@@ -844,369 +982,335 @@ const TeacherExperimentConsolePage = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: SUBMISSIONS & EVALUATION                                           */}
+      {/* TAB 1: UNIFIED EVALUATION & INTEGRITY MATRIX                              */}
       {/* ========================================================================= */}
       {activeTab === 'submissions' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Filter Bar */}
-          <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.875rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: '1 1 320px', flexWrap: 'wrap' }}>
+          {/* Unified Filter & Sort Bar */}
+          <div
+            className="card"
+            style={{
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.875rem'
+            }}
+          >
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: '1 1 340px', flexWrap: 'wrap' }}>
               <input
                 type="text"
                 className="input"
-                placeholder="🔍 Search student name or roll number..."
+                placeholder="🔍 Search name or roll number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ flex: '1 1 220px', maxWidth: '360px', fontSize: '0.875rem' }}
+                style={{ flex: '1 1 200px', maxWidth: '300px', fontSize: '0.8125rem' }}
               />
 
+              {/* Section Filter */}
+              {uniqueSections.length > 1 && (
+                <select
+                  className="input"
+                  value={sectionFilter}
+                  onChange={(e) => setSectionFilter(e.target.value)}
+                  style={{ width: '130px', fontSize: '0.8125rem' }}
+                >
+                  <option value="ALL">All Sections</option>
+                  {uniqueSections.map((sec) => (
+                    <option key={sec} value={sec}>
+                      Section {sec}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* Submission Status Filter */}
               <select
                 className="input"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ width: '170px', fontSize: '0.875rem' }}
+                value={submissionStatusFilter}
+                onChange={(e) => setSubmissionStatusFilter(e.target.value)}
+                style={{ width: '150px', fontSize: '0.8125rem' }}
               >
-                <option value="ALL">All Submission Statuses</option>
+                <option value="ALL">All Submissions</option>
                 <option value="SUBMITTED">Submitted Only</option>
                 <option value="NOT_SUBMITTED">Not Submitted</option>
                 <option value="EVALUATED">Fully Evaluated</option>
                 <option value="VIVA_PENDING">Viva Pending</option>
               </select>
 
-              {uniqueSections.length > 1 && (
-                <select
-                  className="input"
-                  value={sectionFilter}
-                  onChange={(e) => setSectionFilter(e.target.value)}
-                  style={{ width: '140px', fontSize: '0.875rem' }}
-                >
-                  <option value="ALL">All Sections</option>
-                  {uniqueSections.map((sec) => (
-                    <option key={sec} value={sec}>
-                      Section {sec}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <button onClick={refreshTabData} className="btn btn-secondary" style={{ fontSize: '0.8125rem' }}>
-              🔄 Refresh Ledger
-            </button>
-          </div>
-
-          {/* Submissions & Cohort Table */}
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-                <thead>
-                  <tr style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <th style={{ padding: '0.875rem 1.25rem' }}>Student Details</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Section</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Submission Status</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Attempts</th>
-                    <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Program / 10</th>
-                    <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Viva / 5</th>
-                    <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Total / 15</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Evaluation Status</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSubmissionsRoster.length === 0 ? (
-                    <tr>
-                      <td colSpan="9" style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                        No enrolled students match the selected filter criteria.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSubmissionsRoster.map((row) => (
-                      <tr key={row.studentId} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background-color 0.15s ease' }}>
-                        <td style={{ padding: '1rem 1.25rem' }}>
-                          <strong style={{ color: 'var(--color-text-primary)', display: 'block' }}>{row.name}</strong>
-                          <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                            {row.rollNumber}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}>
-                            {row.section || '—'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {row.submissionStatus === 'SUBMITTED' ? (
-                            <div>
-                              <span className="badge badge-success">✓ SUBMITTED</span>
-                              {row.latestSubmission?.submittedAt && (
-                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
-                                  {new Date(row.latestSubmission.submittedAt).toLocaleDateString()}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', color: 'var(--color-text-secondary)' }}>
-                              ⏳ NOT SUBMITTED
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {row.attemptsCount > 0 ? (
-                            <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{row.attemptsCount} attempt{row.attemptsCount > 1 ? 's' : ''}</span>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-secondary)' }}>0</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          {row.programScore !== null ? (
-                            <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{row.programScore.toFixed(1)}</span>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          {row.vivaScore !== null ? (
-                            <span style={{ fontWeight: 700, color: 'var(--color-info)' }}>{row.vivaScore.toFixed(1)}</span>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          {row.totalScore !== null ? (
-                            <span style={{ fontWeight: 800, color: 'var(--color-success)', backgroundColor: 'var(--color-success-subtle)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)' }}>
-                              {row.totalScore.toFixed(1)}
-                            </span>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {row.evaluationStatus === 'EVALUATED' && <span className="badge badge-success">✓ EVALUATED</span>}
-                          {row.evaluationStatus === 'VIVA_PENDING' && <span className="badge badge-warning">🎙 VIVA PENDING</span>}
-                          {row.evaluationStatus === 'NOT_SUBMITTED' && <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', color: 'var(--color-text-secondary)' }}>UNATTEMPTED</span>}
-                        </td>
-                        <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                            {row.submissionStatus === 'SUBMITTED' ? (
-                              <button
-                                onClick={() => handleOpenInspection(row)}
-                                className="btn btn-primary"
-                                style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-                              >
-                                🔍 Inspect / Evaluate
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleOpenVivaGrade(row)}
-                                className="btn btn-secondary"
-                                style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-                              >
-                                🎙 Grade Viva
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 2: MALPRACTICE MONITOR (EXPERIMENT-SCOPED)                            */}
-      {/* ========================================================================= */}
-      {activeTab === 'malpractice' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Malpractice Summary Header Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ fontSize: '2.25rem', backgroundColor: 'var(--color-primary-subtle)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>👥</div>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>STUDENTS MONITORED</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.2rem' }}>
-                  {totalStudentsCount}
-                </div>
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ fontSize: '2.25rem', backgroundColor: 'var(--color-error-subtle)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>🚨</div>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>REQUIRING REVIEW</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-error)', marginTop: '0.2rem' }}>
-                  {unifiedStudentRoster.filter((r) => r.malpracticeStatus === 'REVIEW_REQUIRED' || r.malpracticeStatus === 'CRITICAL').length}
-                </div>
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ fontSize: '2.25rem', backgroundColor: 'var(--color-warning-subtle)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>⚡</div>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>ATTENTION REQUIRED</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-warning)', marginTop: '0.2rem' }}>
-                  {unifiedStudentRoster.filter((r) => r.malpracticeStatus === 'ATTENTION').length}
-                </div>
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ fontSize: '2.25rem', backgroundColor: 'var(--color-success-subtle)', padding: '0.75rem', borderRadius: 'var(--radius-md)' }}>🛡️</div>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>EXPERIMENT EVENTS</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.2rem' }}>
-                  {malpracticeOverview?.summary?.totalEvents || 0}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Malpractice Filter Bar */}
-          <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.875rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: '1 1 320px', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                className="input"
-                placeholder="🔍 Search student name or roll number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ flex: '1 1 220px', maxWidth: '360px', fontSize: '0.875rem' }}
-              />
-
+              {/* Integrity Status Filter */}
               <select
                 className="input"
-                value={malpracticeStatusFilter}
-                onChange={(e) => setMalpracticeStatusFilter(e.target.value)}
-                style={{ width: '180px', fontSize: '0.875rem' }}
+                value={integrityFilter}
+                onChange={(e) => setIntegrityFilter(e.target.value)}
+                style={{ width: '160px', fontSize: '0.8125rem', fontWeight: 600 }}
               >
-                <option value="ALL">All Malpractice Statuses</option>
-                <option value="REVIEW_REQUIRED">Review Required Only</option>
-                <option value="ATTENTION">Attention Only</option>
-                <option value="CRITICAL">Critical Only</option>
-                <option value="NORMAL">Normal Only</option>
+                <option value="ALL">All Integrity States</option>
+                <option value="CLEAN">🟢 Clean Only (0 Events)</option>
+                <option value="FLAGGED">⚠️ Flagged (Attention/Review)</option>
+                <option value="ATTENTION">🟡 Attention Required</option>
+                <option value="REVIEW_REQUIRED">🟠 Review Required</option>
+                <option value="CRITICAL">🔴 Critical Only</option>
               </select>
 
-              {uniqueSections.length > 1 && (
+              {/* Sort By Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>Sort:</span>
                 <select
                   className="input"
-                  value={sectionFilter}
-                  onChange={(e) => setSectionFilter(e.target.value)}
-                  style={{ width: '140px', fontSize: '0.875rem' }}
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{ width: '160px', fontSize: '0.8125rem', fontWeight: 600 }}
                 >
-                  <option value="ALL">All Sections</option>
-                  {uniqueSections.map((sec) => (
-                    <option key={sec} value={sec}>
-                      Section {sec}
-                    </option>
-                  ))}
+                  <option value="RISK_FIRST">Review Status First</option>
+                  <option value="INCIDENTS_DESC">Highest Incidents</option>
+                  <option value="SCORE_DESC">Highest Total Score</option>
+                  <option value="SCORE_ASC">Lowest Total Score</option>
+                  <option value="ROLL_ASC">Roll Number (A-Z)</option>
+                  <option value="NAME_ASC">Student Name (A-Z)</option>
                 </select>
-              )}
+              </div>
             </div>
 
-            <button onClick={refreshTabData} className="btn btn-secondary" style={{ fontSize: '0.8125rem' }}>
-              🔄 Refresh Malpractice Telemetry
-            </button>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+              Showing <strong>{filteredMainRoster.length}</strong> of {totalStudentsCount} students
+            </div>
           </div>
 
-          {/* Malpractice Student Table */}
+          {/* Clean State Banner if 0 incidents across experiment */}
+          {totalIncidentsCount === 0 && (
+            <div
+              style={{
+                padding: '0.875rem 1.25rem',
+                backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                border: '1px solid rgba(34, 197, 94, 0.25)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                fontSize: '0.8125rem',
+                color: '#166534'
+              }}
+            >
+              <span style={{ fontSize: '1.25rem' }}>🛡️</span>
+              <div>
+                <strong>Clean Academic Record:</strong> All {totalStudentsCount} students currently have zero recorded integrity incidents during this experiment.
+              </div>
+            </div>
+          )}
+
+          {/* Main Integrated Table */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <th style={{ padding: '0.875rem 1.25rem' }}>Student Details</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Section</th>
-                    <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Total Events</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Event Category Breakdown</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Latest Event</th>
-                    <th style={{ padding: '0.875rem 1rem' }}>Integrity Status</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'right' }}>Actions</th>
+                  <tr
+                    style={{
+                      backgroundColor: 'var(--color-surface-hover)',
+                      borderBottom: '1px solid var(--color-border)',
+                      color: 'var(--color-text-secondary)',
+                      fontSize: '0.75rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}
+                  >
+                    <th style={{ padding: '0.875rem 1rem' }}>Student Details</th>
+                    <th style={{ padding: '0.875rem 0.75rem' }}>Sec</th>
+                    <th style={{ padding: '0.875rem 0.75rem' }}>Submission</th>
+                    <th style={{ padding: '0.875rem 0.75rem', textAlign: 'center' }}>Auto / 10</th>
+                    <th style={{ padding: '0.875rem 0.75rem', textAlign: 'center' }}>Viva / 5</th>
+                    <th style={{ padding: '0.875rem 0.75rem', textAlign: 'center' }}>Total / 15</th>
+                    <th style={{ padding: '0.875rem 1rem' }}>Integrity Status &amp; Risk</th>
+                    <th style={{ padding: '0.875rem 1rem' }}>Incident Telemetry</th>
+                    <th style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMalpracticeRoster.length === 0 ? (
+                  {filteredMainRoster.length === 0 ? (
                     <tr>
-                      <td colSpan="7" style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                        No students match the selected malpractice filter criteria.
+                      <td colSpan="9" style={{ padding: '3.5rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔍</div>
+                        <h4 style={{ margin: 0, color: 'var(--color-primary)' }}>No students match active filters</h4>
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8125rem' }}>Try clearing filters or search terms.</p>
                       </td>
                     </tr>
                   ) : (
-                    filteredMalpracticeRoster.map((row) => (
-                      <tr key={row.studentId} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background-color 0.15s ease' }}>
-                        <td style={{ padding: '1rem 1.25rem' }}>
-                          <strong style={{ color: 'var(--color-text-primary)', display: 'block' }}>{row.name}</strong>
-                          <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                            {row.rollNumber}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}>
-                            {row.section || '—'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                          <span style={{ fontWeight: 800, fontSize: '1rem', color: row.malpracticeEventsCount > 0 ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
-                            {row.malpracticeEventsCount}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                            {Object.entries(row.malpracticeByType).length > 0 ? (
-                              Object.entries(row.malpracticeByType).map(([type, count]) => {
-                                const cfg = EVENT_CONFIG[type] || { label: type, icon: '⚠️' };
-                                return (
-                                  <span
-                                    key={type}
-                                    style={{
-                                      fontSize: '0.75rem',
-                                      padding: '0.15rem 0.4rem',
-                                      backgroundColor: 'var(--color-surface-hover)',
-                                      border: '1px solid var(--color-border)',
-                                      borderRadius: 'var(--radius-sm)',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '0.25rem'
-                                    }}
-                                  >
-                                    <span>{cfg.icon}</span> {count}
-                                  </span>
-                                );
-                              })
+                    filteredMainRoster.map((row) => {
+                      const isFlagged = row.malpracticeStatus === 'REVIEW_REQUIRED' || row.malpracticeStatus === 'CRITICAL';
+                      return (
+                        <tr
+                          key={row.studentId}
+                          style={{
+                            borderBottom: '1px solid var(--color-border)',
+                            backgroundColor: isFlagged ? 'rgba(249, 115, 22, 0.03)' : 'transparent',
+                            transition: 'background-color 0.15s ease'
+                          }}
+                        >
+                          {/* Student Info */}
+                          <td style={{ padding: '0.875rem 1rem' }}>
+                            <strong style={{ color: 'var(--color-text-primary)', display: 'block', fontSize: '0.875rem' }}>
+                              {row.name}
+                            </strong>
+                            <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                              {row.rollNumber}
+                            </span>
+                          </td>
+
+                          {/* Section */}
+                          <td style={{ padding: '0.875rem 0.75rem' }}>
+                            <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', fontSize: '0.75rem' }}>
+                              {row.section || '—'}
+                            </span>
+                          </td>
+
+                          {/* Submission Status */}
+                          <td style={{ padding: '0.875rem 0.75rem' }}>
+                            {row.submissionStatus === 'SUBMITTED' ? (
+                              <div>
+                                <span className="badge badge-success" style={{ fontSize: '0.6875rem' }}>
+                                  ✓ Att #{row.attemptsCount}
+                                </span>
+                                {row.latestSubmission?.submittedAt && (
+                                  <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', marginTop: '0.15rem' }}>
+                                    {new Date(row.latestSubmission.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                )}
+                              </div>
                             ) : (
-                              <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>No events</span>
-                            )}
-                          </div>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {row.malpracticeLatestEvent ? (
-                            <div>
-                              <strong style={{ fontSize: '0.8125rem', color: 'var(--color-text-primary)', display: 'block' }}>
-                                {EVENT_CONFIG[row.malpracticeLatestEvent.eventType]?.label || row.malpracticeLatestEvent.eventType}
-                              </strong>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                                {new Date(row.malpracticeLatestEvent.timestamp).toLocaleTimeString()}
+                              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
+                                Unattempted
                               </span>
+                            )}
+                          </td>
+
+                          {/* Program Score */}
+                          <td style={{ padding: '0.875rem 0.75rem', textAlign: 'center' }}>
+                            {row.programScore !== null ? (
+                              <strong style={{ color: 'var(--color-primary)' }}>{row.programScore.toFixed(1)}</strong>
+                            ) : (
+                              <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
+                          </td>
+
+                          {/* Viva Score */}
+                          <td style={{ padding: '0.875rem 0.75rem', textAlign: 'center' }}>
+                            {row.vivaScore !== null ? (
+                              <strong style={{ color: '#16a34a' }}>{row.vivaScore.toFixed(1)}</strong>
+                            ) : (
+                              <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
+                          </td>
+
+                          {/* Total Score */}
+                          <td style={{ padding: '0.875rem 0.75rem', textAlign: 'center' }}>
+                            {row.totalScore !== null ? (
+                              <span style={{ fontWeight: 800, color: 'var(--color-primary)', backgroundColor: 'var(--color-primary-subtle)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                                {row.totalScore.toFixed(1)}
+                              </span>
+                            ) : (
+                              <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                            )}
+                          </td>
+
+                          {/* Integrity Status & Risk Score */}
+                          <td style={{ padding: '0.875rem 1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {renderIntegrityBadge(row.malpracticeStatus)}
+                              {row.riskScore > 0 && (
+                                <span
+                                  title="Explainable Risk Score (0-100)"
+                                  style={{
+                                    fontFamily: 'var(--font-family-mono)',
+                                    fontSize: '0.6875rem',
+                                    fontWeight: 700,
+                                    color: row.riskScore >= 70 ? '#F87171' : row.riskScore >= 30 ? '#FB923C' : '#94A3B8'
+                                  }}
+                                >
+                                  Risk: {row.riskScore}/100
+                                </span>
+                              )}
                             </div>
-                          ) : (
-                            <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {getMalpracticeBadge(row.malpracticeStatus)}
-                        </td>
-                        <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                          <button
-                            onClick={() => handleOpenStudentTimeline(row)}
-                            className="btn btn-secondary"
-                            style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-                          >
-                            📈 Activity Timeline &rarr;
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+
+                          {/* Incident Telemetry Tags */}
+                          <td style={{ padding: '0.875rem 1rem' }}>
+                            {row.malpracticeEventsCount > 0 ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                  {Object.entries(row.malpracticeByType).map(([type, count]) => {
+                                    const cfg = EVENT_CONFIG[type] || { label: type, icon: '⚠️' };
+                                    return (
+                                      <span
+                                        key={type}
+                                        title={`${count} ${cfg.label}`}
+                                        style={{
+                                          fontSize: '0.6875rem',
+                                          padding: '0.1rem 0.35rem',
+                                          backgroundColor: 'var(--color-surface)',
+                                          border: '1px solid var(--color-border)',
+                                          borderRadius: '3px',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.2rem'
+                                        }}
+                                      >
+                                        <span>{cfg.icon}</span>
+                                        <strong>{count}</strong>
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                                {row.malpracticeLatestTimestamp && (
+                                  <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
+                                    Last: {new Date(row.malpracticeLatestTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>0 incidents</span>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                              {row.malpracticeEventsCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenStudentInvestigation(row)}
+                                  className="btn btn-secondary"
+                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderColor: isFlagged ? 'rgba(249, 115, 22, 0.4)' : 'var(--color-border)' }}
+                                  title="Inspect complete incident timeline and details"
+                                >
+                                  🛡️ Inspect
+                                </button>
+                              )}
+
+                              {row.submissionStatus === 'SUBMITTED' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenInspection(row)}
+                                  className="btn btn-primary"
+                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
+                                >
+                                  🔍 Code
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenVivaGrade(row)}
+                                className="btn btn-secondary"
+                                style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
+                              >
+                                🎙️ Viva
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -1216,11 +1320,115 @@ const TeacherExperimentConsolePage = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: VIVA EVALUATION                                                    */}
+      {/* TAB 2: EXPERIMENT INTEGRITY ANALYTICS                                     */}
+      {/* ========================================================================= */}
+      {activeTab === 'analytics' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Analytics Overview Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+            {/* Event Category Distribution */}
+            <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                Incident Category Breakdown
+              </div>
+              {Object.keys(malpracticeOverview?.summary?.byType || {}).length === 0 ? (
+                <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.8125rem' }}>
+                  No infractions recorded during this experiment.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {Object.entries(malpracticeOverview.summary.byType).map(([type, count]) => {
+                    const cfg = EVENT_CONFIG[type] || { label: type, icon: '⚠️' };
+                    const pct = totalIncidentsCount > 0 ? Math.round((count / totalIncidentsCount) * 100) : 0;
+                    return (
+                      <div key={type} style={{ fontSize: '0.75rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}>
+                            <span>{cfg.icon}</span> {cfg.label}
+                          </span>
+                          <span><strong>{count}</strong> ({pct}%)</span>
+                        </div>
+                        <div style={{ width: '100%', height: '5px', backgroundColor: 'var(--color-canvas)', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', backgroundColor: 'var(--color-primary)' }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Severity Distribution */}
+            <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                Severity Distribution
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+                <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: '0.6875rem', color: '#94A3B8', fontWeight: 700 }}>LOW</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '0.2rem' }}>
+                    {malpracticeOverview?.summary?.bySeverity?.LOW || 0}
+                  </div>
+                </div>
+
+                <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: '0.6875rem', color: '#FB923C', fontWeight: 700 }}>MEDIUM</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FB923C', marginTop: '0.2rem' }}>
+                    {malpracticeOverview?.summary?.bySeverity?.MEDIUM || 0}
+                  </div>
+                </div>
+
+                <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ fontSize: '0.6875rem', color: '#F87171', fontWeight: 700 }}>HIGH</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#F87171', marginTop: '0.2rem' }}>
+                    {malpracticeOverview?.summary?.bySeverity?.HIGH || 0}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '0.5rem', padding: '0.75rem', backgroundColor: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                <strong>Normalized Metrics:</strong><br />
+                &bull; Incidents per 10 Students: <strong>{malpracticeOverview?.summary?.incidentsPer10Students || 0}</strong><br />
+                &bull; Cohort Infraction Rate: <strong>{malpracticeOverview?.summary?.studentsAffectedPercentage || 0}%</strong>
+              </div>
+            </div>
+
+            {/* Integrity Status Roster Summary */}
+            <div className="card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                Student Integrity Risk Breakdown
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.6rem', backgroundColor: 'rgba(34, 197, 94, 0.08)', borderRadius: '4px' }}>
+                  <span>🟢 Clean (0 incidents)</span>
+                  <strong>{cleanStudentsCount} students</strong>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.6rem', backgroundColor: 'rgba(234, 179, 8, 0.08)', borderRadius: '4px' }}>
+                  <span>🟡 Attention Required (1-2 events)</span>
+                  <strong>{attentionStudentsCount} students</strong>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.6rem', backgroundColor: 'rgba(249, 115, 22, 0.08)', borderRadius: '4px' }}>
+                  <span>🟠 Review Required (&ge;3 events)</span>
+                  <strong>{reviewRequiredCount} students</strong>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.6rem', backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: '4px' }}>
+                  <span>🔴 Critical (&ge;8 events or High Severity)</span>
+                  <strong>{criticalCount} students</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: VIVA VOCE EVALUATION & APPEALS                                     */}
       {/* ========================================================================= */}
       {activeTab === 'viva' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Viva Sub-Tabs Navigation */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
@@ -1251,130 +1459,67 @@ const TeacherExperimentConsolePage = () => {
 
           {vivaSubTab === 'evaluation' ? (
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              {/* Viva Evaluation Filter Bar */}
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.875rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flex: '1 1 320px', flexWrap: 'wrap' }}>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="🔍 Search student name or roll number..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ flex: '1 1 220px', maxWidth: '360px', fontSize: '0.875rem' }}
-                  />
-
-                  <select
-                    className="input"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{ width: '160px', fontSize: '0.875rem' }}
-                  >
-                    <option value="ALL">All Viva Statuses</option>
-                    <option value="EVALUATED">Evaluated Only</option>
-                    <option value="PENDING">Pending Viva Only</option>
-                  </select>
-
-                  {uniqueSections.length > 1 && (
-                    <select
-                      className="input"
-                      value={sectionFilter}
-                      onChange={(e) => setSectionFilter(e.target.value)}
-                      style={{ width: '140px', fontSize: '0.875rem' }}
-                    >
-                      <option value="ALL">All Sections</option>
-                      {uniqueSections.map((sec) => (
-                        <option key={sec} value={sec}>
-                          Section {sec}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              </div>
-
-              {/* Viva Student Table */}
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
                   <thead>
-                    <tr style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <tr style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
                       <th style={{ padding: '0.875rem 1.25rem' }}>Student</th>
                       <th style={{ padding: '0.875rem 1rem' }}>Section</th>
                       <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Program / 10</th>
                       <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Viva / 5</th>
                       <th style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>Total / 15</th>
                       <th style={{ padding: '0.875rem 1rem' }}>Viva Status</th>
-                      <th style={{ padding: '0.875rem 1rem' }}>Evaluator Remarks</th>
+                      <th style={{ padding: '0.875rem 1rem' }}>Remarks</th>
                       <th style={{ padding: '0.875rem 1.25rem', textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredVivaRoster.length === 0 ? (
-                      <tr>
-                        <td colSpan="8" style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                          No students match the selected viva filter criteria.
+                    {unifiedStudentRoster.map((row) => (
+                      <tr key={row.studentId} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                        <td style={{ padding: '0.875rem 1.25rem' }}>
+                          <strong style={{ color: 'var(--color-text-primary)', display: 'block' }}>{row.name}</strong>
+                          <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                            {row.rollNumber}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.875rem 1rem' }}>
+                          <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}>
+                            {row.section || '—'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>
+                          {row.programScore !== null ? <strong>{row.programScore.toFixed(1)}</strong> : '—'}
+                        </td>
+                        <td style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>
+                          {row.vivaScore !== null ? <strong style={{ color: '#16a34a' }}>{row.vivaScore.toFixed(1)}</strong> : '—'}
+                        </td>
+                        <td style={{ padding: '0.875rem 1rem', textAlign: 'center' }}>
+                          {row.totalScore !== null ? (
+                            <span style={{ fontWeight: 800, color: 'var(--color-primary)', backgroundColor: 'var(--color-primary-subtle)', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                              {row.totalScore.toFixed(1)}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td style={{ padding: '0.875rem 1rem' }}>
+                          {row.vivaScore !== null ? <span className="badge badge-success">✓ EVALUATED</span> : <span className="badge badge-warning">⏳ PENDING</span>}
+                        </td>
+                        <td style={{ padding: '0.875rem 1rem', maxWidth: '200px' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {row.vivaRemarks || '—'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.875rem 1.25rem', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenVivaGrade(row)}
+                            className={row.vivaScore !== null ? 'btn btn-secondary' : 'btn btn-primary'}
+                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
+                          >
+                            {row.vivaScore !== null ? '✏️ Edit' : '🎙️ Grade'}
+                          </button>
                         </td>
                       </tr>
-                    ) : (
-                      filteredVivaRoster.map((row) => (
-                        <tr key={row.studentId} style={{ borderBottom: '1px solid var(--color-border)', transition: 'background-color 0.15s ease' }}>
-                          <td style={{ padding: '1rem 1.25rem' }}>
-                            <strong style={{ color: 'var(--color-text-primary)', display: 'block' }}>{row.name}</strong>
-                            <span style={{ fontFamily: 'var(--font-family-mono)', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                              {row.rollNumber}
-                            </span>
-                          </td>
-                          <td style={{ padding: '1rem' }}>
-                            <span className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}>
-                              {row.section || '—'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '1rem', textAlign: 'center' }}>
-                            {row.programScore !== null ? (
-                              <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{row.programScore.toFixed(1)}</span>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1rem', textAlign: 'center' }}>
-                            {row.vivaScore !== null ? (
-                              <span style={{ fontWeight: 800, color: 'var(--color-info)' }}>{row.vivaScore.toFixed(1)}</span>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1rem', textAlign: 'center' }}>
-                            {row.totalScore !== null ? (
-                              <span style={{ fontWeight: 800, color: 'var(--color-success)', backgroundColor: 'var(--color-success-subtle)', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)' }}>
-                                {row.totalScore.toFixed(1)}
-                              </span>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-secondary)' }}>—</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1rem' }}>
-                            {row.vivaScore !== null ? (
-                              <span className="badge badge-success">✓ EVALUATED</span>
-                            ) : (
-                              <span className="badge badge-warning">⏳ PENDING VIVA</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1rem', maxWidth: '240px' }}>
-                            <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {row.vivaRemarks || '—'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                            <button
-                              onClick={() => handleOpenVivaGrade(row)}
-                              className={row.vivaScore !== null ? 'btn btn-secondary' : 'btn btn-primary'}
-                              style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-                            >
-                              {row.vivaScore !== null ? '✏️ Edit Viva' : '🎙️ Grade Viva'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1382,13 +1527,8 @@ const TeacherExperimentConsolePage = () => {
           ) : (
             /* Re-evaluations Requests Table */
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--color-border)' }}>
-                <h3 style={{ fontSize: '1rem', color: 'var(--color-primary)', margin: 0 }}>
-                  Formal Student Re-evaluation Requests
-                </h3>
-              </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8125rem' }}>
                   <thead>
                     <tr style={{ backgroundColor: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
                       <th style={{ padding: '0.875rem 1.25rem' }}>Student</th>
@@ -1460,16 +1600,13 @@ const TeacherExperimentConsolePage = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: SUBMISSION INSPECTION & INLINE EVALUATION                        */}
+      {/* MODAL 1: SUBMISSION INSPECTION & EVALUATION                               */}
       {/* ========================================================================= */}
       {inspectingSubmission && (
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.65)',
             backdropFilter: 'blur(3px)',
             display: 'flex',
@@ -1520,14 +1657,14 @@ const TeacherExperimentConsolePage = () => {
 
               <div style={{ padding: '1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>VIVA ORAL SCORE</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-info)', marginTop: '0.25rem' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a', marginTop: '0.25rem' }}>
                   {inspectingViva?.marks !== undefined ? inspectingViva.marks.toFixed(1) : '—'} <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>/ 5.0</span>
                 </div>
               </div>
 
               <div style={{ padding: '1rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>ACADEMIC TOTAL SCORE</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-success)', marginTop: '0.25rem' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.25rem' }}>
                   {inspectingEvaluation?.score !== undefined || inspectingViva?.marks !== undefined
                     ? ((inspectingEvaluation?.score || 0) + (inspectingViva?.marks || 0)).toFixed(1)
                     : '—'}{' '}
@@ -1634,16 +1771,13 @@ const TeacherExperimentConsolePage = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 2: DEDICATED VIVA GRADING DRAWER / MODAL                            */}
+      {/* MODAL 2: DEDICATED VIVA GRADING MODAL                                     */}
       {/* ========================================================================= */}
       {gradingStudent && (
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.65)',
             backdropFilter: 'blur(3px)',
             display: 'flex',
@@ -1701,7 +1835,6 @@ const TeacherExperimentConsolePage = () => {
                 />
               </div>
 
-              {/* Total Calculation Preview */}
               <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.875rem' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '0.2rem' }}>FINAL SCORE PREVIEW:</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1743,16 +1876,13 @@ const TeacherExperimentConsolePage = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: MALPRACTICE STUDENT ACTIVITY TIMELINE                            */}
+      {/* MODAL 3: STUDENT INTEGRITY INVESTIGATION & TIMELINE                       */}
       {/* ========================================================================= */}
-      {timelineStudent && (
+      {investigatingStudent && (
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.65)',
             backdropFilter: 'blur(3px)',
             display: 'flex',
@@ -1766,8 +1896,8 @@ const TeacherExperimentConsolePage = () => {
             className="card"
             style={{
               width: '100%',
-              maxWidth: '820px',
-              maxHeight: '85vh',
+              maxWidth: '860px',
+              maxHeight: '90vh',
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
@@ -1775,25 +1905,92 @@ const TeacherExperimentConsolePage = () => {
               padding: '1.75rem'
             }}
           >
+            {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <span className="badge badge-primary" style={{ marginBottom: '0.35rem' }}>
-                  EXPERIMENT MALPRACTICE TIMELINE
-                </span>
-                <h2 style={{ fontSize: '1.25rem', color: 'var(--color-primary)', margin: 0 }}>
-                  {timelineStudent.name} ({timelineStudent.rollNumber})
-                </h2>
-                <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginTop: '0.2rem' }}>
-                  Experiment: <strong>{experiment.title}</strong> &bull; Section: <strong>{timelineStudent.section}</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '1.25rem' }}>🛡️</span>
+                  <h2 style={{ fontSize: '1.25rem', color: 'var(--color-primary)', margin: 0 }}>
+                    Student Integrity Investigation &bull; {investigatingStudent.name}
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+                  Roll Number: <strong style={{ fontFamily: 'var(--font-family-mono)' }}>{investigatingStudent.rollNumber}</strong> &bull; Section: <strong>{investigatingStudent.section}</strong> &bull; Experiment: <strong>{experiment.title}</strong>
                 </div>
               </div>
-              <button onClick={() => setTimelineStudent(null)} className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem' }}>
+              <button onClick={() => setInvestigatingStudent(null)} className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem' }}>
                 ✕ Close
               </button>
             </div>
 
+            {/* Student Risk Score & Status Summary Banner */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '0.875rem',
+                padding: '1rem',
+                backgroundColor: 'var(--color-surface-hover)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border)'
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Explainable Risk Score
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: investigatingStudent.riskScore >= 70 ? '#F87171' : investigatingStudent.riskScore >= 30 ? '#FB923C' : '#4ADE80', marginTop: '0.2rem' }}>
+                  {investigatingStudent.riskScore} <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>/ 100</span>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Integrity Status
+                </div>
+                <div style={{ marginTop: '0.3rem' }}>
+                  {renderIntegrityBadge(investigatingStudent.malpracticeStatus)}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Academic Total Score
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-primary)', marginTop: '0.2rem' }}>
+                  {investigatingStudent.totalScore !== null ? `${investigatingStudent.totalScore} / 15` : 'Not Evaluated'}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-secondary)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Official Submissions
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-info)', marginTop: '0.2rem' }}>
+                  {investigatingStudent.attemptsCount} attempt{investigatingStudent.attemptsCount > 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+
+            {/* Submissions & Incidents Correlation Box */}
+            {investigatingStudent.studentSubmissions?.length > 0 && (
+              <div style={{ padding: '0.875rem', backgroundColor: 'var(--color-canvas)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', fontSize: '0.8125rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--color-text-secondary)', marginBottom: '0.35rem', textTransform: 'uppercase', fontSize: '0.6875rem' }}>
+                  Submission Milestones Correlation
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {investigatingStudent.studentSubmissions.map((sub) => (
+                    <div key={sub._id} style={{ padding: '0.4rem 0.65rem', backgroundColor: 'var(--color-surface)', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
+                      <strong>Attempt #{sub.attemptNumber}</strong> ({sub.language}) &bull; {new Date(sub.submittedAt).toLocaleTimeString()}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Timeline Filter Controls */}
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Filters:</span>
               <select
                 className="input"
                 value={modalEventTypeFilter}
@@ -1818,10 +2015,10 @@ const TeacherExperimentConsolePage = () => {
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
-                <option value="CRITICAL">Critical</option>
               </select>
             </div>
 
+            {/* Timeline Body */}
             {timelineLoading ? (
               <div style={{ padding: '2.5rem', textAlign: 'center' }}>
                 <LoadingSpinner size={32} text="Loading student experiment activity timeline..." />
@@ -1840,16 +2037,16 @@ const TeacherExperimentConsolePage = () => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {filteredTimelineEvents.map((evt) => {
+                {filteredTimelineEvents.map((evt, idx) => {
                   const cfg = EVENT_CONFIG[evt.eventType] || { label: evt.eventType, icon: '⚠️', description: 'Malpractice action detected' };
-                  const isHigh = evt.severity === 'HIGH' || evt.severity === 'CRITICAL';
+                  const isHigh = evt.severity === 'HIGH';
                   return (
                     <div
-                      key={evt._id}
+                      key={evt._id || idx}
                       style={{
                         padding: '0.875rem 1rem',
-                        backgroundColor: 'var(--color-surface-hover)',
-                        border: `1px solid ${isHigh ? 'var(--color-error)' : 'var(--color-border)'}`,
+                        backgroundColor: 'var(--color-canvas)',
+                        border: `1px solid ${isHigh ? 'rgba(239, 68, 68, 0.4)' : 'var(--color-border)'}`,
                         borderRadius: 'var(--radius-md)',
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -1864,18 +2061,34 @@ const TeacherExperimentConsolePage = () => {
                             <strong style={{ fontSize: '0.875rem', color: 'var(--color-text-primary)' }}>
                               {cfg.label}
                             </strong>
-                            <span className={isHigh ? 'badge badge-error' : 'badge badge-warning'}>
+                            <span
+                              style={{
+                                fontSize: '0.6875rem',
+                                fontWeight: 700,
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '3px',
+                                backgroundColor: isHigh ? 'rgba(239, 68, 68, 0.2)' : 'rgba(249, 115, 22, 0.15)',
+                                color: isHigh ? '#F87171' : '#FB923C'
+                              }}
+                            >
                               {evt.severity}
                             </span>
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '0.15rem' }}>
                             {cfg.description}
                           </div>
+                          {evt.details && Object.keys(evt.details).length > 0 && (
+                            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
+                              {evt.details.language ? `Language: ${evt.details.language} ` : ''}
+                              {evt.details.codeLength ? `• Code Length: ${evt.details.codeLength} chars ` : ''}
+                              {evt.details.visibilityState ? `• State: ${evt.details.visibilityState}` : ''}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--color-text-secondary)', minWidth: '120px' }}>
-                        {new Date(evt.timestamp).toLocaleTimeString()}
+                      <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--color-text-secondary)', minWidth: '110px' }}>
+                        {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </div>
                     </div>
                   );
@@ -1893,10 +2106,7 @@ const TeacherExperimentConsolePage = () => {
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.65)',
             backdropFilter: 'blur(3px)',
             display: 'flex',
